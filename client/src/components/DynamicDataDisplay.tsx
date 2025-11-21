@@ -7,6 +7,167 @@ interface DynamicDataDisplayProps {
   stock: StockPage;
 }
 
+interface PriceChartProps {
+  price: number;
+  ticker: string;
+}
+
+function PriceChart({ price, ticker }: PriceChartProps) {
+  // Generate mock historical data points (30 days)
+  const generateHistoricalData = () => {
+    const data: { date: string; price: number }[] = [];
+    const today = new Date();
+    const basePrice = price;
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      // Generate realistic price variation
+      const variation = (Math.random() - 0.5) * (basePrice * 0.15);
+      const dayPrice = basePrice + variation - (i * 0.3);
+      
+      data.push({
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        price: Math.max(dayPrice, basePrice * 0.85),
+      });
+    }
+    
+    return data;
+  };
+
+  const data = generateHistoricalData();
+  const maxPrice = Math.max(...data.map(d => d.price));
+  const minPrice = Math.min(...data.map(d => d.price));
+  const priceRange = maxPrice - minPrice;
+  
+  // SVG dimensions
+  const width = 800;
+  const height = 200;
+  const padding = { top: 20, right: 20, bottom: 30, left: 50 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  
+  // Calculate points for the line
+  const points = data.map((d, i) => {
+    const x = padding.left + (i / (data.length - 1)) * chartWidth;
+    const y = padding.top + chartHeight - ((d.price - minPrice) / priceRange) * chartHeight;
+    return `${x},${y}`;
+  }).join(' ');
+  
+  // Create area fill points
+  const areaPoints = `${padding.left},${padding.top + chartHeight} ${points} ${padding.left + chartWidth},${padding.top + chartHeight}`;
+  
+  // Y-axis labels
+  const yTicks = 5;
+  const yLabels = Array.from({ length: yTicks }, (_, i) => {
+    const value = minPrice + (priceRange * i / (yTicks - 1));
+    return {
+      y: padding.top + chartHeight - (i / (yTicks - 1)) * chartHeight,
+      value: value.toFixed(2),
+    };
+  });
+  
+  // X-axis labels (show every 5th day)
+  const xLabels = data.filter((_, i) => i % 5 === 0 || i === data.length - 1);
+
+  return (
+    <div className="w-full">
+      <div className="text-sm font-medium mb-2">30-Day Price Chart - ${price.toFixed(2)}</div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+        {/* Grid lines */}
+        {yLabels.map((label, i) => (
+          <g key={i}>
+            <line
+              x1={padding.left}
+              y1={label.y}
+              x2={width - padding.right}
+              y2={label.y}
+              stroke="currentColor"
+              strokeOpacity="0.1"
+              strokeWidth="1"
+            />
+          </g>
+        ))}
+        
+        {/* Y-axis labels */}
+        {yLabels.map((label, i) => (
+          <text
+            key={i}
+            x={padding.left - 10}
+            y={label.y}
+            textAnchor="end"
+            dominantBaseline="middle"
+            className="text-xs fill-muted-foreground"
+          >
+            ${label.value}
+          </text>
+        ))}
+        
+        {/* Area fill */}
+        <polygon
+          points={areaPoints}
+          fill="url(#priceGradient)"
+          opacity="0.2"
+        />
+        
+        {/* Line */}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        
+        {/* Data points */}
+        {data.map((d, i) => {
+          const x = padding.left + (i / (data.length - 1)) * chartWidth;
+          const y = padding.top + chartHeight - ((d.price - minPrice) / priceRange) * chartHeight;
+          return (
+            <circle
+              key={i}
+              cx={x}
+              cy={y}
+              r="3"
+              fill="hsl(var(--primary))"
+              className="opacity-0 hover:opacity-100 transition-opacity"
+            >
+              <title>{d.date}: ${d.price.toFixed(2)}</title>
+            </circle>
+          );
+        })}
+        
+        {/* X-axis labels */}
+        {xLabels.map((d, i) => {
+          const index = data.indexOf(d);
+          const x = padding.left + (index / (data.length - 1)) * chartWidth;
+          return (
+            <text
+              key={i}
+              x={x}
+              y={height - 5}
+              textAnchor="middle"
+              className="text-xs fill-muted-foreground"
+            >
+              {d.date}
+            </text>
+          );
+        })}
+        
+        {/* Gradient definition */}
+        <defs>
+          <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
+}
+
 export default function DynamicDataDisplay({ stock }: DynamicDataDisplayProps) {
   const { dynamicData } = stock;
 
@@ -145,26 +306,8 @@ export default function DynamicDataDisplay({ stock }: DynamicDataDisplayProps) {
               </div>
             ))}
           </div>
-          <div className="mt-6 bg-muted/50 rounded-lg h-40 flex items-center justify-center">
-            <svg className="w-full h-full p-4" viewBox="0 0 400 120">
-              <polyline
-                points="0,100 50,80 100,90 150,60 200,70 250,40 300,50 350,20 400,30"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="2"
-              />
-              <polyline
-                points="0,100 50,80 100,90 150,60 200,70 250,40 300,50 350,20 400,30"
-                fill="url(#gradient)"
-                opacity="0.2"
-              />
-              <defs>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-            </svg>
+          <div className="mt-6 bg-muted/50 rounded-lg p-4">
+            <PriceChart price={dynamicData.price} ticker={stock.ticker} />
           </div>
         </CardContent>
       </Card>
