@@ -1,0 +1,149 @@
+You are a senior frontend engineer and product designer.
+
+Build a responsive web UI (no backend required) for a **Dynamic Stock Landing Page CMS** for a fintech app called **baraka**.
+
+Tech stack:
+- React (single-page app)
+- Tailwind CSS for styling
+- No need for real APIs: mock data in code
+- Focus on **clean design** and realistic layout, not business logic
+
+The product context:
+- The CMS manages **10,000+ stock landing pages**
+- It is **multilingual**: English (EN) and Arabic (AR, RTL)
+- Each stock page combines:
+  - Real-time style widgets (mock data) for price, market cap, sentiment
+  - Long-form content blocks (overview, thesis, risks, FAQs, highlights)
+  - Internal linking to similar stocks (“Similar stocks”, “Users also traded”, “ETFs in this theme”)
+- Roles exist (Admin, SEO Manager, Content Writer, Compliance, Viewer), but for now this UI can assume “Admin” view with full access
+
+🎯 What to build: 3 main screens
+
+1) **Login Screen (simple)**
+   - Minimal login form: Email, password, “Login” button
+   - Branding: show "baraka CMS" in the header
+   - No real auth, just navigate to the main CMS after clicking Login
+
+2) **CMS Dashboard / Stock List**
+   - Layout:
+     - Left sidebar with navigation:
+       - Dashboard
+       - Stock Pages
+       - Assets
+       - Settings
+     - Top bar with:
+       - “baraka CMS” logo/title
+       - Language toggle: EN / AR (for the UI labels, not full translations)
+       - User avatar dropdown (fake)
+   - Main content:
+     - Table of stock pages with columns:
+       - Ticker
+       - Company name
+       - Language coverage (EN/AR icons)
+       - Status (Draft / In Review / Published)
+       - Last updated
+       - “Edit” button
+     - Simple search bar (by ticker or company name)
+   - When clicking “Edit”, open the Stock Page Editor (screen 3).
+
+3) **Stock Page Editor (core screen)**
+
+   This is the key design; make it feel like a real professional CMS.
+
+   Layout:
+   - Left sidebar (narrow): 
+     - Sections list:
+       - Metadata
+       - Content
+       - Dynamic Data
+       - Internal Linking
+       - Preview
+   - Main area split into two columns:
+     - Left: form editor
+     - Right: live preview of the public stock page
+
+   Form editor details:
+
+   A) Metadata section
+      - Fields with EN/AR tabs:
+        - Meta Title (EN / AR)
+        - Meta Description (EN / AR)
+      - Show character count under each field
+      - Add a toggle “Index this page (yes/no)”
+      - A small “Search Result Preview” card showing how the title + description would appear in Google (mock).
+
+   B) Content section
+      - Show two language tabs at the top: **EN** | **AR**
+      - Inside each tab, rich-text-like textareas for:
+        - Company Overview
+        - Investment Thesis
+        - Risks
+        - FAQs (can be simplified as a list with “Question” / “Answer” inputs)
+        - Highlights
+      - For the AR tab, visually right-align and indicate RTL in styling.
+
+   C) Dynamic Data section
+      - Read-only fields showing mock market data:
+        - Price
+        - Market Cap
+        - Volume
+        - P/E, EPS, Dividend Yield
+        - Sentiment: % Buy / % Sell / % Hold
+      - Render this as a card grid with labels and values, plus a small simplified chart (static SVG or placeholder) for “Performance (1D / 1W / 1M / 1Y)” for visual effect.
+      - Include an info note: “These values are powered by the Market Data Service (read-only here).”
+
+   D) Internal Linking section
+      - Two sub-blocks:
+        1. Auto suggestions (read-only list of tickers with reason tags like “Same sector”, “Users also traded”)
+        2. Manual override:
+           - Input fields where the Admin can add or remove related tickers
+           - Show tags/pills for selected related stocks (e.g., AAPL, MSFT, GOOG)
+      - For design, use tags/pills style, like a modern CMS.
+
+   E) Actions
+      - At the top or bottom, show buttons:
+        - Save Draft
+        - Submit for Compliance Review
+        - Publish (disabled if status is not approved – just visually disabled, no real logic)
+      - Show current status badge (Draft / In Review / Published).
+
+   Live Preview Panel (right side):
+   - Show what the **public stock page** would look like.
+   - Design a simple public view with:
+     - Hero: Stock name, ticker, price, % change, “Invest” button
+     - Below: 
+       - Stats row: Market cap, Volume, P/E, Dividend Yield
+       - Sentiment widget: 3-bar segment for Buy / Hold / Sell
+     - Content section: Overview, Thesis, Risks (from EN or AR depending on a toggle in the editor)
+     - Internal linking block at the bottom:
+       - “Similar stocks” with a list of ticker cards
+   - Add a toggle in the preview to switch between EN and AR view:
+     - EN: LTR layout
+     - AR: Mirrored layout (RTL) with right-aligned text
+
+4) **Asset Library Screen (optional but nice)**
+   - Accessible from sidebar “Assets”
+   - Grid of assets: thumbnails for images/videos, list entries for documents
+   - Each asset tile shows:
+     - Thumbnail or icon
+     - File name
+     - Type (image/video/document)
+     - Public/Restricted badge
+   - Simple “Upload Asset” button (no logic needed)
+   - Show fields for alt-text EN and AR on a simple side panel when clicking an asset.
+
+Style guidance:
+- Clean, modern, Fintech SaaS look.
+- Use Tailwind for spacing, typography, and layout.
+- Use neutral colors, light theme.
+- Make sure the AR (Arabic) views clearly show RTL alignment in both the editor fields and the preview.
+
+Data:
+- Use hardcoded mock JSON data for:
+  - A few stocks (AAPL, TSLA, MSFT)
+  - Their metadata, content, and dynamic data
+  - Some related stocks
+- No real networking required.
+
+Goal:
+- I should be able to run this React app in Replit, click Login, see the dashboard, open a stock’s editor, edit EN/AR content, and visually see the public page preview update on the right, including RTL behavior for AR.
