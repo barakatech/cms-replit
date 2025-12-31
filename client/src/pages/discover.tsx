@@ -16,23 +16,16 @@ import {
 import { mockStocks, mockBlogs } from '@/lib/mockData';
 import { marketDataProvider, type MarketData } from '@/lib/marketDataProvider';
 import { mockDiscoverStocksSettings, mockBlogHomeSettings } from '@/lib/discoverData';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function Discover() {
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
   
   const isRTL = language === 'ar';
   const settings = mockDiscoverStocksSettings;
   const blogSettings = mockBlogHomeSettings;
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   useEffect(() => {
     marketDataProvider.getMarketDataBatch(settings.trendingTickers.slice(0, 4)).then(setMarketData);
@@ -105,10 +98,10 @@ export default function Discover() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                onClick={toggleTheme}
                 data-testid="button-theme-toggle"
               >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
               <Button
                 variant="ghost"
@@ -169,7 +162,7 @@ export default function Discover() {
                         </div>
                         <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <span className="font-medium text-sm">${data.price.toFixed(2)}</span>
-                          <span className={`text-xs flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          <span className={`text-xs flex items-center ${isPositive ? 'text-positive' : 'text-negative'}`}>
                             {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                             {isPositive ? '+' : ''}{data.changePercent.toFixed(2)}%
                           </span>

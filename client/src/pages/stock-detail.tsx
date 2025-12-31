@@ -29,6 +29,7 @@ import {
   TrendingStocksBlock,
   PreviewBanner,
 } from '@/components/stock-blocks';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function StockDetail() {
   const params = useParams<{ slug: string }>();
@@ -38,7 +39,7 @@ export default function StockDetail() {
   const localeParam = searchParams.get('locale') as 'en' | 'ar' | null;
   
   const [language, setLanguage] = useState<'en' | 'ar'>(localeParam || 'en');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   
   const isRTL = language === 'ar';
@@ -52,14 +53,6 @@ export default function StockDetail() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   if (!stock) {
     return (
@@ -122,7 +115,7 @@ export default function StockDetail() {
                 <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <span className="font-bold">{stock.ticker}</span>
                   <span className="text-lg font-semibold">${stock.dynamicData.price.toFixed(2)}</span>
-                  <span className={`text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-sm ${isPositive ? 'text-positive' : 'text-negative'}`}>
                     {isPositive ? '+' : ''}{stock.dynamicData.changePercent.toFixed(2)}%
                   </span>
                 </div>
@@ -152,10 +145,10 @@ export default function StockDetail() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                onClick={toggleTheme}
                 data-testid="button-theme-toggle"
               >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
               <Button
                 variant="ghost"

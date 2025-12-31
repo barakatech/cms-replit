@@ -1,0 +1,124 @@
+```text
+You are a senior frontend engineer. Apply the **GetBaraka-style color theme** across BOTH:
+1) the CMS Admin (/admin, /login)
+2) the public landing pages (/stocks, /stocks/[slug], /blog, /blog/[slug])
+
+GOAL
+Implement a cohesive design system using Tailwind + CSS variables (tokens) with full **Light + Dark mode**, matching a premium finance look:
+- Dark-first UI (charcoal/black backgrounds)
+- Warm primary accent (orange) for CTAs/highlights
+- High contrast typography
+- Clean “surface” cards and dividers
+- Positive/negative colors for change indicators
+
+IMPORTANT
+- Do not hardcode colors in components except via semantic tokens.
+- Use CSS variables for theming and map Tailwind utilities to tokens.
+- Ensure RTL (Arabic) works in both themes.
+
+COLOR TOKENS (MATCH THIS PALETTE)
+Use these exact hex values as the base tokens:
+- --bg:        #0F0F0F  (main background)
+- --surface:   #1C1C1C  (cards/panels)
+- --surface2:  #222222  (secondary surfaces)
+- --border:    #2A2A2A  (dividers/borders)
+- --text:      #FFFFFF  (primary text)
+- --muted:     #A3A3A3  (secondary text)
+- --muted2:    #6B6B6B  (tertiary text)
+- --primary:   #F85A22  (brand accent / CTA)
+- --primary2:  #FF6A3A  (hover/active accent)
+- --positive:  #34C759  (gains)
+- --negative:  #FF3B30  (losses)
+- --focus:     #F85A22  (focus ring)
+
+LIGHT MODE (DERIVE A CLEAN INVERTED PALETTE)
+Define light tokens:
+- --bg:        #FFFFFF
+- --surface:   #F7F7F7
+- --surface2:  #EFEFEF
+- --border:    #E3E3E3
+- --text:      #0F0F0F
+- --muted:     #4B4B4B
+- --muted2:    #6B6B6B
+- --primary:   #F85A22
+- --primary2:  #FF6A3A
+- --positive:  #34C759
+- --negative:  #FF3B30
+- --focus:     #F85A22
+
+IMPLEMENTATION REQUIREMENTS
+1) Tailwind + CSS Variables
+- Configure Tailwind to use semantic colors:
+  - bg, surface, surface2, border, text, muted, primary, positive, negative
+- Use a global stylesheet (e.g., globals.css) to define:
+  - :root { ...light tokens... }
+  - .dark { ...dark tokens... }
+- Ensure Tailwind darkMode: "class"
+
+2) Theme Provider
+- Create ThemeProvider that:
+  - Default = system preference
+  - Allows user toggle (sun/moon icon)
+  - Persists preference in localStorage
+  - Also writes a cookie for SSR consistency
+- Add theme toggle in:
+  - CMS top bar (/admin)
+  - Public header (/stocks, /blog, and /stocks/[slug])
+
+3) Base UI Components (make consistent)
+Build/standardize these components and refactor pages to use them:
+- Button (variants: primary, secondary, ghost)
+  - primary uses --primary background, hover uses --primary2
+- Card (uses --surface, border --border)
+- Input / Select
+  - background: --surface2, border: --border, text: --text
+  - focus ring color: --focus
+- Badge (muted + primary)
+- Divider (border color)
+- Stat (label muted, value text)
+- Chip tabs (for timeframe nav etc.)
+
+4) Typography & Layout Defaults
+- Use high-contrast type:
+  - Headings: text color --text
+  - Body: --text
+  - Secondary: --muted
+- Section headers should include a subtle divider line beneath (border --border)
+- Cards should have:
+  - rounded-xl
+  - border
+  - soft shadow only if needed (keep minimal)
+
+5) Finance Signals
+- Any “% change” or movement:
+  - positive => --positive
+  - negative => --negative
+- Neutral values can use --muted
+
+6) Apply Theme Across These Pages
+CMS:
+- /login
+- /admin (shell: sidebar/topbar)
+- /admin/stocks list + editor + page builder
+- /admin/banners + analytics
+
+Public:
+- /stocks discovery page
+- /stocks/[slug] (brokerage-style modules)
+- /blog home
+- /blog/[slug]
+
+7) RTL Support
+- Ensure Arabic locale sets dir="rtl"
+- Check spacing/alignment in dark + light
+- Ensure icons and chips/tabs don’t break in RTL
+
+DELIVERABLES
+- Updated Tailwind config mapping to semantic tokens
+- globals.css with :root and .dark token sets
+- ThemeProvider + toggle UI
+- Refactor key pages/components to use tokens (no raw hex in components)
+- README section: “Theme system (GetBaraka style)”
+
+Now implement the theme end-to-end so the CMS and landing pages share the same premium dark-first brand look with an orange primary accent.
+```

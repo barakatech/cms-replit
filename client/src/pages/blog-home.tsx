@@ -18,24 +18,17 @@ import {
 } from 'lucide-react';
 import { mockBlogs, type BlogPost } from '@/lib/mockData';
 import { mockBlogHomeSettings, blogCategories } from '@/lib/discoverData';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function BlogHome() {
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   
   const isRTL = language === 'ar';
   const settings = mockBlogHomeSettings;
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   const featuredPost = mockBlogs.find(p => p.id === settings.featuredPostId);
   const publishedPosts = mockBlogs.filter(p => p.status === 'published');
@@ -169,10 +162,10 @@ export default function BlogHome() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                onClick={toggleTheme}
                 data-testid="button-theme-toggle"
               >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
               <Button
                 variant="ghost"

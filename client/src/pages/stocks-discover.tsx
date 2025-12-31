@@ -27,10 +27,11 @@ import {
   mockDiscoverStocksSettings,
   type StockCollection 
 } from '@/lib/discoverData';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function StocksDiscover() {
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('trending');
   const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
@@ -39,14 +40,6 @@ export default function StocksDiscover() {
   
   const isRTL = language === 'ar';
   const settings = mockDiscoverStocksSettings;
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
 
   useEffect(() => {
     const allTickers = [
@@ -151,7 +144,7 @@ export default function StocksDiscover() {
               </div>
               <div className={isRTL ? 'text-left' : 'text-right'}>
                 <p className="font-semibold">${data.price.toFixed(2)}</p>
-                <p className={`text-sm flex items-center gap-0.5 ${isPositive ? 'text-green-600' : 'text-red-600'} ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                <p className={`text-sm flex items-center gap-0.5 ${isPositive ? 'text-positive' : 'text-negative'} ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
                   {isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                   {isPositive ? '+' : ''}{data.changePercent.toFixed(2)}%
                 </p>
@@ -162,7 +155,7 @@ export default function StocksDiscover() {
                 <svg viewBox="0 0 100 30" className="w-full h-full" preserveAspectRatio="none">
                   <polyline
                     fill="none"
-                    stroke={isPositive ? '#22c55e' : '#ef4444'}
+                    stroke={isPositive ? 'hsl(142, 71%, 45%)' : 'hsl(0, 84%, 60%)'}
                     strokeWidth="2"
                     points={data.sparkline.map((v, i) => {
                       const min = Math.min(...data.sparkline!);
@@ -209,7 +202,7 @@ export default function StocksDiscover() {
           </div>
           <div className={isRTL ? 'text-left' : 'text-right'}>
             <p className="font-medium text-sm">${data.price.toFixed(2)}</p>
-            <p className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-xs ${isPositive ? 'text-positive' : 'text-negative'}`}>
               {isPositive ? '+' : ''}{data.changePercent.toFixed(2)}%
             </p>
           </div>
@@ -282,10 +275,10 @@ export default function StocksDiscover() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                onClick={toggleTheme}
                 data-testid="button-theme-toggle"
               >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
               <Button
                 variant="ghost"

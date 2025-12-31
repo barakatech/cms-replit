@@ -11,16 +11,27 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function TopBar() {
   const [uiLang, setUiLang] = useState<'EN' | 'AR'>('EN');
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-background sticky top-0 z-20">
+    <header className="flex items-center justify-between p-4 border-b bg-card sticky top-0 z-20">
       <SidebarTrigger data-testid="button-sidebar-toggle" />
       
       <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          data-testid="button-theme-toggle"
+        >
+          {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+        
         <div className="flex gap-1">
           <Badge
             variant={uiLang === 'EN' ? 'default' : 'outline'}
