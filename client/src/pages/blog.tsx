@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { mockBlogs, type BlogPost, type BlogStatus } from '@/lib/mockData';
-import { Plus, Search, Edit, Trash2, Eye, Calendar, Clock, User, Tag, ArrowLeft, Globe } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Calendar, Clock, User, Tag, ArrowLeft, Globe, Image } from 'lucide-react';
+import { RichTextEditor } from '@/components/RichTextEditor';
 
 export default function Blog() {
   const [blogs, setBlogs] = useState<BlogPost[]>(mockBlogs);
@@ -173,19 +174,41 @@ export default function Blog() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="content">Content ({editLanguage.toUpperCase()})</Label>
-                  <Textarea
-                    id="content"
-                    value={selectedBlog.content[editLanguage]}
-                    onChange={(e) => setSelectedBlog({
+                  <Label>Content ({editLanguage.toUpperCase()})</Label>
+                  <RichTextEditor
+                    content={selectedBlog.content[editLanguage]}
+                    onChange={(value) => setSelectedBlog({
                       ...selectedBlog,
-                      content: { ...selectedBlog.content, [editLanguage]: e.target.value }
+                      content: { ...selectedBlog.content, [editLanguage]: value }
                     })}
                     placeholder="Write your blog content here..."
-                    rows={12}
-                    className="font-mono"
-                    data-testid="input-content"
+                    dir={editLanguage === 'ar' ? 'rtl' : 'ltr'}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="featuredImage">Featured Image URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="featuredImage"
+                      value={selectedBlog.featuredImage}
+                      onChange={(e) => setSelectedBlog({ ...selectedBlog, featuredImage: e.target.value })}
+                      placeholder="https://example.com/image.jpg"
+                      data-testid="input-featured-image"
+                    />
+                    <Button variant="outline" size="icon" data-testid="button-browse-image">
+                      <Image className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {selectedBlog.featuredImage && (
+                    <div className="mt-2 border rounded-lg overflow-hidden">
+                      <img 
+                        src={selectedBlog.featuredImage} 
+                        alt="Featured" 
+                        className="w-full h-40 object-cover"
+                        data-testid="img-featured-preview"
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

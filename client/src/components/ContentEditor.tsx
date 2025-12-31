@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { type StockPage } from '@/lib/mockData';
+import { RichTextEditor } from '@/components/RichTextEditor';
 
 interface ContentEditorProps {
   stock: StockPage;
@@ -56,78 +57,74 @@ export default function ContentEditor({ stock, onChange }: ContentEditorProps) {
 
         <TabsContent value="en" className="space-y-6 mt-6">
           <div className="space-y-2">
-            <Label htmlFor="overview-en">Company Overview</Label>
-            <Textarea
-              id="overview-en"
-              value={stock.content.en.overview}
-              onChange={(e) =>
+            <Label>Company Overview</Label>
+            <RichTextEditor
+              content={stock.content.en.overview}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    en: { ...stock.content.en, overview: e.target.value },
+                    en: { ...stock.content.en, overview: value },
                   },
                 })
               }
-              rows={4}
-              data-testid="textarea-overview-en"
+              placeholder="Write company overview..."
+              dir="ltr"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="thesis-en">Investment Thesis</Label>
-            <Textarea
-              id="thesis-en"
-              value={stock.content.en.thesis}
-              onChange={(e) =>
+            <Label>Investment Thesis</Label>
+            <RichTextEditor
+              content={stock.content.en.thesis}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    en: { ...stock.content.en, thesis: e.target.value },
+                    en: { ...stock.content.en, thesis: value },
                   },
                 })
               }
-              rows={4}
-              data-testid="textarea-thesis-en"
+              placeholder="Write investment thesis..."
+              dir="ltr"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="risks-en">Risks</Label>
-            <Textarea
-              id="risks-en"
-              value={stock.content.en.risks}
-              onChange={(e) =>
+            <Label>Risks</Label>
+            <RichTextEditor
+              content={stock.content.en.risks}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    en: { ...stock.content.en, risks: e.target.value },
+                    en: { ...stock.content.en, risks: value },
                   },
                 })
               }
-              rows={4}
-              data-testid="textarea-risks-en"
+              placeholder="Write about risks..."
+              dir="ltr"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="highlights-en">Highlights</Label>
-            <Textarea
-              id="highlights-en"
-              value={stock.content.en.highlights}
-              onChange={(e) =>
+            <Label>Highlights</Label>
+            <RichTextEditor
+              content={stock.content.en.highlights}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    en: { ...stock.content.en, highlights: e.target.value },
+                    en: { ...stock.content.en, highlights: value },
                   },
                 })
               }
-              rows={3}
-              data-testid="textarea-highlights-en"
+              placeholder="Write highlights..."
+              dir="ltr"
             />
           </div>
 
@@ -200,88 +197,76 @@ export default function ContentEditor({ stock, onChange }: ContentEditorProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="ar" className="space-y-6 mt-6">
+        <TabsContent value="ar" className="space-y-6 mt-6" dir="rtl">
           <div className="space-y-2">
-            <Label htmlFor="overview-ar">نظرة عامة على الشركة</Label>
-            <Textarea
-              id="overview-ar"
-              value={stock.content.ar.overview}
-              onChange={(e) =>
+            <Label>نظرة عامة على الشركة</Label>
+            <RichTextEditor
+              content={stock.content.ar.overview}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    ar: { ...stock.content.ar, overview: e.target.value },
+                    ar: { ...stock.content.ar, overview: value },
                   },
                 })
               }
-              rows={4}
+              placeholder="اكتب نظرة عامة على الشركة..."
               dir="rtl"
-              className="text-right"
-              data-testid="textarea-overview-ar"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="thesis-ar">أطروحة الاستثمار</Label>
-            <Textarea
-              id="thesis-ar"
-              value={stock.content.ar.thesis}
-              onChange={(e) =>
+            <Label>أطروحة الاستثمار</Label>
+            <RichTextEditor
+              content={stock.content.ar.thesis}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    ar: { ...stock.content.ar, thesis: e.target.value },
+                    ar: { ...stock.content.ar, thesis: value },
                   },
                 })
               }
-              rows={4}
+              placeholder="اكتب أطروحة الاستثمار..."
               dir="rtl"
-              className="text-right"
-              data-testid="textarea-thesis-ar"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="risks-ar">المخاطر</Label>
-            <Textarea
-              id="risks-ar"
-              value={stock.content.ar.risks}
-              onChange={(e) =>
+            <Label>المخاطر</Label>
+            <RichTextEditor
+              content={stock.content.ar.risks}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    ar: { ...stock.content.ar, risks: e.target.value },
+                    ar: { ...stock.content.ar, risks: value },
                   },
                 })
               }
-              rows={4}
+              placeholder="اكتب عن المخاطر..."
               dir="rtl"
-              className="text-right"
-              data-testid="textarea-risks-ar"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="highlights-ar">أبرز النقاط</Label>
-            <Textarea
-              id="highlights-ar"
-              value={stock.content.ar.highlights}
-              onChange={(e) =>
+            <Label>أبرز النقاط</Label>
+            <RichTextEditor
+              content={stock.content.ar.highlights}
+              onChange={(value) =>
                 onChange({
                   ...stock,
                   content: {
                     ...stock.content,
-                    ar: { ...stock.content.ar, highlights: e.target.value },
+                    ar: { ...stock.content.ar, highlights: value },
                   },
                 })
               }
-              rows={3}
+              placeholder="اكتب أبرز النقاط..."
               dir="rtl"
-              className="text-right"
-              data-testid="textarea-highlights-ar"
             />
           </div>
 
