@@ -14,16 +14,22 @@ import Blog from '@/pages/blog';
 import Banners from '@/pages/banners';
 import StocksDirectory from '@/pages/stocks';
 import StockDetail from '@/pages/stock-detail';
+import StocksDiscover from '@/pages/stocks-discover';
+import BlogHome from '@/pages/blog-home';
+import Discover from '@/pages/discover';
 import NotFound from '@/pages/not-found';
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <Redirect to="/stocks" />} />
+      <Route path="/" component={() => <Redirect to="/discover" />} />
+      <Route path="/discover" component={Discover} />
+      <Route path="/stocks" component={StocksDiscover} />
+      <Route path="/stocks/:slug" component={StockDetail} />
+      <Route path="/blog" component={BlogHome} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
-      <Route path="/stocks" component={StocksDirectory} />
-      <Route path="/stocks/:slug" component={StockDetail} />
+      <Route path="/admin/stocks" component={StocksDirectory} />
       <Route path="/dashboard">
         {() => (
           <SidebarProvider>
@@ -69,7 +75,7 @@ function Router() {
           </SidebarProvider>
         )}
       </Route>
-      <Route path="/blog">
+      <Route path="/admin/blog">
         {() => (
           <SidebarProvider>
             <div className="flex h-screen w-full">

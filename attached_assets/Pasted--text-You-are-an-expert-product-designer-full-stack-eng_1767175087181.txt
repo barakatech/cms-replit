@@ -1,0 +1,188 @@
+```text
+You are an expert product designer + full-stack engineer. Build a premium **Discover Home** experience for our site that feels like a modern brokerage “markets discovery” page (similar in layout style to eToro’s stocks discovery), but powered by our CMS + dummy market data provider (no scraping, no real API integration yet).
+
+SCOPE
+Create TWO discovery home pages:
+1) Stocks Home: /stocks
+2) Blog Home: /blog
+Plus a combined top-level “Discover” page (optional but recommended):
+3) /discover (links to Stocks + Blog sections)
+
+IMPORTANT CONSTRAINTS
+- Do NOT scrape any external websites.
+- Do NOT integrate real third-party APIs yet.
+- Use our CMS content + DummyMarketDataProvider data interfaces.
+- Must support EN/AR + RTL + light/dark.
+- Keep compliance-friendly language (no “buy now”, no advice).
+
+DATA SOURCES (SEPARATE THEM)
+A) CMS (editorial & layout)
+- Featured collections, hero copy, banners, curated lists, blog content
+B) Market Data (numbers only)
+- Use MarketDataProvider abstraction (dummy for now) for prices/change for tickers displayed
+
+STOCKS HOME PAGE: /stocks (DISCOVER)
+LAYOUT SECTIONS (match brokerage discovery patterns)
+
+1) Hero + Search
+- Large heading: “Discover stocks” (localized)
+- Subheading (localized): “Explore popular companies and market themes”
+- Search bar:
+  - search by ticker/company name
+  - results show instant list with logo, ticker, name
+  - click navigates to /stocks/[slug]
+- Optional filters row (chips):
+  - “Trending”, “Most viewed”, “Top gainers”, “Top losers”, “Newly added”
+  (For now these are CMS-curated toggles, not calculated.)
+
+2) “Trending Stocks” Horizontal Carousel
+- Card layout like eToro discovery:
+  - Logo, ticker, company name
+  - Price and % change (from MarketDataProvider dummy)
+  - Small sparkline (optional; from provider series)
+- “View all” link → /stocks?section=trending
+
+3) “Biggest Movers” (Top Gainers / Top Losers)
+- Two side-by-side panels (stack on mobile)
+- Each panel shows 5–10 stocks with:
+  - ticker, name, price, % change
+- For now:
+  - Movers list is CMS-curated
+  - Numbers come from MarketDataProvider dummy
+
+4) “Explore by Theme” Collections (CMS-defined)
+- A grid of theme cards (like “AI”, “EV”, “GCC”, “Dividend”, “Tech Giants”, “Halal”)
+- Each theme card:
+  - title + short description + 6 tickers preview
+  - click opens /stocks/collection/[slug] (collection page) OR filters /stocks?theme=...
+- Create CMS entity: StockCollection
+  - slug, title, description, localeContent
+  - tickers[] (e.g., ["TSLA","NVDA","AAPL"])
+  - heroImage optional
+  - order, status
+
+5) “Featured Stock Pages” (CMS-curated)
+- Grid of 6–12 stock cards
+- Supports “pin to top” and “new” badges (CMS flags)
+- Use market data for price/change
+
+6) Banner Slots (like your banner system)
+- Render Banner slots on /stocks:
+  - hero_top (above hero)
+  - inline_1 (after trending carousel)
+  - footer_strip (near bottom)
+- Track impressions/clicks with existing banner events
+
+7) Footer “Disclosures” Strip
+- “Capital at risk. Informational only.” localized
+- Keep it subtle but present
+
+BLOG HOME PAGE: /blog
+LAYOUT SECTIONS (modern editorial home)
+
+1) Blog Hero + Search
+- Title: “Learn” / “Insights” (localized)
+- Search blog posts
+- Category chips row
+
+2) Featured Story (1)
+- Large featured card with image, title, excerpt, category, read time
+- Controlled by CMS “Featured” flag or “FeaturedPostId”
+
+3) Latest Posts (list)
+- Left: list of latest posts (10)
+- Right (desktop): sidebar widgets:
+  - “Top categories”
+  - “Most read” (CMS-curated for now)
+  - Banner slot sidebar_1
+
+4) Topic Collections (CMS)
+- “Beginner Guides”, “ETFs”, “Risk & Disclosures”, “Trading Basics”
+- Each collection shows 3–5 posts
+
+5) Newsletter CTA (UI only for now)
+- Email input + “Subscribe”
+- Store submissions in DB table NewsletterSignup (optional) OR stub endpoint
+- Must include privacy microcopy
+
+COMBINED DISCOVER PAGE: /discover (OPTIONAL BUT RECOMMENDED)
+- Top navigation tiles:
+  - “Stocks” (with trending preview)
+  - “Blog” (with featured post preview)
+- This becomes the entry point for discovery
+
+ADMIN CMS REQUIREMENTS (NEW)
+Add CMS management screens:
+
+A) /admin/stocks/discover
+- Manage:
+  - Stocks hero title/subtitle per locale
+  - Curated lists:
+    - Trending tickers[]
+    - Gainers tickers[]
+    - Losers tickers[]
+    - Featured tickers[]
+  - Toggle “Show sparkline”
+  - Banner slot visibility toggles (optional)
+Store in a DiscoverStocksSettings singleton table.
+
+B) /admin/collections/stocks
+- CRUD StockCollections (themes)
+
+C) /admin/blog/home
+- Manage:
+  - Featured post selection
+  - Category order
+  - “Most read” curated list
+Store in BlogHomeSettings singleton table.
+
+DUMMY DATA (SEED)
+- Seed DiscoverStocksSettings with:
+  - Trending: TSLA, NVDA, AAPL, AMZN, MSFT, GOOGL
+  - Gainers/Losers: curated 5–8 each
+  - Featured: 8–12 tickers
+- Seed 6–10 StockCollections:
+  - AI & Semiconductors (NVDA, AMD, TSM, ASML, AVGO)
+  - EV & Mobility (TSLA, NIO, RIVN, LCID, GM)
+  - Tech Giants (AAPL, MSFT, AMZN, GOOGL, META)
+  - GCC Leaders (use regional tickers placeholders if needed)
+  - Dividends (dummy tickers)
+  - Beginner-friendly (dummy)
+- Seed BlogHomeSettings:
+  - Featured post
+  - Most read list
+
+MARKET DATA INTEGRATION (DUMMY NOW, REAL LATER)
+- For each ticker shown on /stocks, call MarketDataProvider.getMarketData(ticker)
+- Batch-fetch optimization:
+  - Implement getMarketDataBatch(tickers[]) in provider for performance
+  - Dummy provider returns from a map
+
+UX DETAILS (MATCH “DISCOVERY” FEEL)
+- Sticky top search on scroll (optional)
+- Clean cards with:
+  - ticker bold
+  - company name muted
+  - price prominent
+  - change colored by positive/negative (use Tailwind classes)
+- Responsive:
+  - Mobile: carousels become swipeable
+  - Desktop: 2–3 column grids
+- Light/Dark: both polished
+
+SEO
+- /stocks and /blog should be SSR with proper meta title/description
+- Add structured data:
+  - ItemList schema for collections (optional)
+- Ensure canonical tags and hreflang for EN/AR if implemented
+
+DELIVERABLES
+- /stocks discovery page with sections above
+- /blog home page with editorial sections above
+- Optional /discover page
+- Admin screens + DB tables for settings/collections
+- Seed script populating everything
+- README section: “Discovery pages configuration”
+
+Now implement this end-to-end in our existing Replit project, using dummy market data via provider abstraction for now.
+```
