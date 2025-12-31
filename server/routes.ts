@@ -1,9 +1,40 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { insertPriceAlertSubscriptionSchema, insertNewsletterSignupSchema } from "@shared/schema";
-import type { InsertCmsWebEvent, InsertBannerEvent } from "@shared/schema";
+import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
+import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
+import { nanoid } from "nanoid";
+
+// Presence management
+const activePresences = new Map<string, UserPresence>();
+const wsClients = new Map<WebSocket, string>(); // ws -> presence id
+
+function broadcastPresence(message: PresenceMessage, excludeWs?: WebSocket) {
+  const payload = JSON.stringify(message);
+  wsClients.forEach((_, ws) => {
+    if (ws !== excludeWs && ws.readyState === WebSocket.OPEN) {
+      ws.send(payload);
+    }
+  });
+}
+
+function cleanupStalePresences() {
+  const now = Date.now();
+  const staleThreshold = 30000; // 30 seconds
+  activePresences.forEach((presence, id) => {
+    if (now - presence.lastActive > staleThreshold) {
+      activePresences.delete(id);
+      broadcastPresence({
+        type: 'leave',
+        presence,
+        timestamp: now,
+      });
+    }
+  });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Discover Settings
@@ -522,6 +553,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true });
   });
 
+  // ============================================
+  // REST API for Presence (fallback)
+  // ============================================
+
+  // Get active presences for a content item
+  app.get("/api/presence/:contentType/:contentId", (req, res) => {
+    const { contentType, contentId } = req.params;
+    const presences = Array.from(activePresences.values()).filter(
+      p => p.contentType === contentType && p.contentId === contentId
+    );
+    res.json(presences);
+  });
+
+  // Get all active presences
+  app.get("/api/presence", (_req, res) => {
+    res.json(Array.from(activePresences.values()));
+  });
+
   const httpServer = createServer(app);
+
+  // ============================================
+  // WebSocket Server for Real-Time Presence
+  // ============================================
+
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws/presence' });
+
+  // Cleanup stale presences every 15 seconds
+  setInterval(cleanupStalePresences, 15000);
+
+  wss.on('connection', (ws) => {
+    let presenceId: string | null = null;
+
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString()) as PresenceMessage;
+        const now = Date.now();
+
+        switch (message.type) {
+          case 'join':
+            if (message.presence) {
+              presenceId = nanoid();
+              // Use client-provided color if available, otherwise assign from palette
+              const userColor = message.presence.userColor || PRESENCE_COLORS[activePresences.size % PRESENCE_COLORS.length];
+              const presence: UserPresence = {
+                ...message.presence,
+                id: presenceId,
+                userColor,
+                lastActive: now,
+              };
+              activePresences.set(presenceId, presence);
+              wsClients.set(ws, presenceId);
+
+              // Send sync to new client with their assigned ID
+              ws.send(JSON.stringify({
+                type: 'sync',
+                presence, // Include the user's own presence with assigned ID
+                presences: Array.from(activePresences.values()),
+                timestamp: now,
+              } as PresenceMessage));
+
+              // Broadcast join to others
+              broadcastPresence({
+                type: 'join',
+                presence,
+                timestamp: now,
+              }, ws);
+            }
+            break;
+
+          case 'update':
+            if (presenceId && message.presence) {
+              const existing = activePresences.get(presenceId);
+              if (existing) {
+                const updated: UserPresence = {
+                  ...existing,
+                  ...message.presence,
+                  id: presenceId,
+                  lastActive: now,
+                };
+                activePresences.set(presenceId, updated);
+                broadcastPresence({
+                  type: 'update',
+                  presence: updated,
+                  timestamp: now,
+                });
+              }
+            }
+            break;
+
+          case 'heartbeat':
+            if (presenceId) {
+              const existing = activePresences.get(presenceId);
+              if (existing) {
+                existing.lastActive = now;
+                activePresences.set(presenceId, existing);
+                // Send back acknowledgement with current presences
+                ws.send(JSON.stringify({
+                  type: 'sync',
+                  presences: Array.from(activePresences.values()),
+                  timestamp: now,
+                } as PresenceMessage));
+              }
+            }
+            break;
+
+          case 'leave':
+            if (presenceId) {
+              const presence = activePresences.get(presenceId);
+              if (presence) {
+                activePresences.delete(presenceId);
+                broadcastPresence({
+                  type: 'leave',
+                  presence,
+                  timestamp: now,
+                });
+              }
+              wsClients.delete(ws);
+              presenceId = null;
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      if (presenceId) {
+        const presence = activePresences.get(presenceId);
+        if (presence) {
+          activePresences.delete(presenceId);
+          broadcastPresence({
+            type: 'leave',
+            presence,
+            timestamp: Date.now(),
+          });
+        }
+        wsClients.delete(ws);
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+  });
+
   return httpServer;
 }

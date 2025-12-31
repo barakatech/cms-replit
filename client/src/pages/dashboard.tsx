@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -21,9 +22,11 @@ import {
   Plus,
   Settings,
   ExternalLink,
-  Activity
+  Activity,
+  Edit3
 } from 'lucide-react';
 import type { DashboardSummary } from '../../../server/storage';
+import type { UserPresence } from '@shared/schema';
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -32,6 +35,21 @@ export default function Dashboard() {
   const { data: summary, isLoading } = useQuery<DashboardSummary>({
     queryKey: ['/api/admin/analytics/summary', dateRange],
   });
+
+  const { data: activeEditors } = useQuery<UserPresence[]>({
+    queryKey: ['/api/presence'],
+    refetchInterval: 5000,
+  });
+
+  const getContentTypeLabel = (type: string) => {
+    switch (type) {
+      case 'stock': return 'Stock Page';
+      case 'blog': return 'Blog Post';
+      case 'banner': return 'Banner';
+      case 'discover': return 'Discover';
+      default: return type;
+    }
+  };
 
   const kpiCards = [
     { label: 'Page Views', value: summary?.kpis.pageViews ?? 0, icon: Eye, color: 'text-brand' },
@@ -293,6 +311,72 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Edit3 className="h-5 w-5 text-brand" />
+              Active Editors
+            </CardTitle>
+            <CardDescription>Team members currently editing content</CardDescription>
+          </div>
+          {activeEditors && activeEditors.length > 0 && (
+            <Badge variant="outline" className="gap-1">
+              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              {activeEditors.length} online
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent>
+          {activeEditors && activeEditors.length > 0 ? (
+            <div className="space-y-3">
+              {activeEditors.map((editor) => (
+                <div 
+                  key={editor.id} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  data-testid={`editor-${editor.id}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8 border-2" style={{ borderColor: editor.userColor }}>
+                      <AvatarFallback 
+                        style={{ backgroundColor: editor.userColor }}
+                        className="text-white text-xs"
+                      >
+                        {editor.userName.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{editor.userName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Editing {getContentTypeLabel(editor.contentType)}
+                        {editor.field && ` - ${editor.field}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => {
+                      if (editor.contentType === 'stock') {
+                        setLocation(`/admin/stocks/${editor.contentId}/edit`);
+                      }
+                    }}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No active editors right now</p>
+              <p className="text-xs mt-1">When team members edit content, they'll appear here</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -613,3 +613,33 @@ export interface StockPage {
 }
 
 export type InsertStockPage = Omit<StockPage, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ============================================
+// REAL-TIME PRESENCE (for collaborative editing)
+// ============================================
+
+export interface UserPresence {
+  id: string;
+  userId: string;
+  userName: string;
+  userColor: string;
+  avatarUrl?: string;
+  contentType: 'stock' | 'blog' | 'banner' | 'discover';
+  contentId: string;
+  field?: string;
+  lastActive: number;
+  cursorPosition?: { x: number; y: number };
+}
+
+export interface PresenceMessage {
+  type: 'join' | 'leave' | 'update' | 'sync' | 'heartbeat';
+  presence?: UserPresence;
+  presences?: UserPresence[];
+  timestamp: number;
+}
+
+export const PRESENCE_COLORS = [
+  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+  '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
+  '#BB8FCE', '#85C1E9', '#F8B500', '#00CED1'
+];

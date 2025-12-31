@@ -5,11 +5,13 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/hooks/use-theme';
+import { UserProvider } from '@/lib/user-context';
 import { AppSidebar } from '@/components/AppSidebar';
 import TopBar from '@/components/TopBar';
 import Login from '@/pages/login';
 import Dashboard from '@/pages/dashboard';
 import StockEditor from '@/pages/stock-editor';
+import AdminStockEditor from '@/pages/admin-stock-editor';
 import Assets from '@/pages/assets';
 import Blog from '@/pages/blog';
 import Banners from '@/pages/banners';
@@ -22,6 +24,7 @@ import AdminDiscover from '@/pages/admin-discover';
 import AdminPages from '@/pages/admin-pages';
 import AdminAnalytics from '@/pages/admin-analytics';
 import AdminMobileInstall from '@/pages/admin-mobile-install';
+import AdminStocks from '@/pages/admin-stocks';
 import PageBuilder from '@/pages/page-builder';
 import LandingPagePublic from '@/pages/landing-page';
 import NotFound from '@/pages/not-found';
@@ -36,7 +39,21 @@ function Router() {
       <Route path="/blog" component={BlogHome} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
-      <Route path="/admin/stocks" component={StocksDirectory} />
+      <Route path="/admin/stocks">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <TopBar />
+                <main className="flex-1 overflow-auto">
+                  <AdminStocks />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
       <Route path="/dashboard">
         {() => (
           <SidebarProvider>
@@ -186,6 +203,21 @@ function Router() {
           </SidebarProvider>
         )}
       </Route>
+      <Route path="/admin/stocks/:id/edit">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <TopBar />
+                <main className="flex-1 overflow-hidden">
+                  <AdminStockEditor />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
       <Route path="/p/:slug" component={LandingPagePublic} />
       <Route path="/p/:slug/preview" component={LandingPagePublic} />
       <Route component={NotFound} />
@@ -197,10 +229,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <UserProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </UserProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
