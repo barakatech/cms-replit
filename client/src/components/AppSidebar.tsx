@@ -9,10 +9,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
+  { title: 'Discover Page', url: '/admin/discover', icon: Compass, testId: 'link-discover' },
   { title: 'Stock Pages', url: '/dashboard', icon: FileText, testId: 'link-stock-pages' },
   { title: 'Blog', url: '/admin/blog', icon: BookOpen, testId: 'link-blog' },
   { title: 'Banners', url: '/banners', icon: Megaphone, testId: 'link-banners' },

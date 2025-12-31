@@ -1,0 +1,181 @@
+```text
+You are an expert product designer + full-stack engineer. Build a premium **/discover** page that mixes:
+- Stocks discovery (themes + trending + featured lists)
+- Learn/Blog discovery (featured article + categories)
+- Banners/Offers (campaign placements)
+- Stock price subscription (watchlist alerts / price alerts subscription UI)
+- Newsletter signup
+
+This should feel like a modern brokerage “Discover” hub, using our Baraka dark-first theme + orange accent. Implement inside our existing Next.js + Tailwind + Prisma CMS project on Replit.
+
+NON-NEGOTIABLE CONSTRAINTS
+- Do NOT scrape any external sites.
+- Real-time market data will come from a third-party API later, but for now use DummyMarketDataProvider with the same interface.
+- Keep compliance-friendly language. No “buy/sell recommendations”.
+- Full EN/AR + RTL support + Light/Dark mode.
+- All discovery sections must be CMS-configurable (curated tickers, featured themes, featured posts, banners).
+
+ROUTES TO BUILD
+- /discover (new main hub page)
+- /stocks (stocks home page — already planned)
+- /blog (blog home)
+Optional:
+- /discover/offers (list all offers)
+- /discover/learn (learn index)
+
+DISCOVER PAGE INFORMATION ARCHITECTURE (MATCH “HUB” FEEL)
+The /discover page must include these modules in this order (responsive):
+
+1) HERO: “Discover” + Search (Unified)
+- Title (localized): “Discover”
+- Subtitle: “Stocks, themes, and learning — in one place.”
+- Unified search bar with tabs:
+  - “Stocks” (search ticker/company)
+  - “Learn” (search blog posts)
+- Quick chips row (CMS-curated):
+  - “Trending”, “Halal”, “ETFs”, “Beginner guides”, “Offers”
+- Banner slot: hero_top (campaign)
+
+2) OFFERS & BANNERS STRIP (Campaign Rail)
+A horizontal carousel of offers/banners:
+- Each card: image, headline, subheadline, CTA
+- Click tracking via existing BannerEvent system
+- CMS controls: order, scheduling, locale targeting
+- This section is explicitly for “Offers”, “Subscription promos”, “Referral offers”, etc.
+Banner slot keys to support:
+- discover_hero
+- discover_offers_rail
+- discover_inline_1
+- discover_footer_strip
+
+3) STOCK THEMES & TRACKERS (Like your reference)
+A) Featured row:
+- Left big card: “Newly Added Theme”
+- Right big card: “Theme of the Month”
+B) “Other Themes & Trackers” grid (6–12 cards)
+- Each theme card opens /stocks/themes/[slug]
+All configured from CMS via StockTheme + DiscoverSettings.
+
+4) TRENDING STOCKS (Real-time later, dummy now)
+- Title + subtitle (localized)
+- Tabs: “Gainers” / “Losers” / “Most watched” (CMS-driven lists for now)
+- List rows with:
+  - logo, ticker, name
+  - price + % change (MarketDataProvider)
+- “View all stocks” CTA -> /stocks
+
+5) FEATURED STOCKS (Curated)
+- Grid of 8–12 stock cards
+- Each card:
+  - ticker, name
+  - price + % change
+  - small sparkline optional
+- “Explore stocks” CTA -> /stocks
+
+6) STOCK PRICE SUBSCRIPTION (Alerts / Watchlist Subscription)
+This is NOT paid subscription necessarily—treat it as “subscribe to price updates” (email/push/WhatsApp later).
+Build a clean module with:
+- Title: “Get price updates”
+- Description: “Subscribe to price alerts for stocks you follow.”
+- UI:
+  - Input to add tickers (autocomplete from StockInstrument list)
+  - Frequency dropdown: Instant / Daily / Weekly (UI + DB)
+  - Channel selection UI (for now):
+    - Email (enabled)
+    - Push (disabled placeholder)
+    - WhatsApp (disabled placeholder)
+  - CTA: “Subscribe”
+- Store in DB table PriceAlertSubscription (even if not fully functional):
+  - email, tickers[], frequency, locale, createdAt
+- Confirmation state (success toast + summary)
+
+7) LEARN SECTION (Blog/Insights discovery)
+- Left: Featured article (big card)
+- Right: 3 smaller article cards
+- Below: “Browse by topic” category chips + “Latest” list (5)
+- “Go to Learn” CTA -> /blog
+All curated by CMS:
+- featuredPostId
+- featuredSecondaryPostIds[]
+- featuredCategories[]
+- optional “Beginner collection” posts
+
+8) NEWSLETTER SIGNUP (General)
+Separate from price alerts to avoid confusion:
+- Title: “Weekly newsletter”
+- Description: “Market explainers, product updates, and new themes.”
+- Email input + subscribe
+- Store in DB table NewsletterSignup:
+  - email, locale, createdAt, source="discover"
+- Include privacy microcopy (localized).
+
+9) FOOTER DISCLOSURES + FINAL BANNER
+- Render discover_footer_strip banner slot
+- Disclosures panel:
+  - “Capital at risk. Information may be delayed. Not investment advice.” localized
+
+CMS CONFIGURATION (ADMIN)
+Create /admin/discover to manage the page content:
+A) DiscoverSettings (singleton)
+- heroTitle_en/ar, heroSubtitle_en/ar
+- heroChips (array of {label_en/ar, href})
+- featuredThemeNewSlug
+- featuredThemeMonthSlug
+- otherThemeSlugs[] (or auto by order)
+- trendingTabs:
+  - gainersTickers[]
+  - losersTickers[]
+  - mostWatchedTickers[]
+- featuredTickers[]
+- learnFeaturedPostId
+- learnSecondaryPostIds[]
+- learnCategorySlugs[]
+- sectionVisibility toggles (turn sections on/off)
+- defaultLocale behavior
+
+B) Offers management
+Reuse existing Banners system:
+- allow selecting banners for “Discover offers rail” via placements:
+  - pageType=discover, positionKey=discover_offers_rail
+- scheduling + targeting already supported
+
+C) Blog home controls
+If not already:
+- /admin/blog/home to set featured posts
+
+DATABASE ADDITIONS (PRISMA)
+- DiscoverSettings (singleton)
+- PriceAlertSubscription
+- NewsletterSignup
+(StockTheme, StocksHomeSettings, StockInstrument assumed from previous prompt)
+
+DUMMY DATA (SEED)
+Seed:
+- DiscoverSettings configured with:
+  - featured themes (ADRs, Halal Stocks)
+  - trending lists (TSLA, NVDA, AAPL, AMZN, MSFT, META)
+  - featured stocks list (12)
+  - learn featured post + 3 secondary posts
+  - learn categories
+- 6–10 offer banners with placements in discover_offers_rail and discover_footer_strip
+- Dummy market data for all featured/trending tickers so prices render nicely
+
+DESIGN REQUIREMENTS (LOOK & FEEL)
+- Use Baraka theme tokens (dark background, orange primary)
+- Clean modular sections with thin dividers and generous spacing
+- Cards are consistent (rounded-xl, border, surface backgrounds)
+- Responsive:
+  - Desktop: 2–3 column grids + side-by-side featured areas
+  - Mobile: stacked sections, carousels swipeable
+- RTL: ensure chips, arrows, and alignment adapt for Arabic
+
+DELIVERABLES
+- /discover page implemented with all 9 sections above
+- Admin screen /admin/discover to configure content
+- DB models + migrations + seed data
+- Reuse banner system for offers rails + tracking
+- Implement price alert subscription + newsletter signup DB storage + simple success states
+- README: “Discover Page Configuration” + “Subscriptions (Price alerts vs Newsletter)”
+
+Now implement end-to-end in the existing Replit project using dummy market data today, with clear seams for plugging in real-time APIs later.
+```

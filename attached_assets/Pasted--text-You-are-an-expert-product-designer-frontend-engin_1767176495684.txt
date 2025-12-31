@@ -1,0 +1,176 @@
+```text
+You are an expert product designer + frontend engineer. Redesign our **Stocks Home / Discover page** to match the layout in the provided reference screenshot (themes grid + trending stocks strip + stock directory list). Implement it in our existing Next.js + Tailwind + Prisma CMS project on Replit, using CMS configuration + dummy market data provider (real-time API later).
+
+GOAL
+Make /stocks (the Stocks Home page) look and behave like the reference:
+1) “Explore Our Themes & Trackers” section with:
+   - “Newly Added Themes” (big feature card)
+   - “Theme of the Month” (big feature card)
+   - “Other Themes & Trackers” (grid of small theme cards)
+2) “Trending Stocks” strip with list rows + a small filter UI + carousel arrows
+3) “Stocks & ETFs” directory section:
+   - Search bar
+   - Sort dropdown (Alphabetical / Popular / etc.)
+   - A–Z letter index navigation
+   - Paginated list of stocks/ETFs with logo + name + price + % change
+
+CONSTRAINTS
+- Do NOT scrape external websites.
+- Market numbers (price/change) come from MarketDataProvider abstraction:
+  - Dummy now, real API later.
+- Themes/trackers must come from CMS (editable).
+- Support EN/AR + RTL + light/dark theme using our Baraka color tokens.
+- Keep compliance-friendly language.
+
+DATA MODELS (ADD TO PRISMA)
+1) StockTheme (Themes & Trackers)
+- id
+- slug (unique)
+- title_en, title_ar
+- description_en, description_ar
+- isNew (boolean)
+- isThemeOfMonth (boolean)
+- isFeaturedNewlyAdded (boolean)  // for the large “Newly Added Themes” slot
+- iconType (enum or string) OR iconUrl
+- heroImageUrl (optional)
+- tags (string[])
+- tickers (string[])  // symbols included in theme
+- order (int)
+- status: published|draft
+- createdAt, updatedAt
+
+2) StocksHomeSettings (singleton)
+- id (single row)
+- heroTitle_en/ar (“Explore Our Themes & Trackers”)
+- heroSubtitle_en/ar
+- newlyAddedThemeSlug (string)   // which theme is shown in big left card
+- themeOfMonthSlug (string)      // which theme is shown in big right card
+- otherThemesTitle_en/ar
+- trendingTitle_en/ar
+- trendingTickers (string[])     // 6–12 symbols
+- directoryTitle_en/ar (“Stocks & ETFs”)
+- directoryDefaultSort (enum: alphabetical|popular)
+- directoryPageSize (int)
+- showETF (boolean) // optional
+- updatedAt
+
+STOCK LIST SOURCE
+We need a stock directory list for the “Stocks & ETFs” section.
+Implement a simple StockInstrument table (or seed from JSON):
+- symbol, name, type (stock|etf), logoUrl(optional), exchange(optional), status
+This is NOT market data; it’s just metadata for listing and search.
+
+MARKET DATA
+Use MarketDataProvider.getMarketDataBatch(symbols[]) to render:
+- price
+- changePercent
+For the list rows and trending strip.
+If market data missing, show “—”.
+
+PAGE LAYOUT (MATCH SCREENSHOT)
+A) Section 1: Explore Our Themes & Trackers
+- Centered title + short subtitle
+- Two big cards row:
+  Left big card: “Newly Added Themes”
+  Right big card: “Theme of the Month”
+Each big card:
+- Title label (small)
+- Theme name (large)
+- Short description
+- Subtle divider line near top
+- Whole card clickable -> /stocks/themes/[slug]
+
+Below: “Other Themes & Trackers”
+- Grid of 6 cards (2 rows x 3 on desktop; responsive)
+- Each card has:
+  - theme name
+  - 1-line description
+  - right arrow icon (like screenshot)
+  - clickable -> /stocks/themes/[slug]
+
+B) Section 2: Trending Stocks Strip
+- Title: “Trending Stocks”
+- Subtitle: “Stocks with the most unusual price changes…” (CMS editable)
+- A compact control on the right:
+  - dropdown: “Gainers” / “Losers” (UI only for now or CMS-driven)
+  - arrows (prev/next) to cycle through pages of trending rows
+- Trending rows layout:
+  - Two-column rows (like screenshot):
+    Each row item shows:
+      - small logo
+      - company name
+      - symbol
+      - price on right
+      - % change colored positive/negative
+  - Implement as a simple paginated carousel (no heavy library needed)
+
+C) Section 3: Stocks & ETFs Directory
+- Title: “Stocks & ETFs”
+- Search input (search by name or symbol)
+- Sort dropdown (Alphabetical / Popular)
+- A–Z letter index row:
+  - Clicking a letter scrolls to that section in the list OR filters list by starting letter
+- List layout:
+  - Two-column table-like cards (as in screenshot) on desktop
+  - Single column on mobile
+  - Each row:
+    - logo + name + symbol
+    - price + % change
+  - Pagination controls at bottom
+
+ROUTES TO ADD
+- /stocks (this new home page)
+- /stocks/themes (optional index of all themes)
+- /stocks/themes/[slug] (theme detail page)
+Theme detail page requirements:
+- theme title + description
+- list of tickers in theme with price/% change
+- CTA: “View [ticker]” -> /stocks/[tickerSlug] (map symbol->stock page slug)
+
+CMS ADMIN SCREENS
+- /admin/stocks/home
+  - Edit titles/subtitles (EN/AR)
+  - Select “Newly Added Theme” (dropdown of published themes)
+  - Select “Theme of the Month”
+  - Manage trendingTickers list (add/remove/reorder)
+  - Directory defaults (sort/page size)
+- /admin/stocks/themes
+  - CRUD themes:
+    - title/description EN/AR
+    - flags: isNew, isThemeOfMonth
+    - tickers multi-select (from StockInstrument list)
+    - ordering
+
+SEED DATA (MUST)
+Seed at least these themes (matching screenshot style):
+- ADRs (isNew=true)
+- Halal Stocks (isThemeOfMonth=true)
+- Penny Stocks
+- 52WK L (52-week lows)
+- 52WK H (52-week highs)
+- Gold ETFs
+- Bitcoin ETFs
+- Titans
+Each theme must have EN+AR title/description and 6–12 tickers.
+Seed StockInstrument list with 50–200 items (mix stocks + ETFs) using safe dummy metadata.
+Seed trendingTickers with 8–12 symbols.
+Dummy MarketDataProvider must return price/% change for the tickers used.
+
+DESIGN/THEME
+- Use our Baraka tokens (primary orange, dark surfaces)
+- Cards: rounded-xl, subtle borders, clean spacing
+- Match screenshot hierarchy:
+  - section headers
+  - thin dividers
+  - minimal iconography (arrow)
+- Ensure light mode still works and looks premium.
+
+DELIVERABLES
+- Implement the /stocks page with the 3 sections above
+- Implement theme pages + admin management
+- Add Prisma models + migrations
+- Seed data to showcase exactly this layout
+- Ensure EN/AR + RTL + theme toggle work
+
+Now implement this end-to-end in the existing Replit project.
+```

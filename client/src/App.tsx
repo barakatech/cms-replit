@@ -18,6 +18,7 @@ import StockDetail from '@/pages/stock-detail';
 import StocksDiscover from '@/pages/stocks-discover';
 import BlogHome from '@/pages/blog-home';
 import Discover from '@/pages/discover';
+import AdminDiscover from '@/pages/admin-discover';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -100,6 +101,21 @@ function Router() {
                 <TopBar />
                 <main className="flex-1 overflow-auto">
                   <Banners />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
+      <Route path="/admin/discover">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <TopBar />
+                <main className="flex-1 overflow-auto">
+                  <AdminDiscover />
                 </main>
               </div>
             </div>
