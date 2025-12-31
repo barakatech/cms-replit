@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'wouter';
+import { Link, useParams, useSearch } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
   Globe, 
   Moon, 
   Sun, 
-  Share2, 
   ChevronRight,
   TrendingUp,
   TrendingDown
@@ -18,16 +16,28 @@ import { mockStocks, type StockPage } from '@/lib/mockData';
 import { 
   StockHero, 
   StockChartPanel, 
-  MarketSentimentCard, 
-  MetricsGrid, 
   FAQAccordion, 
   RisksPanel,
   NewsList 
 } from '@/components/stock-preview';
+import {
+  TradeWidgetBlock,
+  AboutCompanyBlock,
+  KeyStatisticsBlock,
+  AnalystRatingsBlock,
+  EarningsBlock,
+  TrendingStocksBlock,
+  PreviewBanner,
+} from '@/components/stock-blocks';
 
 export default function StockDetail() {
   const params = useParams<{ slug: string }>();
-  const [language, setLanguage] = useState<'en' | 'ar'>('en');
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const isPreview = searchParams.get('preview') === '1';
+  const localeParam = searchParams.get('locale') as 'en' | 'ar' | null;
+  
+  const [language, setLanguage] = useState<'en' | 'ar'>(localeParam || 'en');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isScrolled, setIsScrolled] = useState(false);
   
@@ -67,14 +77,15 @@ export default function StockDetail() {
     );
   }
 
-  const content = stock.content[language];
   const isPositive = stock.dynamicData.change >= 0;
 
   const navItems = [
-    { id: 'overview', labelEn: 'Overview', labelAr: 'نظرة عامة' },
-    { id: 'metrics', labelEn: 'Metrics', labelAr: 'المؤشرات' },
+    { id: 'about', labelEn: 'About', labelAr: 'حول' },
+    { id: 'statistics', labelEn: 'Statistics', labelAr: 'الإحصائيات' },
+    { id: 'ratings', labelEn: 'Ratings', labelAr: 'التقييمات' },
+    { id: 'earnings', labelEn: 'Earnings', labelAr: 'الأرباح' },
     { id: 'news', labelEn: 'News', labelAr: 'الأخبار' },
-    { id: 'faq', labelEn: 'FAQ', labelAr: 'الأسئلة الشائعة' },
+    { id: 'faq', labelEn: 'FAQ', labelAr: 'الأسئلة' },
     { id: 'risks', labelEn: 'Risks', labelAr: 'المخاطر' },
   ];
 
@@ -90,8 +101,12 @@ export default function StockDetail() {
       className={`min-h-screen bg-background ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
+      {isPreview && (
+        <PreviewBanner ticker={stock.ticker} language={language} isPreview={isPreview} />
+      )}
+
       <header 
-        className={`sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all ${isScrolled ? 'py-2' : 'py-4'}`}
+        className={`sticky ${isPreview ? 'top-[40px]' : 'top-0'} z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all ${isScrolled ? 'py-2' : 'py-3'}`}
         data-testid="sticky-header"
       >
         <div className="container mx-auto px-4">
@@ -118,12 +133,13 @@ export default function StockDetail() {
               )}
             </div>
 
-            <nav className={`hidden md:flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <nav className={`hidden lg:flex items-center gap-0.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
               {navItems.map((item) => (
                 <Button
                   key={item.id}
                   variant="ghost"
                   size="sm"
+                  className="text-xs px-2"
                   onClick={() => scrollToSection(item.id)}
                   data-testid={`nav-${item.id}`}
                 >
@@ -150,7 +166,7 @@ export default function StockDetail() {
                 <Globe className="h-4 w-4 mr-1" />
                 {language === 'en' ? 'AR' : 'EN'}
               </Button>
-              <Button data-testid="button-trade-header">
+              <Button className="hidden sm:flex" data-testid="button-trade-header">
                 {language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
               </Button>
             </div>
@@ -158,14 +174,14 @@ export default function StockDetail() {
         </div>
       </header>
 
-      <nav className="md:hidden sticky top-[57px] z-40 border-b bg-background overflow-x-auto">
+      <nav className="lg:hidden sticky top-[49px] z-40 border-b bg-background overflow-x-auto">
         <div className={`flex items-center gap-1 px-4 py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          {navItems.map((item) => (
+          {navItems.slice(0, 5).map((item) => (
             <Button
               key={item.id}
               variant="ghost"
               size="sm"
-              className="whitespace-nowrap"
+              className="whitespace-nowrap text-xs"
               onClick={() => scrollToSection(item.id)}
             >
               {language === 'en' ? item.labelEn : item.labelAr}
@@ -174,64 +190,24 @@ export default function StockDetail() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
+      <main className="container mx-auto px-4 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${isRTL ? 'lg:grid-flow-dense' : ''}`}>
+            <div className={`lg:col-span-8 space-y-6 ${isRTL ? 'lg:col-start-5' : ''}`}>
               <StockHero stock={stock} language={language} />
               
               <StockChartPanel stock={stock} language={language} />
-              
-              <section id="overview" className="scroll-mt-24">
-                <h2 className={`text-xl font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
-                  {language === 'en' ? 'About ' + stock.companyName : 'حول ' + stock.companyName}
-                </h2>
-                <Card>
-                  <CardContent className="p-6">
-                    <div 
-                      className={`prose prose-sm dark:prose-invert max-w-none ${isRTL ? 'text-right' : ''}`}
-                      dangerouslySetInnerHTML={{ __html: content.overview }}
-                      data-testid="overview-content"
-                    />
-                    
-                    {content.thesis && (
-                      <>
-                        <Separator className="my-6" />
-                        <h3 className={`font-semibold mb-3 ${isRTL ? 'text-right' : ''}`}>
-                          {language === 'en' ? 'Investment Thesis' : 'أطروحة الاستثمار'}
-                        </h3>
-                        <div 
-                          className={`prose prose-sm dark:prose-invert max-w-none text-muted-foreground ${isRTL ? 'text-right' : ''}`}
-                          dangerouslySetInnerHTML={{ __html: content.thesis }}
-                          data-testid="thesis-content"
-                        />
-                      </>
-                    )}
 
-                    {content.highlights && (
-                      <>
-                        <Separator className="my-6" />
-                        <h3 className={`font-semibold mb-3 ${isRTL ? 'text-right' : ''}`}>
-                          {language === 'en' ? 'Key Highlights' : 'أبرز النقاط'}
-                        </h3>
-                        <div 
-                          className={`prose prose-sm dark:prose-invert max-w-none text-muted-foreground ${isRTL ? 'text-right' : ''}`}
-                          dangerouslySetInnerHTML={{ __html: content.highlights }}
-                          data-testid="highlights-content"
-                        />
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </section>
+              <AboutCompanyBlock stock={stock} language={language} />
               
-              <section id="metrics" className="scroll-mt-24">
-                <MetricsGrid stock={stock} language={language} />
-              </section>
+              <KeyStatisticsBlock stock={stock} language={language} />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AnalystRatingsBlock stock={stock} language={language} />
+                <EarningsBlock stock={stock} language={language} />
+              </div>
               
-              <section id="news-section" className="scroll-mt-24">
-                <NewsList stock={stock} language={language} />
-              </section>
+              <NewsList stock={stock} language={language} />
               
               <FAQAccordion stock={stock} language={language} />
               
@@ -239,7 +215,7 @@ export default function StockDetail() {
 
               {stock.internalLinks && (
                 <section className="space-y-4">
-                  <h2 className={`text-xl font-semibold ${isRTL ? 'text-right' : ''}`}>
+                  <h2 className={`text-lg font-semibold ${isRTL ? 'text-right' : ''}`}>
                     {language === 'en' ? 'Similar Stocks' : 'أسهم مشابهة'}
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -260,25 +236,13 @@ export default function StockDetail() {
               )}
             </div>
 
-            <aside className="hidden lg:block space-y-6">
-              <div className="sticky top-24 space-y-6">
-                <MarketSentimentCard stock={stock} language={language} />
+            <aside className={`lg:col-span-4 space-y-6 ${isRTL ? 'lg:col-start-1' : ''}`}>
+              <div className="lg:sticky lg:top-24 space-y-6">
+                <TradeWidgetBlock stock={stock} language={language} />
                 
-                <Card>
-                  <CardContent className="p-4 space-y-3">
-                    <Button className="w-full" size="lg" data-testid="button-trade-sidebar">
-                      {language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
-                    </Button>
-                    <Button variant="outline" className="w-full" data-testid="button-watchlist">
-                      {language === 'en' ? 'Add to Watchlist' : 'أضف للمراقبة'}
-                    </Button>
-                    <Button variant="ghost" className="w-full" data-testid="button-alert">
-                      {language === 'en' ? 'Set Price Alert' : 'تعيين تنبيه السعر'}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <TrendingStocksBlock language={language} currentTicker={stock.ticker} />
 
-                <Card>
+                <Card className="hidden lg:block">
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">
                       {language === 'en' 
@@ -289,13 +253,17 @@ export default function StockDetail() {
                 </Card>
               </div>
             </aside>
+
+            <div className="lg:hidden mt-6">
+              <TrendingStocksBlock language={language} currentTicker={stock.ticker} />
+            </div>
           </div>
         </div>
       </main>
 
-      <footer className="border-t mt-16">
+      <footer className="border-t mt-12">
         <div className="container mx-auto px-4 py-8">
-          <div className={`max-w-5xl mx-auto text-center text-sm text-muted-foreground ${isRTL ? 'text-right' : ''}`}>
+          <div className={`max-w-7xl mx-auto text-center text-sm text-muted-foreground ${isRTL ? 'text-right' : ''}`}>
             <p className="mb-2">
               {language === 'en' 
                 ? 'For informational purposes only. Not investment advice.' 

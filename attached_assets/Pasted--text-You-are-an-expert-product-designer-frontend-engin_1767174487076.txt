@@ -1,0 +1,164 @@
+```text
+You are an expert product designer + frontend engineer working inside our Next.js + Tailwind + Prisma CMS project on Replit.
+
+TASK
+Update the **Stock Detail Landing Page layout** (/stocks/[slug]) so it visually and structurally matches the block-based patterns shown in the reference screenshots (Robinhood/eToro-style modules). This is a layout + component upgrade only — DO NOT scrape or fetch data from those sites.
+
+CRITICAL CONSTRAINTS
+- Use ONLY CMS-provided/manual data (seeded/dummy is fine).
+- No live prices, no scraping, no “buy/sell” advice.
+- Anything that resembles analyst recommendations must be framed as “informational” and must include disclaimers.
+- Must work in EN/AR + RTL and Light/Dark mode.
+- Must support secure Preview mode (draft rendering for logged-in editors).
+
+IMPLEMENT THIS PAGE STRUCTURE (BLOCK LAYOUT)
+Create a stock page shell with these sections and spacing similar to reference:
+
+A) Top Section: Header + Main Grid
+Layout: 12-column responsive grid
+- Left (8 cols desktop / full width mobile):
+  1) Stock Header Block
+     - Company name + ticker pill + exchange
+     - Optional “watchlist” toggle UI (no backend needed)
+     - Small “Last updated” timestamp (from CMS)
+  2) Price Snapshot Block (CMS manual)
+     - Large “Price” + “% change (1D)” + “Currency”
+     - Simple timeframe tabs (1D/1W/1M/6M/1Y/MAX) switch chart series from CMS
+  3) Chart Block (CMS manual series)
+     - Recharts line chart using CMS-provided series points
+     - Show “Past performance is not indicative…” disclaimer (localized)
+
+- Right (4 cols desktop / stacks under on mobile):
+  4) Trade/Buy Widget Block (inspired by Robinhood card)
+     - “Invest in: Shares” dropdown (UI only)
+     - Input “Shares” or “Amount” (toggle)
+     - Estimated cost calculation using CMS “price” (simple UI)
+     - CTA button: “Sign up to Trade” / “Trade on Baraka” (neutral)
+     - Compliance microcopy: “For informational purposes only. Capital at risk.”
+     - Optional secondary buttons: “Watch TSLA”, “Trade Options” (UI only)
+
+B) Mid Section: About + Key Statistics (like the screenshot)
+Layout: two stacked modules, full width
+5) About Company Block
+   - Rich text (localized) with “Show more” expand/collapse
+   - 4-column metadata row:
+     CEO | Employees | Headquarters | Founded (all CMS fields)
+6) Key Statistics Grid Block (like “TSLA Key Statistics”)
+   - 2–4 columns responsive
+   - Fields (CMS manual): market cap, P/E, dividend yield, avg volume, high today, low today, open, volume, 52w high/low
+   - Make it look like clean label/value rows
+
+C) Insights Section: Analyst Ratings + Earnings (like top screenshot)
+Layout: 2 modules stacked or 2-column on desktop
+7) Analyst Ratings Block (CMS manual)
+   - Donut or big % circle (“41% of 49 ratings”) style
+   - Horizontal bars: Buy / Hold / Sell with % values
+   - REQUIRED disclaimer line:
+     “Analyst ratings are informational and may be delayed. Not investment advice.”
+   - CMS fields:
+     totalRatings, buyPct, holdPct, sellPct, headline text per locale
+
+8) Earnings Block (CMS manual)
+   - “TSLA Earnings” title
+   - Dot chart comparing Estimated vs Actual per quarter (like screenshot)
+   - Fields:
+     quarters: [{ label: "Q1 FY24", estimated, actual, eventNote }]
+   - Legend: Estimated / Actual + “Expected date” line (CMS text)
+   - DISCLAIMER: “Earnings data shown may be delayed and is for information only.”
+
+D) News Section (like “More TSLA News” + “TSLA News” screenshot)
+9) News List Block (CMS curated feed)
+   - List items with:
+     source, timeAgo, headline, snippet, optional thumbnail
+   - Layout similar to screenshot: headline bold, snippet muted, divider lines
+   - Support 2 variants:
+     - “TSLA News” featured list
+     - “More TSLA News” extended list
+   - CMS model:
+     newsItems: [{source, publishedAtText, headline, snippet, url, imageUrl?}]
+
+E) Sidebar / Additional Module: Trending Stocks (like screenshot)
+10) Trending Stocks Block (CMS manual)
+   - A list card with rows:
+     icon/logo, ticker, name, price, % change
+   - Used as:
+     - Right rail on desktop OR
+     - lower section on mobile
+   - CMS fields:
+     trending: [{ ticker, name, priceText, changePctText, logoUrl? }]
+
+F) Mandatory Disclosures Footer
+11) Risks & Disclosures Block (always visible)
+   - Prominent, visually separated panel
+   - Contains:
+     - bullet risks (CMS)
+     - “Capital at risk. Not investment advice.” (localized)
+   - Enforce publish rule: cannot publish if this block missing/enabled=false
+
+CMS INTEGRATION (PAGE BUILDER)
+We already have a block system. Add/ensure these block types exist and map to UI components:
+- StockHeaderBlock
+- PriceSnapshotBlock
+- PriceChartBlock
+- TradeWidgetBlock
+- AboutCompanyBlock
+- KeyStatisticsBlock
+- AnalystRatingsBlock
+- EarningsBlock
+- NewsListBlock
+- TrendingStocksBlock
+- RisksDisclosureBlock
+
+Each block must support:
+- enabled, order, localized data (en/ar)
+- Zod validation on save
+- Editable in /admin/stocks/[id]/edit under “Page Builder”
+- Drag/drop reorder + duplicate + delete + per-locale editing
+
+PREVIEW MODE (REQUIRED)
+Implement preview route and UX:
+- Route: /stocks/[slug]/preview?locale=en|ar
+- Guard: only logged-in CMS users OR allow signed token links with expiry
+- Preview loads DRAFT version of blocks + SEO head
+- Show a top “PREVIEW” banner with:
+  - locale indicator
+  - “Back to Editor”
+  - “Copy preview link” (if token enabled)
+
+SEO/HEAD REQUIREMENTS
+- SSR meta title/description (from CMS) per locale
+- Canonical URL + robots meta
+- JSON-LD injection from CMS schemas array
+- Exactly one H1 (company name)
+
+STYLING REQUIREMENTS (MATCH REFERENCES)
+- Dark mode first-class (black/charcoal background, subtle dividers, orange accents allowed but keep it restrained)
+- Large section headings with thin divider line underneath
+- Card modules with subtle borders + padding
+- Typography hierarchy like brokerage apps:
+  - headlines bold
+  - labels muted
+  - numbers prominent
+- Responsive:
+  - Desktop: main content + right rail
+  - Mobile: trade widget becomes collapsible card, trending moves below news
+
+SEED DATA (UPDATE)
+Seed TSLA with all these blocks populated using dummy values:
+- Analyst ratings: buy/hold/sell % + total ratings
+- Earnings: quarters with estimated/actual
+- About: CEO, employees, HQ, founded + long description
+- Key stats grid values
+- News items 6–10
+- Trending stocks list 6–8
+Also seed 2 more stocks (AAPL, NVDA) with the same block set.
+
+DELIVERABLES
+- Updated /stocks/[slug] page renderer to match this block layout
+- New block components in /components/stock-blocks/*
+- Updated admin block forms for each new block type
+- Preview route + banner + security
+- Seed updates + README section “Stock Page Layout (Brokerage-style modules)”
+
+Now implement end-to-end inside the Replit project.
+```
