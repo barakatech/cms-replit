@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Edit } from 'lucide-react';
+import { Search, Edit, Eye } from 'lucide-react';
 import { mockStocks, type StockPage } from '@/lib/mockData';
 
 export default function Dashboard() {
@@ -101,15 +101,26 @@ export default function Dashboard() {
                 </TableCell>
                 <TableCell className="text-muted-foreground">{stock.lastUpdated}</TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setLocation(`/editor/${stock.ticker}`)}
-                    data-testid={`button-edit-${stock.ticker}`}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setLocation(`/stocks/${stock.ticker.toLowerCase()}`)}
+                      data-testid={`button-preview-${stock.ticker}`}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Preview
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setLocation(`/editor/${stock.ticker}`)}
+                      data-testid={`button-edit-${stock.ticker}`}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
