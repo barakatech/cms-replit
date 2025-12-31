@@ -1,0 +1,210 @@
+```text
+You are an expert full-stack engineer + product architect. Build a production-ready **Stock Page Management CMS** for www.getbaraka.com. Focus ONLY on the stock pages system (no blog needed in this build). The CMS must let non-technical users create, edit, localize (EN/AR), SEO-optimize, and publish stock landing pages under /stocks/[slug]. Include banners/slots, market sentiment, versioning, roles, audit logs, and dummy seed data.
+
+TECH STACK (use this)
+- Next.js (App Router) + TypeScript
+- Tailwind CSS + Light/Dark theme toggle (persisted)
+- Postgres + Prisma
+- NextAuth (Credentials: email+password) with password hashing (bcrypt)
+- Zod validation on all writes
+- Rich text editor (TipTap or similar) for long sections
+- Charts for analytics can be simple (Recharts ok)
+
+ROUTES
+Public:
+- /stocks (directory list)
+- /stocks/[slug] (published stock page renderer)
+- /sitemap.xml (includes localized urls)
+- /robots.txt
+
+CMS Admin:
+- /login (dedicated login page)
+- /admin (dashboard)
+- /admin/stocks (list)
+- /admin/stocks/new (create)
+- /admin/stocks/[id]/edit (edit + page builder)
+- /admin/banners (banner manager)
+- /admin/analytics/banners (banner analytics)
+- /admin/redirects (redirect manager)
+- /admin/settings (site + GA4 config)
+- Guard all /admin/* routes: redirect unauth users to /login
+
+AUTH + ROLES
+- Roles: Admin, Editor, Analyst
+- Permissions:
+  - Admin: everything
+  - Editor: manage stock pages + banners (create/edit/publish), cannot manage users
+  - Analyst: read-only access to content + analytics
+- Seed admin user:
+  - email: admin@getbaraka.local
+  - password: Admin123!
+
+DATA MODELS (PRISMA)
+StockPage
+- id, slug (unique), ticker, exchange, companyName
+- status: draft|published
+- locale: store two versions in a JSON structure OR separate table; must support EN/AR
+- seo: metaTitle, metaDescription, canonicalUrl, robotsIndex, robotsFollow, ogTitle, ogDescription, ogImage
+- schemas: array of JSON-LD blobs (Json)
+- blocks: page builder blocks (Json recommended) with strict Zod schema
+- publishedAt, createdAt, updatedAt
+
+PageVersion
+- id, stockPageId
+- snapshotJson (includes all page fields + blocks)
+- createdAt, createdByUserId
+
+AuditLog
+- id, actorUserId, entityType, entityId, action, beforeJson, afterJson, createdAt
+
+Banner
+- id, name, imageUrl, altText, headline, subheadline, ctaText
+- destinationUrl, trackerUrl (optional)
+- status active/inactive
+- activeFrom, activeTo
+- createdAt, updatedAt
+
+BannerPlacement
+- id, bannerId
+- pageType: stock|stocksIndex|any
+- pageSlug (nullable; if null = global)
+- positionKey: hero_top | inline_1 | sidebar_1 | footer_strip (string enum ok)
+- localeTarget: en|ar|any
+- deviceTarget: mobile|desktop|any
+- createdAt
+
+BannerEvent
+- id, bannerId, placementId
+- eventType: impression|click
+- timestamp, pageUrl, referrer, userAgent, locale, sessionId(optional)
+
+Redirect
+- id, fromPath, toPath, type 301|302, createdAt
+
+Settings
+- id singleton
+- ga4MeasurementId (optional)
+- defaultSeo fields (optional)
+
+STOCK PAGE BUILDER (COMPONENT/BLOCK SYSTEM)
+Implement a modular block system stored in StockPage.blocks JSON with this structure:
+- blocks: [{ id, type, enabled, order, data: { en: {...}, ar: {...} } }]
+
+BLOCK TYPES (must implement)
+1) HeroBlock
+  - title, subtitle (rich text), badge(optional), primaryCTA {text,url}
+2) OverviewBlock
+  - rich text sections
+3) KeyStatsBlock (manual inputs; no external APIs)
+  - rows: [{label,value}] 3–8
+4) MarketSentimentBlock (manual, compliance-friendly)
+  - sentimentLevel: bullish|neutral|bearish|mixed
+  - timeframeLabel (e.g., Last 7 days)
+  - summary (rich text, neutral tone)
+  - drivers: [{title, description}] 3–8
+  - sources (optional): [{name,url}] 0–5
+  - disclaimerLine (required)
+  - Render a segmented “meter” UI (NOT a forecast chart)
+5) HighlightsBlock
+  - bullets: [{boldPrefix, text}] 3–10
+6) RisksBlock (mandatory on publish)
+  - riskBullets: string[] 3–10
+  - disclaimerLine required (“Capital at risk…” style)
+7) FAQBlock
+  - items: [{q,a}] 4–12 (accordion UI)
+8) BannerSlotBlock
+  - positionKey
+  - Integrates with banner placement system
+
+ADMIN UI FEATURES (STOCK PAGES)
+A) Stocks List (/admin/stocks)
+- Search by ticker/company/slug
+- Filter by status (draft/published)
+- Sort by updatedAt
+- Quick actions: edit, duplicate, unpublish
+B) Create/Edit Stock Page
+- Basic fields: companyName, ticker, exchange, slug
+- Locale tabs: EN / AR
+- SEO panel: meta title/desc, canonical, robots toggles, OG fields
+- Schema editor:
+  - Add multiple JSON-LD snippets
+  - JSON validation + inline errors (Zod)
+- Page Builder tab:
+  - Add block (list of block types)
+  - Drag/drop reorder
+  - Enable/disable per block
+  - Block settings form (localized fields)
+  - Duplicate block, delete block (confirm)
+- Publish rules:
+  - Cannot publish without RisksBlock enabled
+  - Must have metaTitle + metaDescription for BOTH locales (or enforce at least EN; choose one and document)
+  - Must have H1 in HeroBlock
+- Versioning:
+  - On every publish, create PageVersion snapshot
+  - Allow restore from versions list
+- Preview:
+  - Preview published/draft via /stocks/[slug]?preview=1&locale=en|ar
+  - Preview should require auth (signed token or session)
+
+PUBLIC RENDERER REQUIREMENTS
+- /stocks page lists published stock pages + search + featured section (manual “featured” flag optional)
+- /stocks/[slug]:
+  - SSR metadata + JSON-LD injection
+  - Render blocks in order
+  - Locale switcher EN/AR and RTL on Arabic
+  - Light/dark theme consistent
+- Redirect handling:
+  - If incoming path matches Redirect.fromPath, respond with 301/302
+- sitemap.xml includes /stocks and each /stocks/[slug] for each locale
+
+BANNER SYSTEM (ON STOCK PAGES)
+- Define slots in templates: hero_top, inline_1, sidebar_1, footer_strip
+- Placements can target:
+  - specific stock page slug OR global (all stock pages)
+  - locale/device
+  - schedule activeFrom/activeTo
+- Tracking:
+  - Impression: record when banner enters viewport (IntersectionObserver)
+  - Click: route through /api/banners/click?placementId=... -> record event then redirect to trackerUrl or destinationUrl
+
+ANALYTICS (MINIMUM)
+- /admin/analytics/banners:
+  - Date range selector (7d/30d/custom)
+  - Table: banner name, impressions, clicks, CTR
+  - Breakdown by placement + top pages
+- Simple charts optional
+
+THEME (DAY/NIGHT)
+- Tailwind dark mode with CSS variables
+- Theme toggle in admin top bar and optional in public header
+- Persist preference to localStorage + cookie for SSR consistency
+- Default to system preference
+
+SEED DATA (DUMMY STOCK PAGES)
+Seed at least 6 published stock pages:
+- AAPL, TSLA, NVDA, MSFT, AMZN, GOOGL
+Each must include:
+- HeroBlock, MarketSentimentBlock, KeyStatsBlock, HighlightsBlock, RisksBlock, FAQBlock, BannerSlotBlock(inline_1)
+Provide both EN and AR content (simple, neutral, informational). No investment advice.
+
+Also seed:
+- 4 banners with placements (some global, some specific)
+- 6 redirects (old slug -> new slug examples)
+
+COMPLIANCE / SAFETY CONSTRAINTS
+- Do not fetch or scrape live market data
+- No “buy/sell” recommendations; keep copy informational
+- Always show a disclaimer in RisksBlock and MarketSentimentBlock
+
+DELIVERABLES
+- Working Next.js app in Replit
+- Prisma migrations + seed script
+- README:
+  - Setup, login, seed
+  - How stock blocks work
+  - How publish rules work
+  - How to add a new block type
+  - How banners + tracking work
+
+Now implement the system end-to-end.
+```
