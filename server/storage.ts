@@ -952,7 +952,141 @@ const seedLandingPages: LandingPage[] = [
       ar: {
         title: 'برنامج شركاء Baraka',
         description: 'انضم لبرنامج شركاء Baraka وحقق مكافآت بينما تُسهم في توسيع الأدوات المالية لآلاف المستثمرين.',
-        sections: [],
+        sections: [
+          {
+            id: 'hero-partners',
+            type: 'hero',
+            enabled: true,
+            order: 0,
+            data: {
+              eyebrowText: { en: 'Partner with Baraka', ar: 'شارك معنا في Baraka' },
+              headline: { en: 'Grow With Us. Empower Investors Across the Region.', ar: 'انمُ معنا. مَكّن المستثمرين في المنطقة.' },
+              subheadline: { en: 'Join Baraka\'s Partner Program and earn rewards while making financial tools accessible to millions.', ar: 'انضم لبرنامج شركاء Baraka وحقق مكافآت بينما تُسهم في توسيع الأدوات المالية لآلاف المستثمرين.' },
+              primaryCTA: { text: { en: 'Become a Partner', ar: 'انضم كـ شريك' }, url: '/p/baraka-partners#signup', variant: 'primary' },
+              secondaryCTA: { text: { en: 'Learn More', ar: 'المزيد' }, url: '/p/baraka-partners#why-baraka', variant: 'outline' },
+            },
+          },
+          {
+            id: 'value-props-partners',
+            type: 'valueProps',
+            enabled: true,
+            order: 1,
+            data: {
+              title: { en: 'Why Partner With Baraka', ar: 'لماذا Baraka شريكك المثالي' },
+              cards: [
+                { icon: 'Globe', title: { en: 'Wider Reach', ar: 'وصول أوسع' }, description: { en: 'Connect with a growing Arab and global investor community.', ar: 'تواصل مع مجتمع المستثمرين المتنامي محلياً وعالمياً.' } },
+                { icon: 'Award', title: { en: 'Earn More', ar: 'اكسب أكثر' }, description: { en: 'Competitive referral rewards and performance-based incentives.', ar: 'مكافآت إحالة تنافسية وحوافز حسب الأداء.' } },
+                { icon: 'Headphones', title: { en: 'Dedicated Support', ar: 'دعم مخصص' }, description: { en: 'Guided onboarding and ongoing marketing resources.', ar: 'دعم إطلاق الحملات وموارد تسويقية مستمرة.' } },
+              ],
+            },
+          },
+          {
+            id: 'features-partners',
+            type: 'features',
+            enabled: true,
+            order: 2,
+            data: {
+              title: { en: 'What You Get', ar: 'مزايا البرنامج' },
+              features: [
+                { title: { en: 'Custom Referral Links', ar: 'روابط إحالة مخصصة' }, description: { en: 'Track signups and performance with unique referral URLs.', ar: 'تابع التسجيلات والأداء عبر روابط فريدة.' } },
+                { title: { en: 'Real-Time Insights', ar: 'رؤى فورية' }, description: { en: 'Dashboard analytics to monitor clicks, conversions, and rewards.', ar: 'لوحة تحكم لرصد النقرات، التحويلات، والمكافآت.' } },
+                { title: { en: 'Marketing Materials', ar: 'مواد تسويقية' }, description: { en: 'Access banners, social content, and email templates.', ar: 'احصل على بانرات ومحتوى اجتماعي ونماذج بريدية.' } },
+                { title: { en: 'Flexible Payouts', ar: 'دفعات مرنة' }, description: { en: 'Payouts via bank, crypto, or Baraka credits.', ar: 'استلام المكافآت عبر بنكي، أو كريبتو، أو رصيد Baraka.' } },
+              ],
+            },
+          },
+          {
+            id: 'social-proof-partners',
+            type: 'socialProof',
+            enabled: true,
+            order: 3,
+            data: {
+              title: { en: 'Trusted by Partners Across the Region', ar: 'شركاء يثقون بـ Baraka' },
+              logos: [
+                { imageUrl: '/logos/partner1.png', name: 'Finance Insight MENA' },
+                { imageUrl: '/logos/partner2.png', name: 'Investor Weekly' },
+                { imageUrl: '/logos/partner3.png', name: 'EduFi Arabia' },
+              ],
+              testimonials: [
+                { quote: { en: 'Integrating Baraka\'s referral tools boosted our engagement by 3×.', ar: 'أدوات الإحالة في Baraka زادت التفاعل بمقدار ثلاث مرات.' }, author: 'سارة الفارسي – Finance Insight' },
+              ],
+            },
+          },
+          {
+            id: 'content-how-it-works',
+            type: 'content',
+            enabled: true,
+            order: 4,
+            data: {
+              title: { en: 'How It Works', ar: 'كيفية عمل البرنامج' },
+              richText: {
+                en: '<ol><li><strong>Sign up</strong> and get your unique referral link.</li><li><strong>Share it</strong> in your community — website, newsletter, social channels.</li><li><strong>Track performance</strong> in real time with our dashboard.</li><li><strong>Earn rewards</strong> when people join and invest.</li></ol>',
+                ar: '<ol><li><strong>سجّل</strong> واحصل على رابط إحالة فريد.</li><li><strong>شاركه</strong> مع مجتمعك – موقع، نشرة بريدية، أو منصات التواصل.</li><li><strong>راقب الأداء</strong> لحظة بلحظة عبر لوحة التحكم.</li><li><strong>اكسب المكافآت</strong> مع كل تسجيل واستثمار.</li></ol>',
+              },
+            },
+          },
+          {
+            id: 'faq-partners',
+            type: 'faq',
+            enabled: true,
+            order: 5,
+            data: {
+              title: { en: 'Frequently Asked Questions', ar: 'الأسئلة الشائعة' },
+              items: [
+                { question: { en: 'Who can join the Baraka Partner Program?', ar: 'من يمكنه الانضمام لبرنامج الشركاء؟' }, answer: { en: 'Content creators, financial educators, publishers, influencers, and communities.', ar: 'صانعو المحتوى، المعلمون الماليون، الناشرون، والمؤثرون.' } },
+                { question: { en: 'How are rewards calculated?', ar: 'كيف تُحسب المكافآت؟' }, answer: { en: 'Rewards are based on the number of qualified referrals and their first-month activity.', ar: 'تُحسب المكافآت على أساس عدد الإحالات المؤهلة ونشاطهم في الشهر الأول.' } },
+                { question: { en: 'When do I get paid?', ar: 'متى يتم الدفع؟' }, answer: { en: 'Payouts are processed monthly with flexible settlement options.', ar: 'يتم الدفع شهرياً مع خيارات تسوية مرنة.' } },
+              ],
+            },
+          },
+          {
+            id: 'lead-form-partners',
+            type: 'leadForm',
+            enabled: true,
+            order: 6,
+            data: {
+              title: { en: 'Start Earning with Baraka', ar: 'ابدأ كسب المكافآت' },
+              subtitle: { en: 'Join our partner community today.', ar: 'انضم لمجتمع شركاء Baraka الآن.' },
+              fields: { name: true, email: true, phone: false, country: false },
+              customFields: [
+                { key: 'websiteUrl', label: { en: 'Website / Social URL', ar: 'رابط الموقع / حساب التواصل' }, type: 'url', required: true, placeholder: { en: 'https://example.com', ar: 'https://example.com' } },
+                { key: 'audienceSize', label: { en: 'Audience Size', ar: 'حجم الجمهور' }, type: 'select', required: true, options: [
+                  { value: '<1000', label: { en: 'Less than 1,000', ar: 'أقل من 1,000' } },
+                  { value: '1000-10000', label: { en: '1,000 - 10,000', ar: '1,000 - 10,000' } },
+                  { value: '10000-50000', label: { en: '10,000 - 50,000', ar: '10,000 - 50,000' } },
+                  { value: '50000-100000', label: { en: '50,000 - 100,000', ar: '50,000 - 100,000' } },
+                  { value: '>100000', label: { en: 'More than 100,000', ar: 'أكثر من 100,000' } },
+                ] },
+              ],
+              submitText: { en: 'Apply Now', ar: 'قدّم الآن' },
+              successMessage: { en: 'Thank you! Our team will review your application soon.', ar: 'شكراً! سيقوم فريقنا بمراجعة طلبك قريباً.' },
+              formKey: 'partner-signup',
+            },
+          },
+          {
+            id: 'newsletter-partners',
+            type: 'newsletter',
+            enabled: true,
+            order: 7,
+            data: {
+              title: { en: 'Stay Updated', ar: 'ابقَ على اطلاع' },
+              subtitle: { en: 'Get program insights, partner tips, and growth guides.', ar: 'احصل على نصائح البرنامج ودلائل النمو.' },
+              buttonText: { en: 'Subscribe', ar: 'اشترك' },
+              privacyNote: { en: 'We respect your privacy. Unsubscribe anytime.', ar: 'نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.' },
+            },
+          },
+          {
+            id: 'footer-cta-partners',
+            type: 'footerCta',
+            enabled: true,
+            order: 8,
+            data: {
+              headline: { en: 'Ready to Grow with Baraka?', ar: 'هل أنت مستعد للنمو مع Baraka؟' },
+              supportingText: { en: 'Become a partner and help investors unlock new opportunities.', ar: 'انضم كشريك وساعد المستثمرين على اكتشاف فرص جديدة.' },
+              cta: { text: { en: 'Apply as Partner', ar: 'قدّم الآن' }, url: '/p/baraka-partners#signup', variant: 'primary' },
+            },
+          },
+        ],
         seo: {
           metaTitle: 'برنامج شركاء Baraka | انمو واكسب المكافآت',
           metaDescription: 'انضم لبرنامج شركاء Baraka – شاركه مع جمهورك، راقب الأداء، واكسب المكافآت لمشاركة الأدوات المالية في المنطقة والعالم.',
