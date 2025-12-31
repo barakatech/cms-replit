@@ -1,0 +1,231 @@
+```text
+You are a senior frontend engineer. Implement the **Baraka Design System Color Palette** (from the provided DS screenshots) across BOTH:
+1) the CMS admin platform (/login, /admin/*)
+2) the public landing pages (/discover, /stocks, /stocks/[slug], /blog, /p/[slug])
+
+Use Next.js (App Router) + TypeScript + Tailwind. The theme must support Light/Dark mode with Baraka DS tokens and an opacity-based content system.
+
+GOAL
+Create a cohesive, premium, Apple-like design system using:
+- Layered backgrounds (primary/secondary/tertiary) per mode
+- Content colors using opacity tokens (100/50/30/10)
+- Brand + status colors (green/red/yellow)
+- No raw hex usage in components (use tokens only)
+- Theme toggle with persistence
+- RTL support for Arabic
+
+SOURCE OF TRUTH (EXACT COLORS)
+Implement these EXACT values:
+
+LIGHT BACKGROUND
+- bg.light.primary  = #FFFFFF
+- bg.light.secondary= #F9F9FA
+- bg.light.tertiary = #F2F2F2
+
+DARK BACKGROUND
+- bg.dark.primary   = #000000
+- bg.dark.secondary = #191919
+- bg.dark.tertiary  = #303030
+
+CONTENT (OPACITY SYSTEM)
+Light mode uses BLACK with opacity:
+- content.light.100 = rgba(0,0,0,1)
+- content.light.50  = rgba(0,0,0,0.5)
+- content.light.30  = rgba(0,0,0,0.3)
+- content.light.10  = rgba(0,0,0,0.1)
+
+Dark mode uses WHITE with opacity:
+- content.dark.100  = rgba(255,255,255,1)
+- content.dark.50   = rgba(255,255,255,0.5)
+- content.dark.30   = rgba(255,255,255,0.3)
+- content.dark.10   = rgba(255,255,255,0.1)
+
+GLOBAL NEUTRALS (ALL MODES)
+- neutral.black = #000000
+- neutral.white = #FFFFFF
+
+BRAND + STATUS COLORS (ALL MODES)
+- brand.primary = #0DDD00  (Baraka green)
+- status.errorStrong = #FF3317
+- status.errorSoft   = #F25C5C
+- status.warning     = #ECC601
+
+DESIGN TOKENS (CSS VARIABLES)
+Implement in globals.css (or app/globals.css) using semantic tokens that components will consume.
+
+REQUIRED TOKEN SET
+Create these CSS variables:
+
+Background Layers
+- --bg-primary
+- --bg-secondary
+- --bg-tertiary
+
+Content Opacity (text/icons/dividers)
+- --content-100
+- --content-50
+- --content-30
+- --content-10
+
+Brand + Status
+- --brand
+- --success
+- --error
+- --error-soft
+- --warning
+
+Borders & Focus
+- --border (map to content-10 or a dedicated token)
+- --focus (use brand)
+
+Shadows & Radius
+- --shadow-soft
+- --radius-card
+
+Implement tokens for Light and Dark modes:
+
+:root or .light {
+  --bg-primary:#FFFFFF;
+  --bg-secondary:#F9F9FA;
+  --bg-tertiary:#F2F2F2;
+
+  --content-100: rgba(0,0,0,1);
+  --content-50: rgba(0,0,0,.5);
+  --content-30: rgba(0,0,0,.3);
+  --content-10: rgba(0,0,0,.1);
+
+  --brand:#0DDD00;
+  --success:#0DDD00;
+  --error:#FF3317;
+  --error-soft:#F25C5C;
+  --warning:#ECC601;
+
+  --border: rgba(0,0,0,.1);
+  --focus:#0DDD00;
+
+  --shadow-soft: 0 10px 30px rgba(0,0,0,.10);
+  --radius-card: 16px;
+}
+
+.dark {
+  --bg-primary:#000000;
+  --bg-secondary:#191919;
+  --bg-tertiary:#303030;
+
+  --content-100: rgba(255,255,255,1);
+  --content-50: rgba(255,255,255,.5);
+  --content-30: rgba(255,255,255,.3);
+  --content-10: rgba(255,255,255,.1);
+
+  --brand:#0DDD00;
+  --success:#0DDD00;
+  --error:#FF3317;
+  --error-soft:#F25C5C;
+  --warning:#ECC601;
+
+  --border: rgba(255,255,255,.1);
+  --focus:#0DDD00;
+
+  --shadow-soft: 0 10px 30px rgba(0,0,0,.35);
+  --radius-card: 16px;
+}
+
+TAILWIND CONFIG (MUST)
+- darkMode: "class"
+- Extend Tailwind colors to map to CSS variables:
+  colors: {
+    bg: "var(--bg-primary)",
+    surface: "var(--bg-secondary)",
+    surface2: "var(--bg-tertiary)",
+    content: {
+      100: "var(--content-100)",
+      50: "var(--content-50)",
+      30: "var(--content-30)",
+      10: "var(--content-10)"
+    },
+    brand: "var(--brand)",
+    success: "var(--success)",
+    error: "var(--error)",
+    errorSoft: "var(--error-soft)",
+    warning: "var(--warning)",
+    border: "var(--border)",
+    focus: "var(--focus)"
+  }
+- Map borderRadius:
+  card: "var(--radius-card)"
+- Map boxShadow:
+  soft: "var(--shadow-soft)"
+
+THEME PROVIDER (REQUIRED)
+Create ThemeProvider:
+- Supports "light", "dark", "system"
+- Default to system
+- Persists to localStorage
+- Writes cookie "theme=light|dark" for SSR consistency
+- Sets class on <html> to "light" or "dark"
+- Add theme toggle button in:
+  - /admin top bar
+  - public header (/discover, /stocks, /blog)
+
+COMPONENT STYLING RULES (NO RAW HEX)
+Refactor UI components so they use tokens only:
+- Page background: bg-bg
+- Cards: bg-surface border border-border rounded-card shadow-soft
+- Elevated panels: bg-surface2
+- Primary text: text-content-100
+- Secondary text: text-content-50
+- Muted/meta: text-content-30
+- Dividers: border-content-10 or border-border
+- Primary button: bg-brand text-neutral.white hover opacity or subtle brightness
+- Positive text: text-success
+- Negative text: text-errorSoft for price down; text-error for critical errors
+- Warning banners: bg-warning with readable text (ensure contrast)
+
+BASE COMPONENTS (CREATE OR UPDATE)
+- Button (primary/secondary/ghost/destructive)
+- Card
+- Input / Select / Textarea
+- Tabs / Chips
+- Badge
+- Alert (success/error/warning)
+- Table styles (admin lists)
+
+PAGES TO APPLY THEME
+CMS:
+- /login
+- /admin (dashboard shell)
+- /admin/stocks, /admin/blog, /admin/pages
+- /admin/banners + analytics
+- /admin/discover + themes
+
+Public:
+- /discover
+- /stocks + /stocks/[slug]
+- /blog + /blog/[slug]
+- /p/[slug] landing pages
+
+RTL SUPPORT
+When locale=ar:
+- set dir="rtl"
+- ensure cards, tables, chips, arrows, and spacing render correctly
+- icons that imply direction should flip in RTL where appropriate
+
+ACCEPTANCE CRITERIA
+- Switching theme changes all backgrounds and text using the DS layers/opacities
+- No component hardcodes hex values (except inside globals token definitions)
+- Content opacity system is visible and consistent (100/50/30/10)
+- CMS and public pages look visually unified
+- Theme preference persists across refresh and routes
+- Dark mode uses the exact dark background layers and white opacity tokens
+- Status colors match exactly (green/red/yellow)
+
+DELIVERABLES
+- Updated globals.css with DS tokens for light/dark
+- Updated tailwind.config mapping to tokens
+- ThemeProvider + toggle in CMS + public header
+- Refactored base UI components to use tokens
+- Updated main layouts (admin + public) to apply bg/content tokens
+- README section: “Baraka DS Theme Tokens” (with the exact values above)
+
+Now implement this end-to-end in the existing Replit project.
+```

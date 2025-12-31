@@ -6,16 +6,41 @@ export default {
   theme: {
     extend: {
       borderRadius: {
-        lg: ".5625rem", /* 9px */
-        md: ".375rem", /* 6px */
-        sm: ".1875rem", /* 3px */
+        lg: ".5625rem",
+        md: ".375rem",
+        sm: ".1875rem",
+        card: "var(--radius-card)",
+      },
+      boxShadow: {
+        soft: "var(--shadow-soft)",
       },
       colors: {
-        // Flat / base colors (regular buttons)
+        /* ===== BARAKA DS SEMANTIC TOKENS ===== */
+        bg: "hsl(var(--bg-primary) / <alpha-value>)",
+        surface: "hsl(var(--bg-secondary) / <alpha-value>)",
+        surface2: "hsl(var(--bg-tertiary) / <alpha-value>)",
+        
+        content: {
+          100: "hsl(var(--content-100))",
+          50: "hsl(var(--content-50))",
+          30: "hsl(var(--content-30))",
+          10: "hsl(var(--content-10))",
+        },
+        
+        brand: "hsl(var(--brand) / <alpha-value>)",
+        success: "hsl(var(--success) / <alpha-value>)",
+        error: "hsl(var(--error) / <alpha-value>)",
+        errorSoft: "hsl(var(--error-soft) / <alpha-value>)",
+        warning: "hsl(var(--warning) / <alpha-value>)",
+        
+        focus: "hsl(var(--focus-color) / <alpha-value>)",
+        
+        /* ===== SHADCN COMPATIBILITY TOKENS ===== */
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
         input: "hsl(var(--input) / <alpha-value>)",
+        
         card: {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground) / <alpha-value>)",
@@ -89,7 +114,6 @@ export default {
           DEFAULT: "hsl(var(--negative) / <alpha-value>)",
           foreground: "hsl(var(--negative-foreground) / <alpha-value>)",
         },
-        surface2: "hsl(var(--surface2) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

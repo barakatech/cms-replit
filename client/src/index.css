@@ -2,96 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GetBaraka Color Theme - Premium Finance Design System */
-/* LIGHT MODE */
+/* =================================================================
+   BARAKA DESIGN SYSTEM - Color Palette & Tokens
+   Premium Finance-Grade Dark-First Design System
+   
+   Token Format: H S% L% (space-separated for Tailwind compatibility)
+   ================================================================= */
+
+/* LIGHT MODE - Baraka DS */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
+  /* ===== BACKGROUND LAYERS (H S% L% format) ===== */
+  --bg-primary: 0 0% 100%;
+  --bg-secondary: 240 9% 98%;
+  --bg-tertiary: 0 0% 95%;
+  
+  /* ===== CONTENT OPACITY SYSTEM ===== */
+  --content-100: 0 0% 0%;
+  --content-50: 0 0% 0% / 0.5;
+  --content-30: 0 0% 0% / 0.3;
+  --content-10: 0 0% 0% / 0.1;
+  
+  /* ===== BRAND & STATUS COLORS (H S% L% format) ===== */
+  --brand: 116 100% 43%;
+  --success: 116 100% 43%;
+  --error: 9 100% 55%;
+  --error-soft: 4 85% 66%;
+  --warning: 50 97% 47%;
+  
+  /* ===== BORDERS & FOCUS ===== */
+  --border-ds: 0 0% 0% / 0.1;
+  --focus-color: 116 100% 43%;
+  
+  /* ===== SHADOWS & RADIUS ===== */
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.10);
+  --radius-card: 16px;
+  
+  /* ===== ELEVATION SYSTEM ===== */
+  --button-outline: rgba(0, 0, 0, 0.10);
+  --badge-outline: rgba(0, 0, 0, 0.05);
   --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(0, 0, 0, 0.03);
+  --elevate-2: rgba(0, 0, 0, 0.08);
   
-  /* Core Colors - Light Mode */
+  /* ===== SHADCN COMPATIBILITY TOKENS ===== */
   --background: 0 0% 100%;
-  --foreground: 0 0% 6%;
-  --border: 0 0% 89%;
+  --foreground: 0 0% 0%;
+  --border: 0 0% 90%;
   
-  /* Surface Colors - Light Mode */
-  --card: 0 0% 97%;
-  --card-foreground: 0 0% 6%;
-  --card-border: 0 0% 89%;
-  --surface2: 0 0% 94%;
+  --card: 240 9% 98%;
+  --card-foreground: 0 0% 0%;
+  --card-border: 0 0% 90%;
+  --surface2: 0 0% 95%;
   
-  /* Sidebar - Light Mode */
-  --sidebar: 0 0% 97%;
-  --sidebar-foreground: 0 0% 6%;
-  --sidebar-border: 0 0% 89%;
-  --sidebar-primary: 14 95% 55%;
+  --sidebar: 240 9% 98%;
+  --sidebar-foreground: 0 0% 0%;
+  --sidebar-border: 0 0% 90%;
+  --sidebar-primary: 116 100% 43%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 14 95% 95%;
-  --sidebar-accent-foreground: 0 0% 6%;
-  --sidebar-ring: 14 95% 55%;
+  --sidebar-accent: 116 100% 95%;
+  --sidebar-accent-foreground: 0 0% 0%;
+  --sidebar-ring: 116 100% 43%;
   
-  /* Popover - Light Mode */
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 6%;
-  --popover-border: 0 0% 89%;
+  --popover-foreground: 0 0% 0%;
+  --popover-border: 0 0% 90%;
   
-  /* Primary (Orange Accent) */
-  --primary: 14 95% 55%;
+  --primary: 116 100% 43%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 14 95% 61%;
+  --primary-hover: 116 100% 48%;
   
-  /* Secondary */
-  --secondary: 0 0% 94%;
-  --secondary-foreground: 0 0% 6%;
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 0 0% 0%;
   
-  /* Muted - Text hierarchy */
-  --muted: 0 0% 94%;
-  --muted-foreground: 0 0% 29%;
-  --muted2-foreground: 0 0% 42%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 50%;
+  --muted2-foreground: 0 0% 30%;
   
-  /* Accent */
-  --accent: 14 95% 95%;
-  --accent-foreground: 0 0% 6%;
+  --accent: 116 100% 95%;
+  --accent-foreground: 0 0% 0%;
   
-  /* Destructive */
-  --destructive: 0 84% 60%;
+  --destructive: 9 100% 55%;
   --destructive-foreground: 0 0% 100%;
   
-  /* Finance Signals */
-  --positive: 142 71% 45%;
+  --positive: 116 100% 43%;
   --positive-foreground: 0 0% 100%;
-  --negative: 0 84% 60%;
+  --negative: 9 100% 55%;
   --negative-foreground: 0 0% 100%;
   
-  /* Input & Ring */
-  --input: 0 0% 89%;
-  --ring: 14 95% 55%;
-  --focus: 14 95% 55%;
+  --input: 0 0% 90%;
+  --ring: 116 100% 43%;
+  --focus: 116 100% 43%;
   
-  /* Charts */
-  --chart-1: 14 95% 55%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 0 84% 60%;
+  --chart-1: 116 100% 43%;
+  --chart-2: 9 100% 55%;
+  --chart-3: 50 97% 47%;
   --chart-4: 221 83% 53%;
   --chart-5: 262 83% 58%;
   
   /* Typography */
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: 'Inter', sans-serif;
-  --font-mono: Menlo, monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Inter', Georgia, serif;
+  --font-mono: 'SF Mono', Menlo, monospace;
   --radius: 0.5rem;
   
   /* Shadows - Light Mode */
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.04);
-  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.06);
-  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.06);
-  --shadow: 0px 4px 6px -1px rgba(0,0,0,0.08);
-  --shadow-md: 0px 6px 10px -1px rgba(0,0,0,0.08);
-  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0,0.08);
-  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0,0.1);
-  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.15);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.04);
+  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0px 2px 4px 0px rgba(0, 0, 0, 0.06);
+  --shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0px 6px 10px -1px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.15);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -105,89 +127,105 @@
   --destructive-border: hsl(var(--destructive));
 }
 
-/* DARK MODE - GetBaraka Premium Finance */
+/* DARK MODE - Baraka DS (Primary Theme) */
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  /* ===== BACKGROUND LAYERS (H S% L% format) ===== */
+  --bg-primary: 0 0% 0%;
+  --bg-secondary: 0 0% 10%;
+  --bg-tertiary: 0 0% 19%;
+  
+  /* ===== CONTENT OPACITY SYSTEM ===== */
+  --content-100: 0 0% 100%;
+  --content-50: 0 0% 100% / 0.5;
+  --content-30: 0 0% 100% / 0.3;
+  --content-10: 0 0% 100% / 0.1;
+  
+  /* ===== BRAND & STATUS COLORS (same in all modes) ===== */
+  --brand: 116 100% 43%;
+  --success: 116 100% 43%;
+  --error: 9 100% 55%;
+  --error-soft: 4 85% 66%;
+  --warning: 50 97% 47%;
+  
+  /* ===== BORDERS & FOCUS ===== */
+  --border-ds: 0 0% 100% / 0.1;
+  --focus-color: 116 100% 43%;
+  
+  /* ===== SHADOWS & RADIUS ===== */
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --radius-card: 16px;
+  
+  /* ===== ELEVATION SYSTEM ===== */
+  --button-outline: rgba(255, 255, 255, 0.10);
+  --badge-outline: rgba(255, 255, 255, 0.05);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255, 255, 255, 0.04);
+  --elevate-2: rgba(255, 255, 255, 0.09);
   
-  /* Core Colors - Dark Mode (Charcoal/Black) */
-  --background: 0 0% 6%;
+  /* ===== SHADCN COMPATIBILITY TOKENS ===== */
+  --background: 0 0% 0%;
   --foreground: 0 0% 100%;
-  --border: 0 0% 17%;
+  --border: 0 0% 19%;
   
-  /* Surface Colors - Dark Mode */
-  --card: 0 0% 11%;
+  --card: 0 0% 10%;
   --card-foreground: 0 0% 100%;
-  --card-border: 0 0% 17%;
-  --surface2: 0 0% 13%;
+  --card-border: 0 0% 19%;
+  --surface2: 0 0% 19%;
   
-  /* Sidebar - Dark Mode */
-  --sidebar: 0 0% 11%;
+  --sidebar: 0 0% 10%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 0 0% 17%;
-  --sidebar-primary: 14 95% 55%;
+  --sidebar-border: 0 0% 19%;
+  --sidebar-primary: 116 100% 43%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 14 50% 15%;
+  --sidebar-accent: 116 50% 15%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 14 95% 55%;
+  --sidebar-ring: 116 100% 43%;
   
-  /* Popover - Dark Mode */
-  --popover: 0 0% 11%;
+  --popover: 0 0% 10%;
   --popover-foreground: 0 0% 100%;
-  --popover-border: 0 0% 17%;
+  --popover-border: 0 0% 19%;
   
-  /* Primary (Orange Accent) */
-  --primary: 14 95% 55%;
+  --primary: 116 100% 43%;
   --primary-foreground: 0 0% 100%;
-  --primary-hover: 14 95% 61%;
+  --primary-hover: 116 100% 48%;
   
-  /* Secondary */
-  --secondary: 0 0% 17%;
+  --secondary: 0 0% 19%;
   --secondary-foreground: 0 0% 100%;
   
-  /* Muted - Text hierarchy */
-  --muted: 0 0% 17%;
-  --muted-foreground: 0 0% 64%;
-  --muted2-foreground: 0 0% 42%;
+  --muted: 0 0% 19%;
+  --muted-foreground: 0 0% 50%;
+  --muted2-foreground: 0 0% 70%;
   
-  /* Accent */
-  --accent: 14 50% 15%;
+  --accent: 116 50% 15%;
   --accent-foreground: 0 0% 100%;
   
-  /* Destructive */
-  --destructive: 0 84% 60%;
+  --destructive: 9 100% 55%;
   --destructive-foreground: 0 0% 100%;
   
-  /* Finance Signals */
-  --positive: 142 71% 45%;
+  --positive: 116 100% 43%;
   --positive-foreground: 0 0% 100%;
-  --negative: 0 84% 60%;
+  --negative: 9 100% 55%;
   --negative-foreground: 0 0% 100%;
   
-  /* Input & Ring */
-  --input: 0 0% 17%;
-  --ring: 14 95% 55%;
-  --focus: 14 95% 55%;
+  --input: 0 0% 19%;
+  --ring: 116 100% 43%;
+  --focus: 116 100% 43%;
   
-  /* Charts */
-  --chart-1: 14 95% 55%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 0 84% 60%;
+  --chart-1: 116 100% 43%;
+  --chart-2: 9 100% 55%;
+  --chart-3: 50 97% 47%;
   --chart-4: 221 83% 53%;
   --chart-5: 262 83% 58%;
   
-  /* Shadows - Dark Mode (subtle) */
-  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0,0.3);
-  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0,0.4);
-  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.4);
-  --shadow: 0px 4px 6px -1px rgba(0,0,0,0.5);
-  --shadow-md: 0px 6px 10px -1px rgba(0,0,0,0.5);
-  --shadow-lg: 0px 10px 15px -3px rgba(0,0,0,0.5);
-  --shadow-xl: 0px 20px 25px -5px rgba(0,0,0,0.6);
-  --shadow-2xl: 0px 25px 50px -12px rgba(0,0,0,0.7);
+  /* Shadows - Dark Mode */
+  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0px 2px 4px 0px rgba(0, 0, 0, 0.4);
+  --shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0px 6px 10px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.6);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.7);
 
   /* Border Variants */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
@@ -210,33 +248,17 @@
   
   /* High contrast typography */
   h1, h2, h3, h4, h5, h6 {
-    @apply text-foreground font-semibold tracking-tight;
+    @apply font-semibold tracking-tight text-foreground;
   }
 }
 
-/**
- * Using the elevate system.
- * Automatic contrast adjustment.
- *
- * <element className="hover-elevate" />
- * <element className="active-elevate-2" />
- *
- * // Using the tailwind utility when a data attribute is "on"
- * <element className="toggle-elevate data-[state=on]:toggle-elevated" />
- * // Or manually controlling the toggle state
- * <element className="toggle-elevate toggle-elevated" />
- *
- * Elevation systems have to handle many states.
- * - not-hovered, vs. hovered vs. active  (three mutually exclusive states)
- * - toggled or not
- * - focused or not (this is not handled with these utilities)
- *
- * Even without handling focused or not, this is six possible combinations that
- * need to be distinguished from eachother visually.
- */
+/* =================================================================
+   ELEVATION SYSTEM
+   Using pseudo-elements for hover/active states
+   ================================================================= */
 @layer utilities {
 
-  /* Hide ugly search cancel button in Chrome until we can style it properly */
+  /* Hide ugly search cancel button in Chrome */
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;
   }
@@ -248,42 +270,30 @@
     pointer-events: none;
   }
 
-  /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
-   * buttons/badges can remove the automatic brightness adjustment on interactions
-   * and program their own. */
+  /* Escape hatches for default interactions */
   .no-default-hover-elevate {}
-
   .no-default-active-elevate {}
 
-
-  /**
-   * Toggleable backgrounds go behind the content. Hoverable/active goes on top.
-   * This way they can stack/compound. Both will overlap the parent's borders!
-   * So borders will be automatically adjusted both on toggle, and hover/active,
-   * and they will be compounded.
-   */
+  /* Toggle elevation system (background layer) */
   .toggle-elevate::before,
   .toggle-elevate-2::before {
     content: "";
     pointer-events: none;
     position: absolute;
     inset: 0px;
-    /*border-radius: inherit;   match rounded corners */
     border-radius: inherit;
     z-index: -1;
-    /* sits behind content but above backdrop */
   }
 
   .toggle-elevate.toggle-elevated::before {
     background-color: var(--elevate-2);
   }
 
-  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
   .border.toggle-elevate::before {
     inset: -1px;
   }
 
-  /* Does not work on elements with overflow:hidden! */
+  /* Hover/Active elevation (foreground layer) */
   .hover-elevate:not(.no-default-hover-elevate),
   .active-elevate:not(.no-default-active-elevate),
   .hover-elevate-2:not(.no-default-hover-elevate),
@@ -300,10 +310,8 @@
     pointer-events: none;
     position: absolute;
     inset: 0px;
-    /*border-radius: inherit;   match rounded corners */
     border-radius: inherit;
     z-index: 999;
-    /* sits in front of content */
   }
 
   .hover-elevate:hover:not(.no-default-hover-elevate)::after,
@@ -316,16 +324,92 @@
     background-color: var(--elevate-2);
   }
 
-  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after {
     inset: -1px;
   }
   
-  /* Finance signal text colors */
+  /* ===== BARAKA DS UTILITY CLASSES ===== */
+  
+  /* Background layers */
+  .bg-ds-primary {
+    background-color: hsl(var(--bg-primary));
+  }
+  
+  .bg-ds-secondary {
+    background-color: hsl(var(--bg-secondary));
+  }
+  
+  .bg-ds-tertiary {
+    background-color: hsl(var(--bg-tertiary));
+  }
+  
+  /* Content opacity colors */
+  .text-content-100 {
+    color: hsl(var(--content-100));
+  }
+  
+  .text-content-50 {
+    color: hsl(var(--content-50));
+  }
+  
+  .text-content-30 {
+    color: hsl(var(--content-30));
+  }
+  
+  .text-content-10 {
+    color: hsl(var(--content-10));
+  }
+  
+  /* Brand color */
+  .text-brand {
+    color: hsl(var(--brand));
+  }
+  
+  .bg-brand {
+    background-color: hsl(var(--brand));
+  }
+  
+  .border-brand {
+    border-color: hsl(var(--brand));
+  }
+  
+  /* Status colors */
+  .text-success-ds {
+    color: hsl(var(--success));
+  }
+  
+  .bg-success-ds {
+    background-color: hsl(var(--success));
+  }
+  
+  .text-error-ds {
+    color: hsl(var(--error));
+  }
+  
+  .bg-error-ds {
+    background-color: hsl(var(--error));
+  }
+  
+  .text-error-soft-ds {
+    color: hsl(var(--error-soft));
+  }
+  
+  .bg-error-soft-ds {
+    background-color: hsl(var(--error-soft));
+  }
+  
+  .text-warning-ds {
+    color: hsl(var(--warning));
+  }
+  
+  .bg-warning-ds {
+    background-color: hsl(var(--warning));
+  }
+  
+  /* Finance signal colors */
   .text-positive {
     color: hsl(var(--positive));
   }
@@ -340,5 +424,24 @@
   
   .bg-negative {
     background-color: hsl(var(--negative));
+  }
+  
+  /* Border utilities */
+  .border-content-10 {
+    border-color: hsl(var(--content-10));
+  }
+  
+  .border-content-30 {
+    border-color: hsl(var(--content-30));
+  }
+  
+  /* Shadow utilities */
+  .shadow-ds-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  
+  /* Radius utilities */
+  .rounded-ds-card {
+    border-radius: var(--radius-card);
   }
 }
