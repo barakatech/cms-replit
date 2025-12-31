@@ -24,6 +24,7 @@ import AdminDiscover from '@/pages/admin-discover';
 import AdminPages from '@/pages/admin-pages';
 import AdminAnalytics from '@/pages/admin-analytics';
 import AdminMobileInstall from '@/pages/admin-mobile-install';
+import AdminMarketingPixels from '@/pages/admin-marketing-pixels';
 import AdminStocks from '@/pages/admin-stocks';
 import PageBuilder from '@/pages/page-builder';
 import LandingPagePublic from '@/pages/landing-page';
@@ -197,6 +198,21 @@ function Router() {
                 <TopBar />
                 <main className="flex-1 overflow-auto">
                   <AdminMobileInstall />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
+      <Route path="/admin/marketing-pixels">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <TopBar />
+                <main className="flex-1 overflow-auto">
+                  <AdminMarketingPixels />
                 </main>
               </div>
             </div>

@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
@@ -20,6 +20,7 @@ const menuItems = [
   { title: 'Blog', url: '/admin/blog', icon: BookOpen, testId: 'link-blog' },
   { title: 'Banners', url: '/banners', icon: Megaphone, testId: 'link-banners' },
   { title: 'Mobile Install', url: '/admin/mobile-install', icon: Smartphone, testId: 'link-mobile-install' },
+  { title: 'Marketing Pixels', url: '/admin/marketing-pixels', icon: Radio, testId: 'link-marketing-pixels' },
   { title: 'Assets', url: '/assets', icon: Image, testId: 'link-assets' },
   { title: 'Settings', url: '#', icon: Settings, testId: 'link-settings' },
 ];

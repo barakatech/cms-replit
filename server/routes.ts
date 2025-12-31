@@ -434,6 +434,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // MARKETING PIXELS API
+  // ============================================
+
+  // Get all marketing pixels (admin)
+  app.get("/api/admin/marketing-pixels", async (_req, res) => {
+    const pixels = await storage.getMarketingPixels();
+    res.json(pixels);
+  });
+
+  // Get enabled marketing pixels (public - for client-side tracking)
+  app.get("/api/marketing-pixels/enabled", async (_req, res) => {
+    const pixels = await storage.getEnabledMarketingPixels();
+    // Get event maps for all enabled pixels
+    const pixelsWithMaps = await Promise.all(
+      pixels.map(async (pixel) => {
+        const eventMaps = await storage.getPixelEventMaps(pixel.id);
+        return { ...pixel, eventMaps };
+      })
+    );
+    res.json(pixelsWithMaps);
+  });
+
+  // Get single marketing pixel by ID
+  app.get("/api/admin/marketing-pixels/:id", async (req, res) => {
+    const pixel = await storage.getMarketingPixel(req.params.id);
+    if (!pixel) {
+      return res.status(404).json({ error: "Marketing pixel not found" });
+    }
+    // Include event maps
+    const eventMaps = await storage.getPixelEventMaps(pixel.id);
+    res.json({ ...pixel, eventMaps });
+  });
+
+  // Create marketing pixel (admin)
+  app.post("/api/admin/marketing-pixels", async (req, res) => {
+    try {
+      const pixel = await storage.createMarketingPixel(req.body);
+      res.status(201).json(pixel);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create marketing pixel" });
+    }
+  });
+
+  // Update marketing pixel (admin)
+  app.put("/api/admin/marketing-pixels/:id", async (req, res) => {
+    try {
+      const pixel = await storage.updateMarketingPixel(req.params.id, req.body);
+      if (!pixel) {
+        return res.status(404).json({ error: "Marketing pixel not found" });
+      }
+      res.json(pixel);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update marketing pixel" });
+    }
+  });
+
+  // Delete marketing pixel (admin)
+  app.delete("/api/admin/marketing-pixels/:id", async (req, res) => {
+    const success = await storage.deleteMarketingPixel(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Marketing pixel not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // PIXEL EVENT MAPPINGS API
+  // ============================================
+
+  // Get pixel event maps (optionally filtered by pixel ID)
+  app.get("/api/admin/pixel-event-maps", async (req, res) => {
+    const pixelId = req.query.pixelId as string | undefined;
+    const maps = await storage.getPixelEventMaps(pixelId);
+    res.json(maps);
+  });
+
+  // Get single pixel event map by ID
+  app.get("/api/admin/pixel-event-maps/:id", async (req, res) => {
+    const map = await storage.getPixelEventMap(req.params.id);
+    if (!map) {
+      return res.status(404).json({ error: "Pixel event map not found" });
+    }
+    res.json(map);
+  });
+
+  // Create pixel event map (admin)
+  app.post("/api/admin/pixel-event-maps", async (req, res) => {
+    try {
+      const map = await storage.createPixelEventMap(req.body);
+      res.status(201).json(map);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create pixel event map" });
+    }
+  });
+
+  // Update pixel event map (admin)
+  app.put("/api/admin/pixel-event-maps/:id", async (req, res) => {
+    try {
+      const map = await storage.updatePixelEventMap(req.params.id, req.body);
+      if (!map) {
+        return res.status(404).json({ error: "Pixel event map not found" });
+      }
+      res.json(map);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update pixel event map" });
+    }
+  });
+
+  // Delete pixel event map (admin)
+  app.delete("/api/admin/pixel-event-maps/:id", async (req, res) => {
+    const success = await storage.deletePixelEventMap(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Pixel event map not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
   // BLOG POSTS API
   // ============================================
 
