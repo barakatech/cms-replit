@@ -1,0 +1,237 @@
+```text
+You are an expert full-stack engineer + product architect. Add a **Landing Page Builder (Instapage-lite)** inside our existing Next.js + Prisma CMS (Replit project). This builder will let non-technical users create and publish custom marketing pages with drag/drop sections, reusable blocks, SEO controls, EN/AR localization, preview links, and analytics hooks—without allowing “anything goes” canvas chaos.
+
+PHILOSOPHY
+Build a STRUCTURED landing page builder (templates + sections + blocks) that is:
+- fast to ship
+- hard to break
+- SEO-safe
+- RTL-safe for Arabic
+- scalable for many pages and many editors
+We want “Instapage feel” (visual building + previews) but with guardrails.
+
+ROUTES
+Public:
+- /p/[slug]                 -> published landing page
+- /p/[slug]/preview         -> preview landing page (protected)
+- /sitemap.xml              -> include published landing pages (all locales)
+- /robots.txt
+
+Admin:
+- /admin/pages              -> landing pages list
+- /admin/pages/new          -> create page (choose template)
+- /admin/pages/[id]/edit    -> builder (sections + settings)
+- /admin/pages/[id]/versions-> version history
+- /admin/pages/templates    -> manage templates (optional MVP)
+- /login                    -> already exists
+
+AUTH + PERMISSIONS
+Roles: Admin, Editor, Analyst
+- Admin: everything
+- Editor: create/edit/publish landing pages, manage components content
+- Analyst: read-only + analytics
+All /admin/* and preview routes must be protected by session.
+Preview links can optionally be tokenized and expiring.
+
+DATA MODELS (PRISMA) — ADD THESE
+1) LandingPage
+- id
+- slug (unique)
+- status: draft|published
+- pageType: "landing" (string enum)
+- localeContent:
+  - en: { title, description, sectionsJson, seo }
+  - ar: { title, description, sectionsJson, seo }
+Store sectionsJson as Json but validate with Zod.
+- seo (per locale):
+  - metaTitle, metaDescription, canonicalUrl
+  - robotsIndex, robotsFollow
+  - ogTitle, ogDescription, ogImage
+  - schemas: Json[] (JSON-LD)
+- settings:
+  - templateKey
+  - themeVariantKey (optional)
+  - headerVariant (show/hide)
+  - footerVariant (show/hide)
+- publishedAt, createdAt, updatedAt
+- createdByUserId, updatedByUserId
+
+2) LandingPageVersion
+- id, landingPageId
+- snapshotJson (full page snapshot including both locales)
+- createdAt, createdByUserId
+
+3) PageComponentLibrary (reusable symbols)
+- id
+- key (unique)
+- name
+- componentType (enum)
+- dataJson (Json) with en/ar fields
+- createdAt, updatedAt
+
+4) FormSubmission (optional MVP, but recommended)
+- id
+- pageId
+- formKey
+- payloadJson (Json)
+- createdAt
+
+5) AnalyticsEvent (optional lightweight)
+- id
+- pageId
+- eventType (view|cta_click|form_submit|banner_click)
+- metaJson (Json)
+- createdAt
+
+IMPORTANT: We already have Banner/BannerPlacement/BannerEvent in the CMS—reuse them for offers and campaign placements.
+
+LANDING PAGE BUILDER — SECTION/BLOCK ARCHITECTURE
+Landing pages are built from ordered sections:
+sectionsJson = [
+  { id, type, enabled, order, data: { en: {...}, ar: {...} }, style: {...}, rules?: {...} }
+]
+
+STYLE TOKENS (USE OUR BARAKA BRAND THEME)
+Use the Baraka theme tokens for all landing pages and CMS:
+- primary accent: #F85A22
+- dark bg: #0F0F0F
+- surfaces: #1C1C1C / #222222
+- text: #FFFFFF (dark) / #0F0F0F (light)
+- positive: #34C759
+- negative: #FF3B30
+Support light/dark toggle and RTL.
+
+BUILDER UX (ADMIN /admin/pages/[id]/edit)
+Create an Instapage-like structured builder UI:
+- Left panel: “Add Section” library (searchable)
+- Center canvas: live preview of the page (within a responsive frame)
+- Right panel: properties editor for selected section + global page settings
+Must include:
+- Drag/drop reorder sections
+- Enable/disable section
+- Duplicate section
+- Delete section (confirm)
+- Locale toggle (EN/AR) to edit localized fields
+- Device preview toggles: Desktop / Mobile
+- “Preview” buttons (EN and AR) that open preview route
+- “Publish” button with validations
+
+SECTION TYPES (IMPLEMENT THESE MVP)
+1) HeroSection
+- eyebrowText, headline, subheadline (rich text supported)
+- primaryCTA { text, url }
+- secondaryCTA { text, url } optional
+- heroImageUrl optional
+- trustBadges (array of logos/text) optional
+
+2) ValuePropsSection
+- title
+- cards: [{ icon, title, description }] 3–6
+
+3) FeaturesSection
+- title
+- features: [{ title, description, imageUrl? }] 3–8
+
+4) SocialProofSection
+- title
+- logos: [{ imageUrl, name }] 4–12
+- testimonials: [{ quote, author, role }] optional
+
+5) PricingSection (for subscriptions)
+- title
+- plans: [{
+    planName, priceText, billingPeriod, highlightBadge?,
+    features: string[], ctaText, ctaUrl
+  }] 2–4
+- complianceNote (localized) required for finance
+
+6) OfferBannerRailSection (REUSE BANNERS)
+- positionKey = "discover_offers_rail" or "landing_offers_rail"
+- renders banners via BannerPlacement with tracking
+
+7) ContentSection (Rich text)
+- title optional
+- richText body
+
+8) FAQSection
+- title
+- items [{ q, a }] 4–12
+
+9) LeadFormSection
+- title, subtitle
+- fields config: name/email/phone/country (checkboxes)
+- submitText
+- successMessage
+- Stores submissions into FormSubmission table (server route)
+- Basic spam protection: honeypot field
+
+10) NewsletterSection
+- title, subtitle
+- email input + subscribe
+- Stores to NewsletterSignup table if exists OR create it
+- privacy microcopy
+
+11) FooterCTASection
+- headline, supportingText
+- CTA button
+- disclaimers text
+
+SECTION RULES (OPTIONAL MVP)
+Allow simple rules:
+- locale visibility (en only / ar only / both)
+- device visibility (desktop/mobile)
+
+PUBLIC RENDERING
+- /p/[slug] renders published page only
+- /p/[slug]/preview renders draft page (protected)
+- Ensure:
+  - SSR meta tags per locale
+  - JSON-LD injection from schemas
+  - Exactly one H1 (Hero headline)
+  - Fast load, minimal JS
+- Localization:
+  - Locale switcher (en/ar)
+  - Arabic RTL layout + correct typography alignment
+
+TEMPLATES (MVP)
+Provide 5 starter templates users can choose at creation:
+1) Subscription Landing (pricing + FAQs + lead form)
+2) Promo Offer Landing (hero + offer rail + CTA + form)
+3) Learn/Guide Landing (content heavy + newsletter)
+4) App Download Landing (hero + value props + store badges)
+5) Webinar/Event Landing (agenda + speaker cards + signup)
+
+Templates are just predefined section stacks.
+
+VALIDATIONS BEFORE PUBLISH
+- slug required and unique
+- metaTitle + metaDescription required for EN (and AR if AR is enabled)
+- HeroSection required and enabled
+- If PricingSection exists -> complianceNote required
+- If LeadFormSection exists -> successMessage required
+- No forbidden language check (soft warning):
+  - flag words like “guaranteed”, “risk-free”, “double your money”
+  - show warnings in UI but allow Admin override
+
+ANALYTICS HOOKS (LIGHTWEIGHT)
+- On page view, fire /api/analytics/view (store AnalyticsEvent)
+- Track CTA clicks + form submits
+- Provide /admin/pages analytics summary (views, cta clicks, form submissions)
+
+SEED DATA
+Seed 3 landing pages:
+- /p/subscription (pricing + FAQs + lead form)
+- /p/stocks-offer (offer rail + CTA)
+- /p/learn-investing (content + newsletter)
+Include EN/AR content.
+
+DELIVERABLES
+- Prisma models + migrations
+- Admin builder UI (3-panel structured builder)
+- Public renderer + preview route
+- Templates + seed data
+- Tracking endpoints for analytics + form submissions
+- README section: “Landing Page Builder (Instapage-lite)”
+
+Now implement the full Landing Page Builder end-to-end in the existing Replit CMS codebase.
+```

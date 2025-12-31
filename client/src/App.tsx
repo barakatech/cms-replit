@@ -19,6 +19,9 @@ import StocksDiscover from '@/pages/stocks-discover';
 import BlogHome from '@/pages/blog-home';
 import Discover from '@/pages/discover';
 import AdminDiscover from '@/pages/admin-discover';
+import AdminPages from '@/pages/admin-pages';
+import PageBuilder from '@/pages/page-builder';
+import LandingPagePublic from '@/pages/landing-page';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -122,6 +125,37 @@ function Router() {
           </SidebarProvider>
         )}
       </Route>
+      <Route path="/admin/pages">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <TopBar />
+                <main className="flex-1 overflow-auto">
+                  <AdminPages />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
+      <Route path="/admin/pages/:id/edit">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1 overflow-hidden">
+                <main className="flex-1 overflow-hidden">
+                  <PageBuilder />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
+      <Route path="/p/:slug" component={LandingPagePublic} />
+      <Route path="/p/:slug/preview" component={LandingPagePublic} />
       <Route component={NotFound} />
     </Switch>
   );
