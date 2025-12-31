@@ -10,6 +10,8 @@ import Login from '@/pages/login';
 import Dashboard from '@/pages/dashboard';
 import StockEditor from '@/pages/stock-editor';
 import Assets from '@/pages/assets';
+import Blog from '@/pages/blog';
+import Banners from '@/pages/banners';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -56,6 +58,36 @@ function Router() {
                 <TopBar />
                 <main className="flex-1 overflow-auto">
                   <Assets />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
+      <Route path="/blog">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <TopBar />
+                <main className="flex-1 overflow-auto">
+                  <Blog />
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        )}
+      </Route>
+      <Route path="/banners">
+        {() => (
+          <SidebarProvider>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <TopBar />
+                <main className="flex-1 overflow-auto">
+                  <Banners />
                 </main>
               </div>
             </div>
