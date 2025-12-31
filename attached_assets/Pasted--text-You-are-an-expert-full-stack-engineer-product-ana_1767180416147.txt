@@ -1,0 +1,306 @@
+```text
+You are an expert full-stack engineer + product analytics builder. Enhance our existing Next.js + Prisma CMS by building:
+
+1) A world-class **CMS Dashboard** (/admin) with unified content + growth KPIs
+2) A dedicated **Analytics tab** (/admin/analytics) that connects to **GA4**
+3) A **mobile-only install banner system** managed in CMS that deep-links users to our app using **Adjust MMP** links
+
+Constraints:
+- App-driven product: mobile traffic should be pushed to app install/open using Adjust links
+- Keep finance-compliance friendly language
+- EN/AR + RTL + Light/Dark using Baraka DS tokens
+- Role-based access (Admin/Editor/Analyst)
+- The dashboard must show both **Stocks** and **Learn (Blog)** performance + **Newsletter subscribers**
+- GA4 integration must be done via official GA4 Data API (OAuth/service account) and should be configurable
+
+===========================================================
+PART A — CMS DASHBOARD (/admin)
+===========================================================
+
+GOALS
+- Give a daily “health + growth” view: traffic, engagement, conversions
+- Show what content is working: top stock pages, top learn posts
+- Show operational queue: drafts, missing SEO, banners performance
+- Provide quick actions: create stock page, create blog post, create banner, preview
+
+DASHBOARD LAYOUT (widgets)
+Top Bar:
+- Date range selector: 7d / 28d / 90d / custom
+- Filters: Locale (All/EN/AR), Device (All/Mobile/Desktop)
+- Last updated timestamp
+- “Connect GA4” state if not configured
+
+Widget Row 1 — Core Growth KPIs (from GA4 + internal DB)
+Tiles with deltas vs previous period:
+- Sessions
+- Users
+- New Users
+- Engaged sessions
+- Engagement rate
+- Avg engagement time
+- Pageviews
+- Conversions (configured event)
+- Newsletter signups (DB + optional GA4 event)
+- App banner clicks (DB)
+- Adjust outbound clicks (DB)
+
+Widget Row 2 — Stocks Performance (GA4 + CMS)
+- Top Stock Pages (table):
+  - Page path (/stocks/xxx)
+  - Views
+  - Users
+  - Avg engagement time
+  - CTA clicks (if tracked)
+- Stock Directory Funnel (mini funnel):
+  - /stocks -> /stocks/[slug] -> CTA click -> outbound (Adjust)
+Use GA4 events + our own event logs.
+
+Widget Row 3 — Learn Performance (GA4 + CMS)
+- Top Learn Posts (table):
+  - Page path (/blog/xxx)
+  - Views
+  - Users
+  - Scroll depth proxy (if event exists) OR engagement time
+  - Newsletter CTA clicks
+- Learn Funnel:
+  - /blog -> /blog/[slug] -> newsletter submit
+
+Widget Row 4 — Acquisition Snapshot (GA4)
+- Channel mix:
+  - Default channel group (Organic, Paid, Direct, Referral, Social)
+  - Sessions + engaged sessions
+- Geo snapshot:
+  - Top 5 countries by users
+- Device:
+  - Mobile vs Desktop vs Tablet
+
+Widget Row 5 — Content Ops Health (CMS DB)
+- Drafts pending review (stocks/blog/pages)
+- Drafts older than 14 days
+- Missing SEO meta (title/description)
+- Missing schema (if required)
+- Recently published (last 10)
+- Recent edits (audit log)
+
+Widget Row 6 — Banners & Offers Performance (GA4 + internal)
+- Banner impressions/clicks/CTR (from internal BannerEvent logs)
+- Top banners by CTR
+- Top placements by CTR
+- Mobile install banner performance:
+  - views, clicks, click-through rate
+  - breakdown by OS (iOS/Android) if detectable
+
+Quick Actions Panel
+- Create Stock Page
+- Create Blog Post
+- Create Landing Page
+- Create Banner / Offer
+- Manage Mobile Install Banner
+- Open Analytics tab
+
+===========================================================
+PART B — ANALYTICS TAB (/admin/analytics)
+===========================================================
+
+NAV SECTIONS
+- Overview
+- Stocks
+- Learn
+- Acquisition
+- Conversions
+- Banners
+- App Install (Adjust)
+
+GA4 INTEGRATION (REQUIRED)
+Implement GA4 connection via GA4 Data API:
+- Admin settings page: /admin/analytics/settings
+  - GA4 Property ID input
+  - Auth mode:
+    A) Service account JSON (upload via secret env var) OR
+    B) OAuth connect (Google sign-in)
+Pick the most feasible approach for Replit; document it.
+- Store settings in DB: AnalyticsSettings singleton:
+  - ga4PropertyId
+  - authType
+  - enabled
+- Implement server-side GA4 client wrapper:
+  /lib/ga4/client.ts
+  - runReport(params) method
+  - caching (in-memory or DB) for 15–60 min to avoid quotas
+- If GA4 not configured:
+  show empty states + setup CTA
+
+GA4 REPORTS TO BUILD
+Overview:
+- Users, Sessions, Views, Engagement
+- Time series chart (daily)
+
+Stocks:
+- Filter pages starting with /stocks/
+- Top pages, views/users/engagement
+- Paths exploration (optional)
+- Event report:
+  - stock_cta_click
+  - outbound_adjust_click
+
+Learn:
+- Filter pages starting with /blog/ or /learn/
+- Top posts
+- newsletter_view, newsletter_submit events (if present)
+
+Acquisition:
+- sessionDefaultChannelGroup
+- source/medium
+- campaign (UTMs)
+- country, city
+- deviceCategory
+
+Conversions:
+- Conversion events table (GA4 configured conversions)
+- Trendline per conversion
+- Conversion rate = conversions/sessions
+
+Banners:
+- We will NOT rely solely on GA4 for banners
+- Merge internal BannerEvent + GA4 landing page views by pagePath
+- Show CTR, top placements, performance by device
+
+App Install (Adjust):
+- This tab focuses on outbound clicks to Adjust links
+- Show:
+  - clicks by day
+  - clicks by placement
+  - clicks by OS
+  - top source page (stock page vs blog)
+Future: Adjust API integration (optional placeholder)
+
+===========================================================
+PART C — EVENT TRACKING (INTERNAL + OPTIONAL GA4 EVENTS)
+===========================================================
+
+Create an internal analytics event pipeline (DB) for reliability:
+Table: CmsWebEvent
+- id
+- eventType (page_view|banner_view|banner_click|cta_click|newsletter_submit|adjust_outbound_click)
+- pagePath
+- locale
+- deviceCategory (mobile/desktop/tablet)
+- userAgentHash (optional privacy)
+- metaJson (Json)
+- createdAt
+
+Client tracking:
+- Use a lightweight client script to POST to /api/events
+- For banners, track:
+  - view (impression)
+  - click
+- For install banner:
+  - view
+  - click + resolved Adjust URL
+
+GA4 event mirroring (optional but recommended):
+- If GA4 is enabled, also fire dataLayer events:
+  - stock_cta_click
+  - newsletter_submit
+  - adjust_outbound_click
+So dashboards can reconcile GA4 + internal.
+
+===========================================================
+PART D — MOBILE-ONLY INSTALL BANNER (CMS MANAGED + ADJUST LINKS)
+===========================================================
+
+REQUIREMENT
+Create a banner shown ONLY to mobile web users to drive app install/open.
+When clicked, it must redirect using Adjust MMP links (smart deep link).
+
+FEATURES
+- CMS-managed: create/edit banner creatives and targeting rules
+- Device targeting:
+  - show only on mobile (deviceCategory=mobile or small viewport)
+- Page targeting:
+  - show on /stocks/*, /blog/*, /discover (configurable)
+- Frequency capping:
+  - show once per session OR once per X days (cookie/localStorage)
+- Dismissible:
+  - close button hides it for N days
+- OS detection:
+  - iOS vs Android -> use correct Adjust link
+- UTM passthrough:
+  - append source_page, placement, locale, campaign params
+- Track impressions and clicks in CmsWebEvent + BannerEvent
+
+DATA MODEL
+Table: MobileInstallBanner
+- id
+- name
+- enabled (boolean)
+- locales (["en","ar"])
+- pages (array of route patterns e.g. "/stocks/*", "/blog/*")
+- styleVariant ("top"|"bottom")
+- title_en/ar
+- subtitle_en/ar
+- ctaText_en/ar
+- iconUrl
+- backgroundStyle ("surface"|"tertiary"|"brand")
+- adjustLinkIos (string)  // Adjust tracking URL
+- adjustLinkAndroid (string)
+- frequencyCapDays (int)
+- showAfterSeconds (int)
+- createdAt, updatedAt
+
+ADMIN UI
+- /admin/banners/mobile-install
+  - Create/edit banner
+  - Toggle enabled
+  - Preview on mobile frame
+  - See performance table (views/clicks/CTR) for last 7/30 days
+  - Test OS routing (simulate iOS/Android)
+
+FRONTEND IMPLEMENTATION
+- Create <MobileInstallBanner/> mounted in public layout
+- Logic:
+  - detect mobile (UA + viewport)
+  - match current path against banner.pages patterns
+  - check frequency cap & dismiss state
+  - render banner fixed at bottom (like app install banners)
+- On click:
+  - fire events:
+    - install_banner_click
+    - adjust_outbound_click with resolved URL
+  - redirect to Adjust URL (window.location.href)
+
+===========================================================
+DELIVERABLES
+===========================================================
+
+1) /admin Dashboard with the widgets listed above
+2) /admin/analytics with GA4 connection and rich reporting views
+3) /admin/analytics/settings for GA4 property + auth config
+4) Internal events pipeline (CmsWebEvent) + API endpoints:
+   - POST /api/events
+   - GET /api/admin/analytics/summary?range=...
+   - GET /api/admin/analytics/ga4-report?...
+5) Mobile install banner system:
+   - Admin management page
+   - Runtime banner component
+   - Adjust outbound routing for iOS/Android
+   - Tracking + frequency cap
+6) Seed data:
+   - 1 mobile install banner enabled
+   - sample events for local preview
+7) README:
+   - How to connect GA4
+   - Events naming schema
+   - How Adjust links are configured and used
+   - Privacy notes (no PII in events)
+
+ACCEPTANCE CRITERIA
+- Dashboard shows unified KPIs (stocks + learn + subscribers + banners)
+- Analytics tab works with GA4 once configured, with caching
+- Mobile install banner appears only on mobile and respects frequency cap + dismiss
+- Click redirects to Adjust links correctly per OS
+- All events tracked in internal DB; optional GA4 event mirroring
+- Works in EN/AR + RTL and Light/Dark theme
+
+Now implement all of the above end-to-end in the existing Replit CMS project.
+```

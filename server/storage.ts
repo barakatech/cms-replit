@@ -14,7 +14,19 @@ import {
   type FormSubmission,
   type InsertFormSubmission,
   type AnalyticsEvent,
-  type InsertAnalyticsEvent
+  type InsertAnalyticsEvent,
+  type CmsWebEvent,
+  type InsertCmsWebEvent,
+  type BannerEvent,
+  type InsertBannerEvent,
+  type MobileInstallBanner,
+  type InsertMobileInstallBanner,
+  type AnalyticsSettings,
+  type InsertAnalyticsSettings,
+  type BlogPost,
+  type InsertBlogPost,
+  type StockPage,
+  type InsertStockPage
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -247,6 +259,227 @@ const seedOfferBanners: OfferBanner[] = [
     endDate: '2024-12-31',
     order: 4,
   },
+];
+
+// Seed Blog Posts
+const seedBlogPosts: BlogPost[] = [
+  {
+    id: '1',
+    slug: 'beginner-guide-stock-investing',
+    title_en: 'Beginner\'s Guide to Stock Investing',
+    title_ar: 'دليل المبتدئين للاستثمار في الأسهم',
+    excerpt_en: 'Learn the basics of stock investing and start your journey to financial freedom.',
+    excerpt_ar: 'تعلم أساسيات الاستثمار في الأسهم وابدأ رحلتك نحو الحرية المالية.',
+    content_en: '<p>Investing in stocks can seem intimidating at first...</p>',
+    content_ar: '<p>قد يبدو الاستثمار في الأسهم مخيفاً في البداية...</p>',
+    featuredImage: '',
+    category: 'education',
+    tags: ['beginner', 'stocks', 'investing'],
+    author: 'Baraka Team',
+    status: 'published',
+    seo: {
+      metaTitle_en: 'Beginner\'s Guide to Stock Investing | Baraka',
+      metaTitle_ar: 'دليل المبتدئين للاستثمار في الأسهم | بركة',
+    },
+    publishedAt: '2024-01-15T00:00:00Z',
+    createdAt: '2024-01-10T00:00:00Z',
+    updatedAt: '2024-01-15T00:00:00Z',
+  },
+  {
+    id: '2',
+    slug: 'understanding-halal-investing',
+    title_en: 'Understanding Halal Investing',
+    title_ar: 'فهم الاستثمار الحلال',
+    excerpt_en: 'A comprehensive guide to Shariah-compliant investing principles.',
+    excerpt_ar: 'دليل شامل لمبادئ الاستثمار المتوافق مع الشريعة الإسلامية.',
+    content_en: '<p>Halal investing follows Islamic finance principles...</p>',
+    content_ar: '<p>يتبع الاستثمار الحلال مبادئ التمويل الإسلامي...</p>',
+    featuredImage: '',
+    category: 'education',
+    tags: ['halal', 'shariah', 'islamic-finance'],
+    author: 'Baraka Team',
+    status: 'published',
+    seo: {},
+    publishedAt: '2024-02-01T00:00:00Z',
+    createdAt: '2024-01-25T00:00:00Z',
+    updatedAt: '2024-02-01T00:00:00Z',
+  },
+  {
+    id: '3',
+    slug: 'market-analysis-tech-sector',
+    title_en: 'Market Analysis: Tech Sector Q1 2024',
+    title_ar: 'تحليل السوق: قطاع التكنولوجيا الربع الأول 2024',
+    excerpt_en: 'An in-depth look at the tech sector performance and outlook.',
+    excerpt_ar: 'نظرة معمقة على أداء قطاع التكنولوجيا وتوقعاته.',
+    content_en: '<p>The technology sector continues to drive market growth...</p>',
+    content_ar: '<p>يواصل قطاع التكنولوجيا دفع نمو السوق...</p>',
+    featuredImage: '',
+    category: 'analysis',
+    tags: ['tech', 'analysis', 'market'],
+    author: 'Baraka Research',
+    status: 'published',
+    seo: {},
+    publishedAt: '2024-03-01T00:00:00Z',
+    createdAt: '2024-02-28T00:00:00Z',
+    updatedAt: '2024-03-01T00:00:00Z',
+  },
+  {
+    id: '4',
+    slug: 'draft-post-dividends',
+    title_en: 'Understanding Dividend Investing',
+    title_ar: 'فهم الاستثمار في توزيعات الأرباح',
+    excerpt_en: 'Learn how dividends can generate passive income.',
+    excerpt_ar: 'تعلم كيف يمكن لتوزيعات الأرباح توليد دخل سلبي.',
+    content_en: '<p>Draft content here...</p>',
+    content_ar: '<p>محتوى المسودة هنا...</p>',
+    featuredImage: '',
+    category: 'strategy',
+    tags: ['dividends', 'income'],
+    author: 'Baraka Team',
+    status: 'draft',
+    seo: {},
+    createdAt: '2024-03-10T00:00:00Z',
+    updatedAt: '2024-03-10T00:00:00Z',
+  },
+];
+
+// Seed Stock Pages
+const seedStockPages: StockPage[] = [
+  {
+    id: '1',
+    ticker: 'AAPL',
+    slug: 'apple-aapl',
+    companyName_en: 'Apple Inc.',
+    companyName_ar: 'شركة أبل',
+    description_en: 'Apple designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.',
+    description_ar: 'تصمم أبل وتصنع وتسوق الهواتف الذكية وأجهزة الكمبيوتر الشخصية والأجهزة اللوحية.',
+    content_en: '<p>Apple Inc. is one of the world\'s most valuable companies...</p>',
+    content_ar: '<p>شركة أبل هي واحدة من أكثر الشركات قيمة في العالم...</p>',
+    sector: 'Technology',
+    exchange: 'NASDAQ',
+    status: 'published',
+    seo: {
+      metaTitle_en: 'Apple (AAPL) Stock | Baraka',
+      metaTitle_ar: 'سهم أبل (AAPL) | بركة',
+    },
+    relatedTickers: ['MSFT', 'GOOGL', 'AMZN'],
+    publishedAt: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    ticker: 'TSLA',
+    slug: 'tesla-tsla',
+    companyName_en: 'Tesla, Inc.',
+    companyName_ar: 'شركة تسلا',
+    description_en: 'Tesla designs, develops, manufactures, and sells electric vehicles and energy storage products.',
+    description_ar: 'تصمم تسلا وتطور وتصنع وتبيع السيارات الكهربائية ومنتجات تخزين الطاقة.',
+    content_en: '<p>Tesla has revolutionized the automotive industry...</p>',
+    content_ar: '<p>أحدثت تسلا ثورة في صناعة السيارات...</p>',
+    sector: 'Automotive',
+    exchange: 'NASDAQ',
+    status: 'published',
+    seo: {},
+    relatedTickers: ['RIVN', 'LCID', 'NIO'],
+    publishedAt: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '3',
+    ticker: 'NVDA',
+    slug: 'nvidia-nvda',
+    companyName_en: 'NVIDIA Corporation',
+    companyName_ar: 'شركة إنفيديا',
+    description_en: 'NVIDIA designs graphics processing units and system on chip units for gaming, professional, and datacenter markets.',
+    description_ar: 'تصمم إنفيديا وحدات معالجة الرسومات والرقائق المتكاملة لأسواق الألعاب والمحترفين ومراكز البيانات.',
+    content_en: '<p>NVIDIA is at the forefront of AI computing...</p>',
+    content_ar: '<p>إنفيديا في طليعة حوسبة الذكاء الاصطناعي...</p>',
+    sector: 'Technology',
+    exchange: 'NASDAQ',
+    status: 'published',
+    seo: {},
+    relatedTickers: ['AMD', 'INTC', 'AVGO'],
+    publishedAt: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '4',
+    ticker: 'MSFT',
+    slug: 'microsoft-msft',
+    companyName_en: 'Microsoft Corporation',
+    companyName_ar: 'شركة مايكروسوفت',
+    description_en: 'Microsoft develops, licenses, and supports software, services, devices, and solutions worldwide.',
+    description_ar: 'تطور مايكروسوفت وترخص وتدعم البرمجيات والخدمات والأجهزة والحلول في جميع أنحاء العالم.',
+    content_en: '<p>Microsoft is a technology giant...</p>',
+    content_ar: '<p>مايكروسوفت عملاق تكنولوجي...</p>',
+    sector: 'Technology',
+    exchange: 'NASDAQ',
+    status: 'draft',
+    seo: {},
+    relatedTickers: ['AAPL', 'GOOGL', 'AMZN'],
+    createdAt: '2024-02-01T00:00:00Z',
+    updatedAt: '2024-02-01T00:00:00Z',
+  },
+];
+
+// Seed Mobile Install Banner
+const seedMobileInstallBanner: MobileInstallBanner = {
+  id: '1',
+  name: 'Default App Install Banner',
+  enabled: true,
+  locales: ['en', 'ar'],
+  pages: ['/stocks/*', '/blog/*', '/discover'],
+  styleVariant: 'bottom',
+  title_en: 'Get the Baraka App',
+  title_ar: 'حمّل تطبيق بركة',
+  subtitle_en: 'Trade stocks commission-free',
+  subtitle_ar: 'تداول الأسهم بدون عمولة',
+  ctaText_en: 'Download Now',
+  ctaText_ar: 'حمّل الآن',
+  iconUrl: '',
+  backgroundStyle: 'brand',
+  adjustLinkIos: 'https://app.adjust.com/baraka_ios?campaign=web_install_banner',
+  adjustLinkAndroid: 'https://app.adjust.com/baraka_android?campaign=web_install_banner',
+  frequencyCapDays: 7,
+  showAfterSeconds: 3,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+};
+
+// Seed Analytics Settings
+const seedAnalyticsSettings: AnalyticsSettings = {
+  id: '1',
+  ga4PropertyId: undefined,
+  authType: 'none',
+  enabled: false,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+};
+
+// Seed CMS Web Events (sample data)
+const seedCmsWebEvents: CmsWebEvent[] = [
+  { id: '1', eventType: 'page_view', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'mobile', metaJson: { sessionId: 'sess1' }, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '2', eventType: 'page_view', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'desktop', metaJson: { sessionId: 'sess2' }, createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+  { id: '3', eventType: 'cta_click', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'mobile', metaJson: { ctaText: 'Trade Now' }, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '4', eventType: 'page_view', pagePath: '/blog/beginner-guide-stock-investing', locale: 'en', deviceCategory: 'desktop', metaJson: { sessionId: 'sess3' }, createdAt: new Date(Date.now() - 86400000 * 3).toISOString() },
+  { id: '5', eventType: 'newsletter_submit', pagePath: '/blog/beginner-guide-stock-investing', locale: 'en', deviceCategory: 'desktop', metaJson: {}, createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+  { id: '6', eventType: 'install_banner_view', pagePath: '/stocks/tesla-tsla', locale: 'en', deviceCategory: 'mobile', metaJson: { bannerId: '1' }, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '7', eventType: 'install_banner_click', pagePath: '/stocks/tesla-tsla', locale: 'en', deviceCategory: 'mobile', metaJson: { bannerId: '1', os: 'ios' }, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '8', eventType: 'adjust_outbound_click', pagePath: '/stocks/nvidia-nvda', locale: 'ar', deviceCategory: 'mobile', metaJson: { os: 'android', adjustUrl: 'https://app.adjust.com/baraka_android' }, createdAt: new Date(Date.now() - 86400000 * 4).toISOString() },
+  { id: '9', eventType: 'banner_view', pagePath: '/discover', locale: 'en', deviceCategory: 'desktop', metaJson: { bannerId: '1', bannerPlacement: 'discover_offers_rail' }, createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '10', eventType: 'banner_click', pagePath: '/discover', locale: 'en', deviceCategory: 'desktop', metaJson: { bannerId: '1', bannerPlacement: 'discover_offers_rail' }, createdAt: new Date(Date.now() - 86400000).toISOString() },
+];
+
+// Seed Banner Events
+const seedBannerEvents: BannerEvent[] = [
+  { id: '1', bannerId: '1', bannerType: 'offer', eventType: 'view', placement: 'discover_offers_rail', pagePath: '/discover', locale: 'en', deviceCategory: 'desktop', createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '2', bannerId: '1', bannerType: 'offer', eventType: 'click', placement: 'discover_offers_rail', pagePath: '/discover', locale: 'en', deviceCategory: 'desktop', createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '3', bannerId: '1', bannerType: 'mobile_install', eventType: 'view', placement: 'bottom', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'mobile', createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '4', bannerId: '1', bannerType: 'mobile_install', eventType: 'click', placement: 'bottom', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'mobile', createdAt: new Date(Date.now() - 86400000).toISOString() },
+  { id: '5', bannerId: '2', bannerType: 'offer', eventType: 'view', placement: 'discover_offers_rail', pagePath: '/discover', locale: 'ar', deviceCategory: 'mobile', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
 ];
 
 // Seed Landing Pages
@@ -601,6 +834,66 @@ export interface IStorage {
   createAnalyticsEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent>;
   getAnalyticsEvents(landingPageId?: string): Promise<AnalyticsEvent[]>;
   getAnalyticsSummary(landingPageId: string): Promise<{ views: number; ctaClicks: number; formSubmits: number }>;
+  
+  // CMS Web Events
+  createCmsWebEvent(event: InsertCmsWebEvent): Promise<CmsWebEvent>;
+  getCmsWebEvents(filters?: { eventType?: string; startDate?: string; endDate?: string }): Promise<CmsWebEvent[]>;
+  
+  // Banner Events
+  createBannerEvent(event: InsertBannerEvent): Promise<BannerEvent>;
+  getBannerEvents(filters?: { bannerId?: string; bannerType?: string }): Promise<BannerEvent[]>;
+  
+  // Mobile Install Banner
+  getMobileInstallBanners(): Promise<MobileInstallBanner[]>;
+  getMobileInstallBanner(id: string): Promise<MobileInstallBanner | undefined>;
+  getActiveMobileInstallBanner(): Promise<MobileInstallBanner | undefined>;
+  createMobileInstallBanner(banner: InsertMobileInstallBanner): Promise<MobileInstallBanner>;
+  updateMobileInstallBanner(id: string, banner: Partial<MobileInstallBanner>): Promise<MobileInstallBanner | undefined>;
+  deleteMobileInstallBanner(id: string): Promise<boolean>;
+  
+  // Analytics Settings
+  getAnalyticsSettings(): Promise<AnalyticsSettings>;
+  updateAnalyticsSettings(settings: Partial<AnalyticsSettings>): Promise<AnalyticsSettings>;
+  
+  // Blog Posts
+  getBlogPosts(): Promise<BlogPost[]>;
+  getBlogPost(id: string): Promise<BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: string, post: Partial<BlogPost>): Promise<BlogPost | undefined>;
+  deleteBlogPost(id: string): Promise<boolean>;
+  
+  // Stock Pages
+  getStockPages(): Promise<StockPage[]>;
+  getStockPage(id: string): Promise<StockPage | undefined>;
+  getStockPageBySlug(slug: string): Promise<StockPage | undefined>;
+  createStockPage(page: InsertStockPage): Promise<StockPage>;
+  updateStockPage(id: string, page: Partial<StockPage>): Promise<StockPage | undefined>;
+  deleteStockPage(id: string): Promise<boolean>;
+  
+  // Dashboard Analytics
+  getDashboardSummary(dateRange: { start: string; end: string }): Promise<DashboardSummary>;
+}
+
+// Dashboard Summary Types
+export interface DashboardSummary {
+  kpis: {
+    pageViews: number;
+    uniqueSessions: number;
+    ctaClicks: number;
+    newsletterSignups: number;
+    bannerClicks: number;
+    adjustOutboundClicks: number;
+  };
+  topStockPages: Array<{ path: string; views: number; clicks: number }>;
+  topBlogPosts: Array<{ path: string; views: number; newsletterClicks: number }>;
+  bannerPerformance: Array<{ bannerId: string; views: number; clicks: number; ctr: number }>;
+  contentHealth: {
+    draftStocks: number;
+    draftBlogs: number;
+    missingSeo: number;
+    recentlyPublished: number;
+  };
 }
 
 export class MemStorage implements IStorage {
@@ -614,6 +907,12 @@ export class MemStorage implements IStorage {
   private landingPageVersions: Map<string, LandingPageVersion>;
   private formSubmissions: Map<string, FormSubmission>;
   private analyticsEvents: Map<string, AnalyticsEvent>;
+  private cmsWebEvents: Map<string, CmsWebEvent>;
+  private bannerEvents: Map<string, BannerEvent>;
+  private mobileInstallBanners: Map<string, MobileInstallBanner>;
+  private analyticsSettings: AnalyticsSettings;
+  private blogPosts: Map<string, BlogPost>;
+  private stockPages: Map<string, StockPage>;
 
   constructor() {
     this.users = new Map();
@@ -626,9 +925,30 @@ export class MemStorage implements IStorage {
     this.landingPageVersions = new Map();
     this.formSubmissions = new Map();
     this.analyticsEvents = new Map();
+    this.cmsWebEvents = new Map();
+    this.bannerEvents = new Map();
+    this.mobileInstallBanners = new Map();
+    this.analyticsSettings = { ...seedAnalyticsSettings };
+    this.blogPosts = new Map();
+    this.stockPages = new Map();
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
+    
+    // Seed blog posts
+    seedBlogPosts.forEach(post => this.blogPosts.set(post.id, post));
+    
+    // Seed stock pages
+    seedStockPages.forEach(page => this.stockPages.set(page.id, page));
+    
+    // Seed mobile install banner
+    this.mobileInstallBanners.set(seedMobileInstallBanner.id, seedMobileInstallBanner);
+    
+    // Seed CMS web events
+    seedCmsWebEvents.forEach(event => this.cmsWebEvents.set(event.id, event));
+    
+    // Seed banner events
+    seedBannerEvents.forEach(event => this.bannerEvents.set(event.id, event));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -837,6 +1157,298 @@ export class MemStorage implements IStorage {
       views: events.filter(e => e.eventType === 'page_view').length,
       ctaClicks: events.filter(e => e.eventType === 'cta_click').length,
       formSubmits: events.filter(e => e.eventType === 'form_submit').length,
+    };
+  }
+
+  // CMS Web Events
+  async createCmsWebEvent(event: InsertCmsWebEvent): Promise<CmsWebEvent> {
+    const id = randomUUID();
+    const newEvent: CmsWebEvent = {
+      ...event,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.cmsWebEvents.set(id, newEvent);
+    return newEvent;
+  }
+
+  async getCmsWebEvents(filters?: { eventType?: string; startDate?: string; endDate?: string }): Promise<CmsWebEvent[]> {
+    let events = Array.from(this.cmsWebEvents.values());
+    if (filters?.eventType) {
+      events = events.filter(e => e.eventType === filters.eventType);
+    }
+    if (filters?.startDate) {
+      events = events.filter(e => new Date(e.createdAt) >= new Date(filters.startDate!));
+    }
+    if (filters?.endDate) {
+      events = events.filter(e => new Date(e.createdAt) <= new Date(filters.endDate!));
+    }
+    return events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  // Banner Events
+  async createBannerEvent(event: InsertBannerEvent): Promise<BannerEvent> {
+    const id = randomUUID();
+    const newEvent: BannerEvent = {
+      ...event,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.bannerEvents.set(id, newEvent);
+    return newEvent;
+  }
+
+  async getBannerEvents(filters?: { bannerId?: string; bannerType?: string }): Promise<BannerEvent[]> {
+    let events = Array.from(this.bannerEvents.values());
+    if (filters?.bannerId) {
+      events = events.filter(e => e.bannerId === filters.bannerId);
+    }
+    if (filters?.bannerType) {
+      events = events.filter(e => e.bannerType === filters.bannerType);
+    }
+    return events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  // Mobile Install Banner
+  async getMobileInstallBanners(): Promise<MobileInstallBanner[]> {
+    return Array.from(this.mobileInstallBanners.values());
+  }
+
+  async getMobileInstallBanner(id: string): Promise<MobileInstallBanner | undefined> {
+    return this.mobileInstallBanners.get(id);
+  }
+
+  async getActiveMobileInstallBanner(): Promise<MobileInstallBanner | undefined> {
+    return Array.from(this.mobileInstallBanners.values()).find(b => b.enabled);
+  }
+
+  async createMobileInstallBanner(banner: InsertMobileInstallBanner): Promise<MobileInstallBanner> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newBanner: MobileInstallBanner = {
+      ...banner,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.mobileInstallBanners.set(id, newBanner);
+    return newBanner;
+  }
+
+  async updateMobileInstallBanner(id: string, banner: Partial<MobileInstallBanner>): Promise<MobileInstallBanner | undefined> {
+    const existing = this.mobileInstallBanners.get(id);
+    if (!existing) return undefined;
+    
+    const updated: MobileInstallBanner = {
+      ...existing,
+      ...banner,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.mobileInstallBanners.set(id, updated);
+    return updated;
+  }
+
+  async deleteMobileInstallBanner(id: string): Promise<boolean> {
+    return this.mobileInstallBanners.delete(id);
+  }
+
+  // Analytics Settings
+  async getAnalyticsSettings(): Promise<AnalyticsSettings> {
+    return this.analyticsSettings;
+  }
+
+  async updateAnalyticsSettings(settings: Partial<AnalyticsSettings>): Promise<AnalyticsSettings> {
+    this.analyticsSettings = {
+      ...this.analyticsSettings,
+      ...settings,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.analyticsSettings;
+  }
+
+  // Blog Posts
+  async getBlogPosts(): Promise<BlogPost[]> {
+    return Array.from(this.blogPosts.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getBlogPost(id: string): Promise<BlogPost | undefined> {
+    return this.blogPosts.get(id);
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    return Array.from(this.blogPosts.values()).find(post => post.slug === slug);
+  }
+
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newPost: BlogPost = {
+      ...post,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.blogPosts.set(id, newPost);
+    return newPost;
+  }
+
+  async updateBlogPost(id: string, post: Partial<BlogPost>): Promise<BlogPost | undefined> {
+    const existing = this.blogPosts.get(id);
+    if (!existing) return undefined;
+    
+    const updated: BlogPost = {
+      ...existing,
+      ...post,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.blogPosts.set(id, updated);
+    return updated;
+  }
+
+  async deleteBlogPost(id: string): Promise<boolean> {
+    return this.blogPosts.delete(id);
+  }
+
+  // Stock Pages
+  async getStockPages(): Promise<StockPage[]> {
+    return Array.from(this.stockPages.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getStockPage(id: string): Promise<StockPage | undefined> {
+    return this.stockPages.get(id);
+  }
+
+  async getStockPageBySlug(slug: string): Promise<StockPage | undefined> {
+    return Array.from(this.stockPages.values()).find(page => page.slug === slug);
+  }
+
+  async createStockPage(page: InsertStockPage): Promise<StockPage> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newPage: StockPage = {
+      ...page,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.stockPages.set(id, newPage);
+    return newPage;
+  }
+
+  async updateStockPage(id: string, page: Partial<StockPage>): Promise<StockPage | undefined> {
+    const existing = this.stockPages.get(id);
+    if (!existing) return undefined;
+    
+    const updated: StockPage = {
+      ...existing,
+      ...page,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.stockPages.set(id, updated);
+    return updated;
+  }
+
+  async deleteStockPage(id: string): Promise<boolean> {
+    return this.stockPages.delete(id);
+  }
+
+  // Dashboard Analytics
+  async getDashboardSummary(dateRange: { start: string; end: string }): Promise<DashboardSummary> {
+    const events = await this.getCmsWebEvents({
+      startDate: dateRange.start,
+      endDate: dateRange.end,
+    });
+    
+    const newsletterSignups = Array.from(this.newsletterSignups.values()).filter(s => {
+      const date = new Date(s.createdAt);
+      return date >= new Date(dateRange.start) && date <= new Date(dateRange.end);
+    });
+    
+    const bannerEvts = await this.getBannerEvents();
+    const stockPages = await this.getStockPages();
+    const blogPosts = await this.getBlogPosts();
+
+    // Calculate top stock pages
+    const stockViews: Record<string, { views: number; clicks: number }> = {};
+    events.filter(e => e.pagePath.startsWith('/stocks/')).forEach(e => {
+      if (!stockViews[e.pagePath]) stockViews[e.pagePath] = { views: 0, clicks: 0 };
+      if (e.eventType === 'page_view') stockViews[e.pagePath].views++;
+      if (e.eventType === 'cta_click') stockViews[e.pagePath].clicks++;
+    });
+
+    // Calculate top blog posts
+    const blogViews: Record<string, { views: number; newsletterClicks: number }> = {};
+    events.filter(e => e.pagePath.startsWith('/blog/')).forEach(e => {
+      if (!blogViews[e.pagePath]) blogViews[e.pagePath] = { views: 0, newsletterClicks: 0 };
+      if (e.eventType === 'page_view') blogViews[e.pagePath].views++;
+      if (e.eventType === 'newsletter_submit') blogViews[e.pagePath].newsletterClicks++;
+    });
+
+    // Banner performance
+    const bannerPerf: Record<string, { views: number; clicks: number }> = {};
+    bannerEvts.forEach(e => {
+      if (!bannerPerf[e.bannerId]) bannerPerf[e.bannerId] = { views: 0, clicks: 0 };
+      if (e.eventType === 'view') bannerPerf[e.bannerId].views++;
+      if (e.eventType === 'click') bannerPerf[e.bannerId].clicks++;
+    });
+
+    // Content health
+    const draftStocks = stockPages.filter(p => p.status === 'draft').length;
+    const draftBlogs = blogPosts.filter(p => p.status === 'draft').length;
+    const missingSeo = [...stockPages, ...blogPosts].filter(p => {
+      const seo = 'seo' in p ? p.seo : {};
+      return !seo.metaTitle_en && !seo.metaDescription_en;
+    }).length;
+    const recentlyPublished = [...stockPages, ...blogPosts].filter(p => {
+      const published = p.publishedAt;
+      if (!published) return false;
+      const days = (Date.now() - new Date(published).getTime()) / (1000 * 60 * 60 * 24);
+      return days <= 7;
+    }).length;
+
+    // Unique sessions
+    const sessions = new Set(events.filter(e => e.metaJson.sessionId).map(e => e.metaJson.sessionId));
+
+    return {
+      kpis: {
+        pageViews: events.filter(e => e.eventType === 'page_view').length,
+        uniqueSessions: sessions.size,
+        ctaClicks: events.filter(e => e.eventType === 'cta_click').length,
+        newsletterSignups: newsletterSignups.length + events.filter(e => e.eventType === 'newsletter_submit').length,
+        bannerClicks: events.filter(e => e.eventType === 'banner_click').length,
+        adjustOutboundClicks: events.filter(e => e.eventType === 'adjust_outbound_click').length,
+      },
+      topStockPages: Object.entries(stockViews)
+        .map(([path, data]) => ({ path, ...data }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10),
+      topBlogPosts: Object.entries(blogViews)
+        .map(([path, data]) => ({ path, ...data }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 10),
+      bannerPerformance: Object.entries(bannerPerf)
+        .map(([bannerId, data]) => ({
+          bannerId,
+          ...data,
+          ctr: data.views > 0 ? (data.clicks / data.views) * 100 : 0,
+        }))
+        .sort((a, b) => b.ctr - a.ctr),
+      contentHealth: {
+        draftStocks,
+        draftBlogs,
+        missingSeo,
+        recentlyPublished,
+      },
     };
   }
 }

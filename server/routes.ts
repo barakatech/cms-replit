@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPriceAlertSubscriptionSchema, insertNewsletterSignupSchema } from "@shared/schema";
+import type { InsertCmsWebEvent, InsertBannerEvent } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -222,6 +223,303 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const landingPageId = req.query.landingPageId as string | undefined;
     const events = await storage.getAnalyticsEvents(landingPageId);
     res.json(events);
+  });
+
+  // ============================================
+  // CMS WEB EVENTS API (Internal Analytics Pipeline)
+  // ============================================
+
+  // Track CMS web event (public endpoint)
+  app.post("/api/events", async (req, res) => {
+    try {
+      const event: InsertCmsWebEvent = {
+        eventType: req.body.eventType,
+        pagePath: req.body.pagePath,
+        locale: req.body.locale || 'en',
+        deviceCategory: req.body.deviceCategory || 'desktop',
+        userAgentHash: req.body.userAgentHash,
+        metaJson: req.body.metaJson || {},
+      };
+      await storage.createCmsWebEvent(event);
+      res.status(201).json({ success: true });
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Failed to track event" });
+    }
+  });
+
+  // Get CMS web events (admin)
+  app.get("/api/admin/events", async (req, res) => {
+    const filters = {
+      eventType: req.query.eventType as string | undefined,
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+    };
+    const events = await storage.getCmsWebEvents(filters);
+    res.json(events);
+  });
+
+  // ============================================
+  // BANNER EVENTS API
+  // ============================================
+
+  // Track banner event (public endpoint)
+  app.post("/api/events/banner", async (req, res) => {
+    try {
+      const event: InsertBannerEvent = {
+        bannerId: req.body.bannerId,
+        bannerType: req.body.bannerType,
+        eventType: req.body.eventType,
+        placement: req.body.placement,
+        pagePath: req.body.pagePath,
+        locale: req.body.locale || 'en',
+        deviceCategory: req.body.deviceCategory || 'desktop',
+      };
+      await storage.createBannerEvent(event);
+      res.status(201).json({ success: true });
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Failed to track banner event" });
+    }
+  });
+
+  // Get banner events (admin)
+  app.get("/api/admin/events/banners", async (req, res) => {
+    const filters = {
+      bannerId: req.query.bannerId as string | undefined,
+      bannerType: req.query.bannerType as string | undefined,
+    };
+    const events = await storage.getBannerEvents(filters);
+    res.json(events);
+  });
+
+  // ============================================
+  // MOBILE INSTALL BANNER API
+  // ============================================
+
+  // Get all mobile install banners (admin)
+  app.get("/api/admin/mobile-install-banners", async (_req, res) => {
+    const banners = await storage.getMobileInstallBanners();
+    res.json(banners);
+  });
+
+  // Get active mobile install banner (public)
+  app.get("/api/mobile-install-banner", async (_req, res) => {
+    const banner = await storage.getActiveMobileInstallBanner();
+    if (!banner) {
+      return res.status(404).json({ error: "No active banner" });
+    }
+    res.json(banner);
+  });
+
+  // Get single mobile install banner (admin)
+  app.get("/api/admin/mobile-install-banners/:id", async (req, res) => {
+    const banner = await storage.getMobileInstallBanner(req.params.id);
+    if (!banner) {
+      return res.status(404).json({ error: "Banner not found" });
+    }
+    res.json(banner);
+  });
+
+  // Create mobile install banner (admin)
+  app.post("/api/admin/mobile-install-banners", async (req, res) => {
+    try {
+      const banner = await storage.createMobileInstallBanner(req.body);
+      res.status(201).json(banner);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create banner" });
+    }
+  });
+
+  // Update mobile install banner (admin)
+  app.put("/api/admin/mobile-install-banners/:id", async (req, res) => {
+    try {
+      const banner = await storage.updateMobileInstallBanner(req.params.id, req.body);
+      if (!banner) {
+        return res.status(404).json({ error: "Banner not found" });
+      }
+      res.json(banner);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update banner" });
+    }
+  });
+
+  // Delete mobile install banner (admin)
+  app.delete("/api/admin/mobile-install-banners/:id", async (req, res) => {
+    const success = await storage.deleteMobileInstallBanner(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Banner not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // ANALYTICS SETTINGS API
+  // ============================================
+
+  // Get analytics settings (admin)
+  app.get("/api/admin/analytics/settings", async (_req, res) => {
+    const settings = await storage.getAnalyticsSettings();
+    res.json(settings);
+  });
+
+  // Update analytics settings (admin)
+  app.put("/api/admin/analytics/settings", async (req, res) => {
+    try {
+      const settings = await storage.updateAnalyticsSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update analytics settings" });
+    }
+  });
+
+  // ============================================
+  // DASHBOARD SUMMARY API
+  // ============================================
+
+  // Get dashboard summary (admin)
+  app.get("/api/admin/analytics/summary", async (req, res) => {
+    const range = req.query.range as string || '7d';
+    const endDate = new Date();
+    let startDate = new Date();
+    
+    switch (range) {
+      case '7d':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '28d':
+        startDate.setDate(endDate.getDate() - 28);
+        break;
+      case '90d':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+    
+    const summary = await storage.getDashboardSummary({
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+    });
+    res.json(summary);
+  });
+
+  // ============================================
+  // BLOG POSTS API
+  // ============================================
+
+  // Get all blog posts
+  app.get("/api/blog-posts", async (_req, res) => {
+    const posts = await storage.getBlogPosts();
+    res.json(posts);
+  });
+
+  // Get single blog post by ID
+  app.get("/api/blog-posts/:id", async (req, res) => {
+    const post = await storage.getBlogPost(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Blog post not found" });
+    }
+    res.json(post);
+  });
+
+  // Get blog post by slug (public)
+  app.get("/api/blog-posts/slug/:slug", async (req, res) => {
+    const post = await storage.getBlogPostBySlug(req.params.slug);
+    if (!post) {
+      return res.status(404).json({ error: "Blog post not found" });
+    }
+    res.json(post);
+  });
+
+  // Create blog post (admin)
+  app.post("/api/blog-posts", async (req, res) => {
+    try {
+      const post = await storage.createBlogPost(req.body);
+      res.status(201).json(post);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create blog post" });
+    }
+  });
+
+  // Update blog post (admin)
+  app.put("/api/blog-posts/:id", async (req, res) => {
+    try {
+      const post = await storage.updateBlogPost(req.params.id, req.body);
+      if (!post) {
+        return res.status(404).json({ error: "Blog post not found" });
+      }
+      res.json(post);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update blog post" });
+    }
+  });
+
+  // Delete blog post (admin)
+  app.delete("/api/blog-posts/:id", async (req, res) => {
+    const success = await storage.deleteBlogPost(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Blog post not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // STOCK PAGES API
+  // ============================================
+
+  // Get all stock pages
+  app.get("/api/stock-pages", async (_req, res) => {
+    const pages = await storage.getStockPages();
+    res.json(pages);
+  });
+
+  // Get single stock page by ID
+  app.get("/api/stock-pages/:id", async (req, res) => {
+    const page = await storage.getStockPage(req.params.id);
+    if (!page) {
+      return res.status(404).json({ error: "Stock page not found" });
+    }
+    res.json(page);
+  });
+
+  // Get stock page by slug (public)
+  app.get("/api/stock-pages/slug/:slug", async (req, res) => {
+    const page = await storage.getStockPageBySlug(req.params.slug);
+    if (!page) {
+      return res.status(404).json({ error: "Stock page not found" });
+    }
+    res.json(page);
+  });
+
+  // Create stock page (admin)
+  app.post("/api/stock-pages", async (req, res) => {
+    try {
+      const page = await storage.createStockPage(req.body);
+      res.status(201).json(page);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create stock page" });
+    }
+  });
+
+  // Update stock page (admin)
+  app.put("/api/stock-pages/:id", async (req, res) => {
+    try {
+      const page = await storage.updateStockPage(req.params.id, req.body);
+      if (!page) {
+        return res.status(404).json({ error: "Stock page not found" });
+      }
+      res.json(page);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update stock page" });
+    }
+  });
+
+  // Delete stock page (admin)
+  app.delete("/api/stock-pages/:id", async (req, res) => {
+    const success = await storage.deleteStockPage(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Stock page not found" });
+    }
+    res.json({ success: true });
   });
 
   const httpServer = createServer(app);

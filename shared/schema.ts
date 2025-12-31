@@ -452,3 +452,164 @@ export interface AnalyticsEvent {
 export type InsertLandingPage = Omit<LandingPage, 'id' | 'createdAt' | 'updatedAt'>;
 export type InsertFormSubmission = Omit<FormSubmission, 'id' | 'createdAt'>;
 export type InsertAnalyticsEvent = Omit<AnalyticsEvent, 'id' | 'createdAt'>;
+
+// ============================================
+// CMS WEB EVENTS (Internal Analytics Pipeline)
+// ============================================
+
+export type CmsWebEventType = 
+  | 'page_view'
+  | 'banner_view'
+  | 'banner_click'
+  | 'cta_click'
+  | 'newsletter_submit'
+  | 'adjust_outbound_click'
+  | 'install_banner_view'
+  | 'install_banner_click';
+
+export interface CmsWebEvent {
+  id: string;
+  eventType: CmsWebEventType;
+  pagePath: string;
+  locale: 'en' | 'ar';
+  deviceCategory: 'mobile' | 'desktop' | 'tablet';
+  userAgentHash?: string;
+  metaJson: {
+    bannerId?: string;
+    bannerPlacement?: string;
+    ctaText?: string;
+    adjustUrl?: string;
+    os?: 'ios' | 'android' | 'other';
+    sessionId?: string;
+    referrer?: string;
+    [key: string]: unknown;
+  };
+  createdAt: string;
+}
+
+export type InsertCmsWebEvent = Omit<CmsWebEvent, 'id' | 'createdAt'>;
+
+// ============================================
+// BANNER EVENTS (For tracking banner performance)
+// ============================================
+
+export interface BannerEvent {
+  id: string;
+  bannerId: string;
+  bannerType: 'offer' | 'mobile_install';
+  eventType: 'view' | 'click';
+  placement: string;
+  pagePath: string;
+  locale: 'en' | 'ar';
+  deviceCategory: 'mobile' | 'desktop' | 'tablet';
+  createdAt: string;
+}
+
+export type InsertBannerEvent = Omit<BannerEvent, 'id' | 'createdAt'>;
+
+// ============================================
+// MOBILE INSTALL BANNER
+// ============================================
+
+export interface MobileInstallBanner {
+  id: string;
+  name: string;
+  enabled: boolean;
+  locales: ('en' | 'ar')[];
+  pages: string[]; // Route patterns like "/stocks/*", "/blog/*"
+  styleVariant: 'top' | 'bottom';
+  title_en: string;
+  title_ar: string;
+  subtitle_en: string;
+  subtitle_ar: string;
+  ctaText_en: string;
+  ctaText_ar: string;
+  iconUrl?: string;
+  backgroundStyle: 'surface' | 'tertiary' | 'brand';
+  adjustLinkIos: string;
+  adjustLinkAndroid: string;
+  frequencyCapDays: number;
+  showAfterSeconds: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertMobileInstallBanner = Omit<MobileInstallBanner, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ============================================
+// ANALYTICS SETTINGS (GA4 Configuration)
+// ============================================
+
+export interface AnalyticsSettings {
+  id: string;
+  ga4PropertyId?: string;
+  authType: 'service_account' | 'oauth' | 'none';
+  enabled: boolean;
+  lastSyncAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertAnalyticsSettings = Omit<AnalyticsSettings, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ============================================
+// BLOG POSTS (for Learn/Blog section)
+// ============================================
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title_en: string;
+  title_ar: string;
+  excerpt_en: string;
+  excerpt_ar: string;
+  content_en: string;
+  content_ar: string;
+  featuredImage?: string;
+  category: string;
+  tags: string[];
+  author: string;
+  status: 'draft' | 'published' | 'archived';
+  seo: {
+    metaTitle_en?: string;
+    metaTitle_ar?: string;
+    metaDescription_en?: string;
+    metaDescription_ar?: string;
+  };
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertBlogPost = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ============================================
+// STOCK PAGES (for Stocks section)
+// ============================================
+
+export interface StockPage {
+  id: string;
+  ticker: string;
+  slug: string;
+  companyName_en: string;
+  companyName_ar: string;
+  description_en: string;
+  description_ar: string;
+  content_en: string;
+  content_ar: string;
+  sector: string;
+  exchange: string;
+  status: 'draft' | 'published' | 'archived';
+  seo: {
+    metaTitle_en?: string;
+    metaTitle_ar?: string;
+    metaDescription_en?: string;
+    metaDescription_ar?: string;
+  };
+  relatedTickers: string[];
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertStockPage = Omit<StockPage, 'id' | 'createdAt' | 'updatedAt'>;
