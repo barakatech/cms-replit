@@ -236,6 +236,270 @@ export interface Asset {
   uploadDate: string;
 }
 
+// Blog types and mock data
+export type BlogStatus = 'draft' | 'published' | 'archived';
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: { en: string; ar: string };
+  excerpt: { en: string; ar: string };
+  content: { en: string; ar: string };
+  author: string;
+  category: string;
+  tags: string[];
+  featuredImage: string;
+  status: BlogStatus;
+  publishDate: string;
+  lastUpdated: string;
+  readTime: number;
+  seoTitle: { en: string; ar: string };
+  seoDescription: { en: string; ar: string };
+}
+
+export const mockBlogs: BlogPost[] = [
+  {
+    id: '1',
+    slug: 'understanding-stock-market-basics',
+    title: {
+      en: 'Understanding Stock Market Basics: A Beginner\'s Guide',
+      ar: 'فهم أساسيات سوق الأسهم: دليل المبتدئين',
+    },
+    excerpt: {
+      en: 'Learn the fundamental concepts of stock market investing, from understanding what stocks are to how markets operate.',
+      ar: 'تعلم المفاهيم الأساسية للاستثمار في سوق الأسهم، من فهم ماهية الأسهم إلى كيفية عمل الأسواق.',
+    },
+    content: {
+      en: 'The stock market is a complex but fascinating system that allows individuals and institutions to buy and sell shares of publicly traded companies...',
+      ar: 'سوق الأسهم هو نظام معقد ولكنه رائع يسمح للأفراد والمؤسسات بشراء وبيع أسهم الشركات المتداولة علنًا...',
+    },
+    author: 'Sarah Ahmed',
+    category: 'Education',
+    tags: ['investing', 'stocks', 'beginners'],
+    featuredImage: '/images/stock-basics.jpg',
+    status: 'published',
+    publishDate: '2024-01-10',
+    lastUpdated: '2024-01-10',
+    readTime: 8,
+    seoTitle: {
+      en: 'Stock Market Basics Guide | baraka',
+      ar: 'دليل أساسيات سوق الأسهم | بركة',
+    },
+    seoDescription: {
+      en: 'Master the basics of stock market investing with our comprehensive guide for beginners.',
+      ar: 'أتقن أساسيات الاستثمار في سوق الأسهم مع دليلنا الشامل للمبتدئين.',
+    },
+  },
+  {
+    id: '2',
+    slug: 'top-tech-stocks-2024',
+    title: {
+      en: 'Top Tech Stocks to Watch in 2024',
+      ar: 'أفضل أسهم التكنولوجيا للمتابعة في 2024',
+    },
+    excerpt: {
+      en: 'Discover the most promising technology stocks that could shape your investment portfolio this year.',
+      ar: 'اكتشف أسهم التكنولوجيا الواعدة التي يمكن أن تشكل محفظتك الاستثمارية هذا العام.',
+    },
+    content: {
+      en: 'As we enter 2024, the technology sector continues to be a driving force in the global economy. From AI advancements to cloud computing...',
+      ar: 'مع دخولنا عام 2024، يستمر قطاع التكنولوجيا في كونه قوة دافعة في الاقتصاد العالمي. من التطورات في الذكاء الاصطناعي إلى الحوسبة السحابية...',
+    },
+    author: 'Mohammed Khan',
+    category: 'Analysis',
+    tags: ['technology', 'stocks', '2024', 'investing'],
+    featuredImage: '/images/tech-stocks.jpg',
+    status: 'published',
+    publishDate: '2024-01-05',
+    lastUpdated: '2024-01-08',
+    readTime: 12,
+    seoTitle: {
+      en: 'Best Tech Stocks 2024 | baraka',
+      ar: 'أفضل أسهم التكنولوجيا 2024 | بركة',
+    },
+    seoDescription: {
+      en: 'Explore top technology stocks for 2024 with expert analysis and insights.',
+      ar: 'استكشف أفضل أسهم التكنولوجيا لعام 2024 مع تحليلات ورؤى الخبراء.',
+    },
+  },
+  {
+    id: '3',
+    slug: 'dividend-investing-strategy',
+    title: {
+      en: 'Building Wealth Through Dividend Investing',
+      ar: 'بناء الثروة من خلال الاستثمار في توزيعات الأرباح',
+    },
+    excerpt: {
+      en: 'Learn how dividend investing can provide steady income and long-term wealth building opportunities.',
+      ar: 'تعلم كيف يمكن للاستثمار في توزيعات الأرباح أن يوفر دخلاً ثابتًا وفرصًا لبناء الثروة على المدى الطويل.',
+    },
+    content: {
+      en: 'Dividend investing is a time-tested strategy that focuses on purchasing stocks that regularly distribute profits to shareholders...',
+      ar: 'الاستثمار في توزيعات الأرباح هو استراتيجية مجربة تركز على شراء الأسهم التي توزع الأرباح بانتظام على المساهمين...',
+    },
+    author: 'Fatima Al-Hassan',
+    category: 'Strategy',
+    tags: ['dividends', 'passive income', 'investing'],
+    featuredImage: '/images/dividends.jpg',
+    status: 'draft',
+    publishDate: '',
+    lastUpdated: '2024-01-12',
+    readTime: 10,
+    seoTitle: {
+      en: 'Dividend Investing Guide | baraka',
+      ar: 'دليل الاستثمار في توزيعات الأرباح | بركة',
+    },
+    seoDescription: {
+      en: 'Discover how to build wealth through strategic dividend investing.',
+      ar: 'اكتشف كيفية بناء الثروة من خلال الاستثمار الاستراتيجي في توزيعات الأرباح.',
+    },
+  },
+];
+
+// Banner types and mock data
+export type BannerType = 'hero' | 'promotional' | 'announcement' | 'feature';
+export type BannerStatus = 'active' | 'scheduled' | 'inactive' | 'expired';
+
+export interface Banner {
+  id: string;
+  name: string;
+  type: BannerType;
+  title: { en: string; ar: string };
+  subtitle: { en: string; ar: string };
+  ctaText: { en: string; ar: string };
+  ctaUrl: string;
+  backgroundImage: string;
+  backgroundColor: string;
+  textColor: string;
+  status: BannerStatus;
+  placement: string[];
+  startDate: string;
+  endDate: string;
+  priority: number;
+  targetAudience: string;
+  clickCount: number;
+  impressions: number;
+}
+
+export const mockBanners: Banner[] = [
+  {
+    id: '1',
+    name: 'New Year Trading Promotion',
+    type: 'hero',
+    title: {
+      en: 'Start 2024 with Zero Commission Trading',
+      ar: 'ابدأ 2024 مع تداول بدون عمولة',
+    },
+    subtitle: {
+      en: 'Trade US stocks with zero commission for the first 30 days',
+      ar: 'تداول الأسهم الأمريكية بدون عمولة لأول 30 يومًا',
+    },
+    ctaText: {
+      en: 'Start Trading',
+      ar: 'ابدأ التداول',
+    },
+    ctaUrl: '/signup',
+    backgroundImage: '/images/banner-newyear.jpg',
+    backgroundColor: '#1a1a2e',
+    textColor: '#ffffff',
+    status: 'active',
+    placement: ['home-hero', 'dashboard'],
+    startDate: '2024-01-01',
+    endDate: '2024-01-31',
+    priority: 1,
+    targetAudience: 'new-users',
+    clickCount: 1250,
+    impressions: 45000,
+  },
+  {
+    id: '2',
+    name: 'Apple Stock Feature',
+    type: 'promotional',
+    title: {
+      en: 'Apple Q1 Earnings Alert',
+      ar: 'تنبيه أرباح آبل للربع الأول',
+    },
+    subtitle: {
+      en: 'Get ready for Apple\'s Q1 earnings report. Set up price alerts now.',
+      ar: 'استعد لتقرير أرباح آبل للربع الأول. قم بإعداد تنبيهات الأسعار الآن.',
+    },
+    ctaText: {
+      en: 'Set Alert',
+      ar: 'إعداد التنبيه',
+    },
+    ctaUrl: '/stocks/AAPL',
+    backgroundImage: '/images/banner-apple.jpg',
+    backgroundColor: '#000000',
+    textColor: '#ffffff',
+    status: 'active',
+    placement: ['stock-pages', 'blog'],
+    startDate: '2024-01-15',
+    endDate: '2024-02-15',
+    priority: 2,
+    targetAudience: 'all-users',
+    clickCount: 890,
+    impressions: 28000,
+  },
+  {
+    id: '3',
+    name: 'Referral Program',
+    type: 'announcement',
+    title: {
+      en: 'Refer Friends & Earn Rewards',
+      ar: 'أحل أصدقاءك واكسب مكافآت',
+    },
+    subtitle: {
+      en: 'Earn up to $100 for each friend who joins baraka',
+      ar: 'اربح حتى 100 دولار عن كل صديق ينضم إلى بركة',
+    },
+    ctaText: {
+      en: 'Invite Now',
+      ar: 'ادعُ الآن',
+    },
+    ctaUrl: '/referral',
+    backgroundImage: '',
+    backgroundColor: '#4f46e5',
+    textColor: '#ffffff',
+    status: 'scheduled',
+    placement: ['dashboard', 'settings'],
+    startDate: '2024-02-01',
+    endDate: '2024-03-31',
+    priority: 3,
+    targetAudience: 'existing-users',
+    clickCount: 0,
+    impressions: 0,
+  },
+  {
+    id: '4',
+    name: 'Market Hours Update',
+    type: 'feature',
+    title: {
+      en: 'Extended Trading Hours Now Available',
+      ar: 'ساعات التداول الممتدة متاحة الآن',
+    },
+    subtitle: {
+      en: 'Trade before and after regular market hours',
+      ar: 'تداول قبل وبعد ساعات السوق العادية',
+    },
+    ctaText: {
+      en: 'Learn More',
+      ar: 'اعرف المزيد',
+    },
+    ctaUrl: '/features/extended-hours',
+    backgroundImage: '/images/banner-hours.jpg',
+    backgroundColor: '#059669',
+    textColor: '#ffffff',
+    status: 'inactive',
+    placement: ['home', 'dashboard'],
+    startDate: '2024-01-10',
+    endDate: '2024-12-31',
+    priority: 4,
+    targetAudience: 'all-users',
+    clickCount: 520,
+    impressions: 18000,
+  },
+];
+
 export const mockAssets: Asset[] = [
   {
     id: '1',
