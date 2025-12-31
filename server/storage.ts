@@ -26,7 +26,11 @@ import {
   type BlogPost,
   type InsertBlogPost,
   type StockPage,
-  type InsertStockPage
+  type InsertStockPage,
+  type MarketingPixel,
+  type InsertMarketingPixel,
+  type PixelEventMap,
+  type InsertPixelEventMap
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -873,6 +877,21 @@ export interface IStorage {
   
   // Dashboard Analytics
   getDashboardSummary(dateRange: { start: string; end: string }): Promise<DashboardSummary>;
+  
+  // Marketing Pixels
+  getMarketingPixels(): Promise<MarketingPixel[]>;
+  getMarketingPixel(id: string): Promise<MarketingPixel | undefined>;
+  getEnabledMarketingPixels(): Promise<MarketingPixel[]>;
+  createMarketingPixel(pixel: InsertMarketingPixel): Promise<MarketingPixel>;
+  updateMarketingPixel(id: string, pixel: Partial<MarketingPixel>): Promise<MarketingPixel | undefined>;
+  deleteMarketingPixel(id: string): Promise<boolean>;
+  
+  // Pixel Event Mappings
+  getPixelEventMaps(pixelId?: string): Promise<PixelEventMap[]>;
+  getPixelEventMap(id: string): Promise<PixelEventMap | undefined>;
+  createPixelEventMap(mapping: InsertPixelEventMap): Promise<PixelEventMap>;
+  updatePixelEventMap(id: string, mapping: Partial<PixelEventMap>): Promise<PixelEventMap | undefined>;
+  deletePixelEventMap(id: string): Promise<boolean>;
 }
 
 // Dashboard Summary Types
@@ -913,6 +932,8 @@ export class MemStorage implements IStorage {
   private analyticsSettings: AnalyticsSettings;
   private blogPosts: Map<string, BlogPost>;
   private stockPages: Map<string, StockPage>;
+  private marketingPixels: Map<string, MarketingPixel>;
+  private pixelEventMaps: Map<string, PixelEventMap>;
 
   constructor() {
     this.users = new Map();
@@ -931,6 +952,8 @@ export class MemStorage implements IStorage {
     this.analyticsSettings = { ...seedAnalyticsSettings };
     this.blogPosts = new Map();
     this.stockPages = new Map();
+    this.marketingPixels = new Map();
+    this.pixelEventMaps = new Map();
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -1450,6 +1473,102 @@ export class MemStorage implements IStorage {
         recentlyPublished,
       },
     };
+  }
+
+  // Marketing Pixels
+  async getMarketingPixels(): Promise<MarketingPixel[]> {
+    return Array.from(this.marketingPixels.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getMarketingPixel(id: string): Promise<MarketingPixel | undefined> {
+    return this.marketingPixels.get(id);
+  }
+
+  async getEnabledMarketingPixels(): Promise<MarketingPixel[]> {
+    return Array.from(this.marketingPixels.values()).filter(p => p.enabled);
+  }
+
+  async createMarketingPixel(pixel: InsertMarketingPixel): Promise<MarketingPixel> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newPixel: MarketingPixel = {
+      ...pixel,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.marketingPixels.set(id, newPixel);
+    return newPixel;
+  }
+
+  async updateMarketingPixel(id: string, pixel: Partial<MarketingPixel>): Promise<MarketingPixel | undefined> {
+    const existing = this.marketingPixels.get(id);
+    if (!existing) return undefined;
+    
+    const updated: MarketingPixel = {
+      ...existing,
+      ...pixel,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.marketingPixels.set(id, updated);
+    return updated;
+  }
+
+  async deleteMarketingPixel(id: string): Promise<boolean> {
+    // Also delete associated event mappings
+    Array.from(this.pixelEventMaps.values())
+      .filter(m => m.pixelId === id)
+      .forEach(m => this.pixelEventMaps.delete(m.id));
+    return this.marketingPixels.delete(id);
+  }
+
+  // Pixel Event Mappings
+  async getPixelEventMaps(pixelId?: string): Promise<PixelEventMap[]> {
+    const maps = Array.from(this.pixelEventMaps.values());
+    if (pixelId) {
+      return maps.filter(m => m.pixelId === pixelId);
+    }
+    return maps;
+  }
+
+  async getPixelEventMap(id: string): Promise<PixelEventMap | undefined> {
+    return this.pixelEventMaps.get(id);
+  }
+
+  async createPixelEventMap(mapping: InsertPixelEventMap): Promise<PixelEventMap> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newMapping: PixelEventMap = {
+      ...mapping,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.pixelEventMaps.set(id, newMapping);
+    return newMapping;
+  }
+
+  async updatePixelEventMap(id: string, mapping: Partial<PixelEventMap>): Promise<PixelEventMap | undefined> {
+    const existing = this.pixelEventMaps.get(id);
+    if (!existing) return undefined;
+    
+    const updated: PixelEventMap = {
+      ...existing,
+      ...mapping,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.pixelEventMaps.set(id, updated);
+    return updated;
+  }
+
+  async deletePixelEventMap(id: string): Promise<boolean> {
+    return this.pixelEventMaps.delete(id);
   }
 }
 

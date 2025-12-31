@@ -643,3 +643,92 @@ export const PRESENCE_COLORS = [
   '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
   '#BB8FCE', '#85C1E9', '#F8B500', '#00CED1'
 ];
+
+// ============================================
+// MARKETING PIXELS (Meta, TikTok, Snapchat, Google Ads)
+// ============================================
+
+export type PixelPlatform = 'meta' | 'tiktok' | 'snapchat' | 'google_ads';
+
+export interface MarketingPixel {
+  id: string;
+  name: string;
+  platform: PixelPlatform;
+  pixelId: string;
+  enabled: boolean;
+  testMode: boolean;
+  locales: ('en' | 'ar')[];
+  devices: ('mobile' | 'desktop' | 'tablet')[];
+  pages: string[]; // Route patterns like "/stocks/*", "/blog/*", "*" for all
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertMarketingPixel = Omit<MarketingPixel, 'id' | 'createdAt' | 'updatedAt'>;
+
+// CMS Event to Pixel Event Mapping
+export type CmsEventName = 
+  | 'page_view'
+  | 'banner_impression'
+  | 'banner_click'
+  | 'newsletter_submit'
+  | 'lead_submit'
+  | 'app_install_click';
+
+export interface PixelEventMap {
+  id: string;
+  pixelId: string;
+  cmsEvent: CmsEventName;
+  pixelEventName: string; // e.g., 'Lead', 'ViewContent', 'Subscribe'
+  enabled: boolean;
+  customParams?: Record<string, string>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertPixelEventMap = Omit<PixelEventMap, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Pixel Event Dispatch Payload
+export interface PixelDispatchPayload {
+  eventName: CmsEventName;
+  pagePath: string;
+  locale: 'en' | 'ar';
+  device: 'mobile' | 'desktop' | 'tablet';
+  metadata?: Record<string, unknown>;
+}
+
+// Default event mappings per platform
+export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<CmsEventName, string>>> = {
+  meta: {
+    page_view: 'PageView',
+    banner_impression: 'ViewContent',
+    banner_click: 'Lead',
+    newsletter_submit: 'Subscribe',
+    lead_submit: 'Lead',
+    app_install_click: 'Lead',
+  },
+  tiktok: {
+    page_view: 'ViewContent',
+    banner_impression: 'ViewContent',
+    banner_click: 'ClickButton',
+    newsletter_submit: 'Subscribe',
+    lead_submit: 'SubmitForm',
+    app_install_click: 'Download',
+  },
+  snapchat: {
+    page_view: 'PAGE_VIEW',
+    banner_impression: 'VIEW_CONTENT',
+    banner_click: 'ADD_TO_CART',
+    newsletter_submit: 'SIGN_UP',
+    lead_submit: 'SIGN_UP',
+    app_install_click: 'APP_INSTALL',
+  },
+  google_ads: {
+    page_view: 'page_view',
+    banner_impression: 'view_item',
+    banner_click: 'generate_lead',
+    newsletter_submit: 'sign_up',
+    lead_submit: 'generate_lead',
+    app_install_click: 'conversion',
+  },
+};

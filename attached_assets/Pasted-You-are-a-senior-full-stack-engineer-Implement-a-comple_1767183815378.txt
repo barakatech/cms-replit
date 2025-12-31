@@ -1,0 +1,119 @@
+You are a senior full-stack engineer. Implement a complete **Marketing Tracking System** in our Next.js + Prisma CMS that supports:
+
+1) Mobile install banners tracked internally and routed via Adjust MMP
+2) Impression & click analytics owned by CMS
+3) Pixel integrations for Meta, TikTok, Snapchat, and Google Ads
+4) CMS-managed configuration (no hardcoded pixels)
+
+--------------------------------------------------
+PART A — MOBILE BANNER TRACKING (ADJUST)
+--------------------------------------------------
+
+Implement mobile install banners that:
+- Render only on mobile devices
+- Track impressions internally (CMS DB)
+- Track clicks internally
+- Redirect users to OS-specific Adjust links
+
+Tracking rules:
+- Impression fires once per banner per page per session
+- Click fires immediately before redirect
+- Store events in CmsWebEvent table
+
+Event types:
+- banner_impression
+- banner_click
+- adjust_outbound_click
+
+Adjust links:
+- Store iOS and Android Adjust URLs in DB
+- Append UTM + page_path + placement dynamically
+- Redirect using window.location.href
+
+--------------------------------------------------
+PART B — CMS EVENT PIPELINE
+--------------------------------------------------
+
+Create table:
+CmsWebEvent
+- id
+- eventType
+- bannerId (optional)
+- placementKey
+- pagePath
+- device
+- os
+- locale
+- metaJson
+- createdAt
+
+API:
+POST /api/events
+- Validate input
+- Persist event
+- Optionally forward to pixel dispatcher
+
+--------------------------------------------------
+PART C — MARKETING PIXELS SYSTEM
+--------------------------------------------------
+
+Create tables:
+MarketingPixel
+PixelEventMap
+
+Admin UI:
+- /admin/marketing/pixels
+- Add/edit pixels
+- Enable/disable
+- Choose events to fire
+- Choose pages and devices
+- Test mode
+
+Client-side:
+- Single PixelManager
+- dispatchMarketingEvent(eventName, payload)
+
+Supported platforms:
+- Meta (fbq)
+- TikTok (ttq)
+- Snapchat (snaptr)
+- Google Ads (gtag)
+
+--------------------------------------------------
+PART D — EVENT MAPPING
+--------------------------------------------------
+
+CMS events:
+- page_view
+- banner_impression
+- banner_click
+- newsletter_submit
+- lead_submit
+
+Mapped dynamically to:
+- Meta events
+- TikTok events
+- Snapchat events
+- Google Ads conversions
+
+--------------------------------------------------
+PART E — PRIVACY & SAFETY
+--------------------------------------------------
+
+- No PII sent to pixels
+- Respect Do Not Track / consent flags
+- Pixel firing can be disabled per locale
+- All pixel scripts load only if enabled
+
+--------------------------------------------------
+DELIVERABLES
+--------------------------------------------------
+
+- Mobile banner tracking with Adjust routing
+- Internal analytics for impressions/clicks
+- CMS pixel manager UI
+- Client-side pixel dispatcher
+- Event mapping system
+- Documentation on Adjust vs CMS responsibilities
+
+Now implement this end-to-end in the existing Replit CMS.
