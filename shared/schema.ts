@@ -290,6 +290,14 @@ export interface LeadFormSectionData extends LandingPageSectionBase {
       phone: boolean;
       country: boolean;
     };
+    customFields?: Array<{
+      key: string;
+      label: LocalizedText;
+      type: 'text' | 'url' | 'number' | 'textarea' | 'select';
+      required: boolean;
+      placeholder?: LocalizedText;
+      options?: Array<{ value: string; label: LocalizedText }>;
+    }>;
     submitText: LocalizedText;
     successMessage: LocalizedText;
     formKey: string;

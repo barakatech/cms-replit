@@ -1,0 +1,229 @@
+```text
+You are an expert full-stack engineer + copywriter. In our existing Next.js + Prisma CMS with a Landing Page Builder, build a **marketing landing page** similar in structure and intent to the *Robinhood Affiliates* page, but uniquely written from a Baraka perspective. Use our CMS builder’s sections (Hero, Value Props, Features, Social Proof, CTA, FAQ, Newsletter, Footer CTA).
+
+Requirements:
+- Create a new landing page in the Landing Page Builder
+- Use unique Baraka-centric copy that is clear, compliant, and brand-aligned
+- Support EN + AR content
+- Include SEO metadata
+- Use responsive layout
+- Track engagement (CTA clicks) and allow preview in CMS
+- Optional form to collect lead signups
+
+Landing Page Purpose:
+Introduce *Baraka’s Partner & Growth Opportunities* program — drive signups by partners, educators, influencers, and publishers interested in sharing Baraka’s platform and earning referral rewards or commissions.
+
+PAGE STRUCTURE + COPY
+
+-----------------------------------------------------------
+SECTION 1 — Hero / Above the Fold
+-----------------------------------------------------------
+
+Slug: `baraka-partners`
+
+HeroSection (EN)
+- eyebrowText: “Partner with Baraka”
+- headline: “Grow With Us. Empower Investors Across the Region.”
+- subheadline: “Join Baraka’s Partner Program and earn rewards while making financial tools accessible to millions.”
+- primaryCTA:
+  - text: “Become a Partner”
+  - url: “/p/baraka-partners#signup”
+- secondaryCTA:
+  - text: “Learn More”
+  - url: “/p/baraka-partners#why-baraka”
+- heroImageUrl: (illustrative partner ecosystem visual or brand graphic)
+
+HeroSection (AR)
+- eyebrowText: “شارك معنا في Baraka”
+- headline: “انمُ معنا. مَكّن المستثمرين في المنطقة.”
+- subheadline: “انضم لبرنامج شركاء Baraka وحقق مكافآت بينما تُسهم في توسيع الأدوات المالية لآلاف المستثمرين.”
+- primaryCTA:
+  - text: “انضم كـ شريك”
+  - url: “/p/baraka-partners#signup”
+- secondaryCTA:
+  - text: “المزيد”
+  - url: “/p/baraka-partners#why-baraka”
+- heroImageUrl: same (optional AR variation)
+
+-----------------------------------------------------------
+SECTION 2 — Value Props Section
+-----------------------------------------------------------
+
+ValuePropsSection (EN)
+- title: “Why Partner With Baraka”
+- cards:
+  - { icon: “reach”, title: “Wider Reach”, description: “Connect with a growing Arab and global investor community.” }
+  - { icon: “rewards”, title: “Earn More”, description: “Competitive referral rewards and performance-based incentives.” }
+  - { icon: “support”, title: “Dedicated Support”, description: “Guided onboarding and ongoing marketing resources.” }
+
+ValuePropsSection (AR)
+- title: “لماذا Baraka شريكك المثالي”
+- cards:
+  - { icon: “reach”, title: “وصول أوسع”, description: “تواصل مع مجتمع المستثمرين المتنامي محلياً وعالمياً.” }
+  - { icon: “rewards”, title: “اكسب أكثر”, description: “مكافآت إحالة تنافسية وحوافز حسب الأداء.” }
+  - { icon: “support”, title: “دعم مخصص”, description: “دعم إطلاق الحملات وموارد تسويقية مستمرة.” }
+
+-----------------------------------------------------------
+SECTION 3 — Features / Partner Benefits
+-----------------------------------------------------------
+
+FeaturesSection (EN)
+- title: “What You Get”
+- features:
+  - { title: “Custom Referral Links”, description: “Track signups and performance with unique referral URLs.” }
+  - { title: “Real-Time Insights”, description: “Dashboard analytics to monitor clicks, conversions, and rewards.” }
+  - { title: “Marketing Materials”, description: “Access banners, social content, and email templates.” }
+  - { title: “Flexible Payouts”, description: “Payouts via bank, crypto, or Baraka credits.” }
+
+FeaturesSection (AR)
+- title: “مزايا البرنامج”
+- features:
+  - { title: “روابط إحالة مخصصة”, description: “تابع التسجيلات والأداء عبر روابط فريدة.” }
+  - { title: “رؤى فورية”, description: “لوحة تحكم لرصد النقرات، التحويلات، والمكافآت.” }
+  - { title: “مواد تسويقية”, description: “احصل على بانرات ومحتوى اجتماعي ونماذج بريدية.” }
+  - { title: “دفعات مرنة”, description: “استلام المكافآت عبر بنكي، أو كريبتو، أو رصيد Baraka.” }
+
+-----------------------------------------------------------
+SECTION 4 — Social Proof / Testimonials
+-----------------------------------------------------------
+
+SocialProofSection (EN)
+- title: “Trusted by Partners Across the Region”
+- logos: [
+    { imageUrl: “/logos/partner1.png”, name: “Finance Insight MENA” },
+    { imageUrl: “/logos/partner2.png”, name: “Investor Weekly” },
+    { imageUrl: “/logos/partner3.png”, name: “EduFi Arabia” }
+  ]
+- testimonials:
+  - { quote: “Integrating Baraka’s referral tools boosted our engagement by 3×.”, author: “Sara Al-Farsi, Finance Insight” }
+
+SocialProofSection (AR)
+- title: “شركاء يثقون بـ Baraka”
+- logos: same as EN
+- testimonials:
+  - { quote: “أدوات الإحالة في Baraka زادت التفاعل بمقدار ثلاث مرات.”, author: “سارة الفارسي – Finance Insight” }
+
+-----------------------------------------------------------
+SECTION 5 — How It Works (Content Section)
+-----------------------------------------------------------
+
+ContentSection (EN)
+- title: “How It Works”
+- richText: 
+  “1. Sign up and get your unique referral link.  
+  2. Share it in your community — website, newsletter, social channels.  
+  3. Track performance in real time with our dashboard.  
+  4. Earn rewards when people join and invest.”
+
+ContentSection (AR)
+- title: “كيفية عمل البرنامج”
+- richText:
+  “1. سجّل واحصل على رابط إحالة فريد.  
+  2. شاركه مع مجتمعك – موقع، نشرة بريدية، أو منصات التواصل.  
+  3. راقب الأداء لحظة بلحظة عبر لوحة التحكم.  
+  4. اكسب المكافآت مع كل تسجيل واستثمار.”
+
+-----------------------------------------------------------
+SECTION 6 — FAQ
+-----------------------------------------------------------
+
+FAQSection (EN)
+- title: “Frequently Asked Questions”
+- items:
+  - { q: “Who can join the Baraka Partner Program?”, a: “Content creators, financial educators, publishers, influencers, and communities.” }
+  - { q: “How are rewards calculated?”, a: “Rewards are based on the number of qualified referrals and their first-month activity.” }
+  - { q: “When do I get paid?”, a: “Payouts are processed monthly with flexible settlement options.” }
+
+FAQSection (AR)
+- title: “الأسئلة الشائعة”
+- items:
+  - { q: “من يمكنه الانضمام لبرنامج الشركاء؟”, a: “صانعو المحتوى، المعلمون الماليون، الناشرون، والمؤثرون.” }
+  - { q: “كيف تُحسب المكافآت؟”, a: “تُحسب المكافآت على أساس عدد الإحالات المؤهلة ونشاطهم في الشهر الأول.” }
+  - { q: “متى يتم الدفع؟”, a: “يتم الدفع شهرياً مع خيارات تسوية مرنة.” }
+
+-----------------------------------------------------------
+SECTION 7 — Lead / Signup Form
+-----------------------------------------------------------
+
+LeadFormSection (EN)
+- title: “Start Earning with Baraka”
+- subtitle: “Join our partner community today.”
+- fields:
+  - name, email, website/social URL, audience size
+- submitText: “Apply Now”
+- successMessage: “Thank you! Our team will review your application soon.”
+
+LeadFormSection (AR)
+- title: “ابدأ كسب المكافآت”
+- subtitle: “انضم لمجتمع شركاء Baraka الآن.”
+- fields: same as EN
+- submitText: “قدّم الآن”
+- successMessage: “شكراً! سيقوم فريقنا بمراجعة طلبك قريباً.”
+
+-----------------------------------------------------------
+SECTION 8 — Newsletter Signup
+-----------------------------------------------------------
+
+NewsletterSection (EN)
+- title: “Stay Updated”
+- subtitle: “Get program insights, partner tips, and growth guides.”
+- privacyNote: “We respect your privacy. Unsubscribe anytime.”
+
+NewsletterSection (AR)
+- title: “ابقَ على اطلاع”
+- subtitle: “احصل على نصائح البرنامج ودلائل النمو.”
+- privacyNote: “نحترم خصوصيتك. يمكنك إلغاء الاشتراك في أي وقت.”
+
+-----------------------------------------------------------
+SECTION 9 — Footer CTA
+-----------------------------------------------------------
+
+FooterCTASection (EN)
+- headline: “Ready to Grow with Baraka?”
+- supportingText: “Become a partner and help investors unlock new opportunities.”
+- ctaText: “Apply as Partner”
+- ctaUrl: “/p/baraka-partners#signup”
+
+FooterCTASection (AR)
+- headline: “هل أنت مستعد للنمو مع Baraka؟”
+- supportingText: “انضم كشريك وساعد المستثمرين على اكتشاف فرص جديدة.”
+- ctaText: “قدّم الآن”
+- ctaUrl: “/p/baraka-partners#signup”
+
+-----------------------------------------------------------  
+SEO METADATA (per locale)
+-----------------------------------------------------------
+
+SEO (EN)
+- metaTitle: “Baraka Partner Program | Grow & Earn with Baraka”
+- metaDescription: “Join the Baraka Partner Program — share with your audience, track performance, and earn rewards for financial engagement across MENA & global users.”
+
+SEO (AR)
+- metaTitle: “برنامج شركاء Baraka | انمو واكسب المكافآت”
+- metaDescription: “انضم لبرنامج شركاء Baraka – شاركه مع جمهورك، راقب الأداء، واكسب المكافآت لمشاركة الأدوات المالية في المنطقة والعالم.”
+
+-----------------------------------------------------------  
+INSTRUCTIONS FOR CMS BUILDER  
+-----------------------------------------------------------
+
+1) Create a new landing page with slug `baraka-partners`
+2) Choose a “Marketing / Lead Capture” template
+3) Add sections in this order:
+   - Hero
+   - Value Props
+   - Features
+   - Social Proof
+   - How It Works
+   - FAQ
+   - Lead Form
+   - Newsletter Signup
+   - Footer CTA
+4) Populate content (EN + AR) using the copy above
+5) Add banners as needed (e.g., campaign banners)
+6) Configure SEO metadata per locale
+7) Save as draft and preview both locales
+8) Publish when ready
+9) Ensure form submissions are stored in the FormSubmission table and trigger internal analytics
+
+Now implement this landing page in the Baraka CMS Landing Page Builder end-to-end.
+```
