@@ -12,13 +12,18 @@ import StockEditor from '@/pages/stock-editor';
 import Assets from '@/pages/assets';
 import Blog from '@/pages/blog';
 import Banners from '@/pages/banners';
+import StocksDirectory from '@/pages/stocks';
+import StockDetail from '@/pages/stock-detail';
 import NotFound from '@/pages/not-found';
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <Redirect to="/login" />} />
+      <Route path="/" component={() => <Redirect to="/stocks" />} />
       <Route path="/login" component={Login} />
+      <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
+      <Route path="/stocks" component={StocksDirectory} />
+      <Route path="/stocks/:slug" component={StockDetail} />
       <Route path="/dashboard">
         {() => (
           <SidebarProvider>

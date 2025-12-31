@@ -1,0 +1,135 @@
+```text
+You are an expert product designer + frontend engineer. Upgrade the **Preview UI** for our CMS-driven stock landing pages to feel as polished as top brokerage stock pages (Robinhood/eToro-style), while still using ONLY our CMS data (no live market data scraping).
+
+GOAL
+Create a premium “Stock Page Preview” experience for /stocks/[slug] that:
+- Looks modern and trustworthy (finance-grade)
+- Works in Preview Mode for editors (draft content)
+- Supports EN/AR with RTL
+- Supports light/dark themes
+- Is SEO-friendly (SSR metadata + JSON-LD from CMS)
+- Uses a clean layout inspired by:
+  - Hero with ticker, company name, price area + daily change
+  - Interactive timeframe chart section
+  - Jump-to navigation (About, Key metrics, News, FAQ, Risks)
+  - Key metrics grid/cards
+  - News feed module
+  - Analyst/consensus-style module (optional + clearly “informational”)
+  - FAQ accordion
+  - Prominent disclaimers
+
+IMPORTANT CONSTRAINTS
+- Do NOT scrape or fetch from any brokerage site.
+- Use our CMS fields + dummy sample values (editor-provided) for preview.
+- Avoid investment advice language (no “buy now”, “will rise”, “guaranteed returns”).
+- Any “analyst forecast” module must include “not investment advice / informational only”.
+
+IMPLEMENTATION DETAILS
+Stack: Next.js App Router + TS + Tailwind.
+We already have StockPage blocks in CMS. Enhance the **public renderer** + create a dedicated **Preview Mode**.
+
+A) PREVIEW MODE
+- Route: /stocks/[slug]?preview=1&locale=en|ar
+- Only accessible if logged in to CMS (session-based guard).
+- Preview loads DRAFT content from DB.
+- If preview=0 or absent, only published content.
+
+B) PAGE LAYOUT (VISUAL SYSTEM)
+1) Sticky Top Ticker Bar
+- Left: CompanyName (ticker) + exchange pill
+- Center (desktop): mini nav links (Overview, Metrics, News, FAQ, Risks)
+- Right: “Trade” CTA (neutral label like “Trade TSLA” or “View in app”) + share icon
+- On scroll: condense bar but keep price + % change visible
+
+2) Hero + Price Panel
+- H1: “Tesla Motors, Inc. (TSLA)” (localized)
+- Subtext: “Delayed prices • in USD” (localized, informational)
+- Price block:
+  - Big price number + daily change (+/-) + (1D)
+  - Show timestamp “Last updated: …” (from CMS or preview timestamp)
+- Include a small disclaimer under price area: “For informational purposes only.”
+
+3) Chart Module (CMS-Driven)
+- Use a simple line chart (Recharts) powered by CMS-provided dummy series OR editor-entered “performance points”.
+- Timeframe tabs: 1D, 1W, 1M, 6M, 1Y, MAX (tabs switch series).
+- Add note: “Past performance is not indicative of future results.” (localized)
+
+4) Key Modules Row (cards)
+- Market Sentiment card (from MarketSentimentBlock):
+  - Segmented meter (Bearish / Neutral / Bullish / Mixed)
+  - Drivers list (3–5)
+  - Disclaimer line always visible
+- Analyst/Consensus-style card (OPTIONAL module)
+  - If CMS has “consensusLabel / rating / priceTarget / #analysts”, show it.
+  - Add microcopy: “Composite of public analyst commentary. Not investment advice.”
+- Quick actions card (neutral):
+  - “Add to watchlist” (preview-only UI toggle)
+  - “Set price alert” (UI only, no backend required for now)
+
+5) Jump-To Navigation + Content Sections (like long-form broker pages)
+- Use an “On this page” anchor nav (desktop) and horizontal sticky tabs (mobile)
+Sections:
+- Overview (rich text from CMS)
+- Key metrics (KeyStatsBlock) in a responsive grid (2 columns mobile, 4 columns desktop)
+- News module (CMS-curated list OR dummy seeded news items for preview)
+  - Each item: title, source, date/time
+- About the company (CMS rich text)
+- FAQ accordion (FAQBlock)
+- Risks & Disclosures (RisksBlock) — visually distinct + mandatory
+- Related content (if present): cards linking to blog posts (optional if blog exists later)
+
+6) Banner Slots Integration
+- Render BannerSlotBlock positions in:
+  - hero_top (above hero)
+  - inline_1 (between chart and metrics)
+  - sidebar_1 (desktop right rail)
+  - footer_strip (near bottom)
+- In preview mode, show a subtle “Preview banner” badge
+
+C) COMPONENTS TO BUILD/REFINE
+- StockPageShell (layout, sticky header, theme, locale)
+- StockHero
+- StockChartPanel (timeframe tabs)
+- MetricsGrid
+- MarketSentimentCard (segmented meter UI)
+- NewsList (CMS-fed)
+- FAQAccordion
+- RisksPanel (high emphasis)
+- BannerSlotRenderer (slot → placement matching)
+- Skeleton loaders for preview fetching
+
+D) THEMING + TYPOGRAPHY
+- Tailwind light/dark using CSS variables tokens:
+  - bg, fg, card, border, muted, primary
+- Arabic RTL support:
+  - Flip spacing, alignments, and icon directions
+- Visual style:
+  - Large, clean typography
+  - Cards with subtle borders
+  - Plenty of whitespace
+  - Mobile-first responsiveness
+
+E) SEO (PREVIEW + PUBLISHED)
+- SSR metadata:
+  - metaTitle/metaDescription from CMS per locale
+  - canonical + robots rules
+  - OG/Twitter tags
+- JSON-LD injection from CMS schemas array
+- Ensure exactly one H1
+
+F) DUMMY DATA FOR PREVIEW (IF CMS FIELD EMPTY)
+When the editor hasn’t filled fields yet, show tasteful placeholders:
+- Price: 452.12, change: -0.51% (1D)
+- Chart: generated sample series
+- News: 5 sample items
+- Metrics: Market cap, P/E, 52W range, avg volume, revenue, dividend yield (strings)
+
+DELIVERABLES
+- Implement the upgraded /stocks/[slug] page UI (published + preview)
+- Add preview guard + draft fetching
+- Add responsive sticky nav and sections
+- Ensure EN/AR + light/dark work perfectly
+- Update seed content to showcase the new layout with at least TSLA + 2 other stocks
+
+Build this end-to-end in the existing Replit CMS codebase.
+```
