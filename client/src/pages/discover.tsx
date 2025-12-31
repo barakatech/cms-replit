@@ -219,6 +219,92 @@ export default function Discover() {
   
   const t = labels[language];
 
+  const getCardStyle = (ticker: string, index: number) => {
+    const colorOptions = [
+      { bg: '#f8fafc', textColor: '#0f172a', sparkColor: '#94a3b8' },
+      { bg: '#ef4444', textColor: '#ffffff', sparkColor: '#fca5a5' },
+      { bg: '#64748b', textColor: '#ffffff', sparkColor: '#cbd5e1' },
+      { bg: '#0ea5e9', textColor: '#ffffff', sparkColor: '#7dd3fc' },
+      { bg: '#f97316', textColor: '#ffffff', sparkColor: '#fdba74' },
+      { bg: '#22c55e', textColor: '#ffffff', sparkColor: '#86efac' },
+      { bg: '#8b5cf6', textColor: '#ffffff', sparkColor: '#c4b5fd' },
+      { bg: '#eab308', textColor: '#1f2937', sparkColor: '#fde047' },
+    ];
+    return colorOptions[index % colorOptions.length];
+  };
+
+  const renderTrendingCard = (ticker: string, index: number) => {
+    const data = marketData[ticker];
+    if (!data) return null;
+    const isPositive = data.changePercent >= 0;
+    const stock = mockStocks.find(s => s.ticker === ticker);
+    const cardStyle = getCardStyle(ticker, index);
+    
+    return (
+      <Link key={ticker} href={`/stocks/${ticker}`}>
+        <div 
+          className="relative rounded-xl min-w-[240px] h-[130px] cursor-pointer hover-elevate transition-all shadow-sm"
+          style={{ backgroundColor: cardStyle.bg }}
+          data-testid={`trending-card-${ticker}`}
+        >
+          {data.sparkline && (
+            <svg 
+              viewBox="0 0 100 50" 
+              className="absolute bottom-0 left-0 right-0 h-12 opacity-30 pointer-events-none"
+              preserveAspectRatio="none"
+            >
+              <polyline
+                fill="none"
+                stroke={cardStyle.sparkColor}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                points={data.sparkline.map((v, i) => {
+                  const min = Math.min(...data.sparkline!);
+                  const max = Math.max(...data.sparkline!);
+                  const x = (i / (data.sparkline!.length - 1)) * 100;
+                  const y = 48 - ((v - min) / (max - min)) * 40;
+                  return `${x},${y}`;
+                }).join(' ')}
+              />
+            </svg>
+          )}
+          
+          <div className="absolute top-4 left-5 right-5">
+            <div 
+              className="text-5xl font-bold opacity-80"
+              style={{ color: cardStyle.textColor }}
+            >
+              {ticker.charAt(0)}
+            </div>
+          </div>
+          
+          <div className={`absolute bottom-4 left-5 right-5 flex items-end justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={isRTL ? 'text-right' : ''}>
+              <div className="font-bold text-sm" style={{ color: cardStyle.textColor }}>{ticker}</div>
+              {stock && (
+                <div 
+                  className="text-xs opacity-80 truncate max-w-[90px]"
+                  style={{ color: cardStyle.textColor }}
+                >
+                  {stock.companyName}
+                </div>
+              )}
+            </div>
+            <div className={`${isRTL ? 'text-left' : 'text-right'}`}>
+              <div className="font-bold text-lg" style={{ color: cardStyle.textColor }}>
+                {data.price.toFixed(2)}
+              </div>
+              <div className="text-xs opacity-80" style={{ color: cardStyle.textColor }}>
+                {isPositive ? '+' : ''}{data.changePercent.toFixed(2)}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  };
+
   const renderStockRow = (ticker: string, showChange = true) => {
     const data = marketData[ticker];
     if (!data) return null;
@@ -584,8 +670,8 @@ export default function Discover() {
               </TabsList>
               {settings.trendingTabs.map(tab => (
                 <TabsContent key={tab.key} value={tab.key}>
-                  <div className="grid gap-2">
-                    {tab.tickers.slice(0, 6).map(ticker => renderStockRow(ticker))}
+                  <div className={`flex gap-4 overflow-x-auto pb-2 scrollbar-hide ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    {tab.tickers.slice(0, 8).map((ticker, index) => renderTrendingCard(ticker, index))}
                   </div>
                 </TabsContent>
               ))}
