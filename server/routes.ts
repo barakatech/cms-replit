@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertNewsletterSignupSchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -794,6 +794,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ success: false, error: "Failed to update app download config" });
     }
+  });
+
+  // ============================================
+  // CTA Registry Routes
+  // ============================================
+  
+  app.get("/api/ctas", async (_req, res) => {
+    const ctas = await storage.getCallToActions();
+    res.json(ctas);
+  });
+
+  app.get("/api/ctas/key/:key", async (req, res) => {
+    const cta = await storage.getCallToActionByKey(req.params.key);
+    if (!cta) {
+      return res.status(404).json({ error: "CTA not found" });
+    }
+    res.json(cta);
+  });
+
+  app.get("/api/ctas/:id", async (req, res) => {
+    const cta = await storage.getCallToAction(req.params.id);
+    if (!cta) {
+      return res.status(404).json({ error: "CTA not found" });
+    }
+    res.json(cta);
+  });
+
+  app.post("/api/ctas", async (req, res) => {
+    try {
+      const data = insertCallToActionSchema.parse(req.body);
+      const cta = await storage.createCallToAction(data);
+      res.status(201).json(cta);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create CTA" });
+    }
+  });
+
+  app.put("/api/ctas/:id", async (req, res) => {
+    try {
+      const updateSchema = insertCallToActionSchema.partial();
+      const data = updateSchema.parse(req.body);
+      const cta = await storage.updateCallToAction(req.params.id, data);
+      if (!cta) {
+        return res.status(404).json({ error: "CTA not found" });
+      }
+      res.json(cta);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update CTA" });
+    }
+  });
+
+  app.delete("/api/ctas/:id", async (req, res) => {
+    const success = await storage.deleteCallToAction(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "CTA not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // CTA Events Routes
+  // ============================================
+  
+  app.post("/api/cta-events", async (req, res) => {
+    try {
+      const data = insertCTAEventSchema.parse(req.body);
+      const event = await storage.createCTAEvent(data);
+      res.status(201).json(event);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create CTA event" });
+    }
+  });
+
+  app.get("/api/cta-events", async (req, res) => {
+    const filters = {
+      ctaKey: req.query.ctaKey as string | undefined,
+      eventType: req.query.eventType as string | undefined,
+      startDate: req.query.startDate as string | undefined,
+      endDate: req.query.endDate as string | undefined,
+    };
+    const events = await storage.getCTAEvents(filters);
+    res.json(events);
+  });
+
+  app.get("/api/cta-performance", async (_req, res) => {
+    const performance = await storage.getCTAPerformance();
+    res.json(performance);
   });
 
   const httpServer = createServer(app);

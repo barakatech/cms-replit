@@ -4,7 +4,8 @@ import { X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { dispatchMarketingEvent } from '@/lib/pixel-manager';
 import { apiRequest } from '@/lib/queryClient';
-import type { MobileInstallBanner as MobileInstallBannerType, InsertBannerEvent } from '@shared/schema';
+import type { MobileInstallBanner as MobileInstallBannerType, InsertBannerEvent, InsertCTAEvent } from '@shared/schema';
+import { BARAKA_STORE_URLS } from '@shared/schema';
 
 interface MobileInstallBannerProps {
   locale: 'en' | 'ar';
@@ -139,9 +140,22 @@ export default function MobileInstallBanner({ locale, currentPath }: MobileInsta
       deviceCategory: 'mobile',
     } as InsertBannerEvent).catch(console.error);
 
+    apiRequest('POST', '/api/cta-events', {
+      ctaKey: 'mobile_install.download_now',
+      eventType: 'store_redirect',
+      pagePath: currentPath,
+      locale,
+      device: 'mobile',
+      os: platform === 'ios' ? 'ios' : platform === 'android' ? 'android' : 'other',
+      metaJson: { bannerId: banner.id },
+    } as InsertCTAEvent).catch(console.error);
+
     const adjustLink = platform === 'ios' ? banner.adjustLinkIos : banner.adjustLinkAndroid;
-    if (adjustLink) {
-      window.location.href = adjustLink;
+    const fallbackUrl = platform === 'ios' ? BARAKA_STORE_URLS.ios : BARAKA_STORE_URLS.android;
+    const targetUrl = adjustLink || fallbackUrl;
+    
+    if (targetUrl) {
+      window.location.href = targetUrl;
     }
   };
 

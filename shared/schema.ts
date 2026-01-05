@@ -881,6 +881,93 @@ export interface AppDownloadConfig {
 
 export type InsertAppDownloadConfig = Omit<AppDownloadConfig, 'id' | 'updatedAt'>;
 
+// ============================================
+// CTA REGISTRY (CRO System)
+// ============================================
+
+export type CTAActionType = 'link' | 'qr_modal' | 'os_store_redirect' | 'scroll_anchor';
+
+export interface CallToAction {
+  id: string;
+  key: string; // Unique identifier like 'discover.start_trading'
+  text_en: string;
+  text_ar: string;
+  url: string; // URL or anchor like #pricing
+  actionType: CTAActionType;
+  allowedPages: string[]; // Route patterns: /discover, /stocks/*, /blog/*
+  metaJson?: {
+    tickerAware?: boolean;
+    plan?: string;
+    promo?: string;
+    anchorId?: string;
+    os?: 'ios' | 'android';
+  };
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertCallToAction = Omit<CallToAction, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Zod validation schema for CTA insert
+export const insertCallToActionSchema = z.object({
+  key: z.string().min(1),
+  text_en: z.string().min(1),
+  text_ar: z.string().min(1),
+  url: z.string().min(1),
+  actionType: z.enum(['link', 'qr_modal', 'os_store_redirect', 'scroll_anchor']),
+  allowedPages: z.array(z.string()),
+  metaJson: z.object({
+    tickerAware: z.boolean().optional(),
+    plan: z.string().optional(),
+    promo: z.string().optional(),
+    anchorId: z.string().optional(),
+    os: z.enum(['ios', 'android']).optional(),
+  }).optional(),
+  enabled: z.boolean(),
+});
+
+// CTA Event Types for tracking
+export type CTAEventType = 
+  | 'cta_click'
+  | 'qr_modal_view'
+  | 'qr_modal_close'
+  | 'store_redirect'
+  | 'continue_on_web_click';
+
+export interface CTAEvent {
+  id: string;
+  ctaKey: string;
+  eventType: CTAEventType;
+  pagePath: string;
+  locale: 'en' | 'ar';
+  device: 'mobile' | 'desktop' | 'tablet';
+  os?: 'ios' | 'android' | 'other';
+  ticker?: string;
+  metaJson?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type InsertCTAEvent = Omit<CTAEvent, 'id' | 'createdAt'>;
+
+// Zod validation schema for CTA event insert
+export const insertCTAEventSchema = z.object({
+  ctaKey: z.string().min(1),
+  eventType: z.enum(['cta_click', 'qr_modal_view', 'qr_modal_close', 'store_redirect', 'continue_on_web_click']),
+  pagePath: z.string().min(1),
+  locale: z.enum(['en', 'ar']),
+  device: z.enum(['mobile', 'desktop', 'tablet']),
+  os: z.enum(['ios', 'android', 'other']).optional(),
+  ticker: z.string().optional(),
+  metaJson: z.record(z.unknown()).optional(),
+});
+
+// Store URLs (centralized)
+export const BARAKA_STORE_URLS = {
+  ios: 'https://apps.apple.com/us/app/baraka-buy-us-stocks-etfs/id1532264769',
+  android: 'https://play.google.com/store/apps/details?id=com.baraka.app&hl=en',
+};
+
 // Default event mappings per platform
 export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<CmsEventName, string>>> = {
   meta: {

@@ -37,7 +37,12 @@ import {
   type InsertMarketingPixel,
   type PixelEventMap,
   type InsertPixelEventMap,
-  type AppDownloadConfig
+  type AppDownloadConfig,
+  type CallToAction,
+  type InsertCallToAction,
+  type CTAEvent,
+  type InsertCTAEvent,
+  BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -851,6 +856,244 @@ const seedBannerEvents: BannerEvent[] = [
   { id: '3', bannerId: '1', bannerType: 'mobile_install', eventType: 'view', placement: 'bottom', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'mobile', createdAt: new Date(Date.now() - 86400000).toISOString() },
   { id: '4', bannerId: '1', bannerType: 'mobile_install', eventType: 'click', placement: 'bottom', pagePath: '/stocks/apple-aapl', locale: 'en', deviceCategory: 'mobile', createdAt: new Date(Date.now() - 86400000).toISOString() },
   { id: '5', bannerId: '2', bannerType: 'offer', eventType: 'view', placement: 'discover_offers_rail', pagePath: '/discover', locale: 'ar', deviceCategory: 'mobile', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+];
+
+// Seed CTA Registry (18 CTAs)
+const seedCallToActions: CallToAction[] = [
+  // Discover Page Offer Banners
+  {
+    id: '1',
+    key: 'discover.start_trading',
+    text_en: 'Start Trading',
+    text_ar: 'ابدأ التداول',
+    url: '/signup',
+    actionType: 'link',
+    allowedPages: ['/discover'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '2',
+    key: 'discover.invite_now',
+    text_en: 'Invite Now',
+    text_ar: 'ادعُ الآن',
+    url: '/referral',
+    actionType: 'link',
+    allowedPages: ['/discover'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '3',
+    key: 'discover.upgrade_now',
+    text_en: 'Upgrade Now',
+    text_ar: 'ترقية الآن',
+    url: '/premium',
+    actionType: 'link',
+    allowedPages: ['/discover'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '4',
+    key: 'discover.start_learning',
+    text_en: 'Start Learning',
+    text_ar: 'ابدأ التعلم',
+    url: '/blog',
+    actionType: 'link',
+    allowedPages: ['/discover'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Mobile Install Banner
+  {
+    id: '5',
+    key: 'mobile_install.download_now',
+    text_en: 'Download Now',
+    text_ar: 'حمّل الآن',
+    url: BARAKA_STORE_URLS.ios,
+    actionType: 'os_store_redirect',
+    allowedPages: ['/stocks/*', '/blog/*', '/discover'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Main Sign Up CTAs
+  {
+    id: '6',
+    key: 'main.signup_to_trade',
+    text_en: 'Sign Up to Trade',
+    text_ar: 'سجّل للتداول',
+    url: BARAKA_STORE_URLS.ios,
+    actionType: 'qr_modal',
+    allowedPages: ['/stocks/*', '/stocks/themes/*', '/refer-earn', '/p/*'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '7',
+    key: 'stock.trade_ticker',
+    text_en: 'Trade',
+    text_ar: 'تداول',
+    url: BARAKA_STORE_URLS.ios,
+    actionType: 'qr_modal',
+    allowedPages: ['/stocks/*'],
+    metaJson: { tickerAware: true },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Subscription Page CTAs
+  {
+    id: '8',
+    key: 'landing.subscription.start_free_trial',
+    text_en: 'Start Free Trial',
+    text_ar: 'ابدأ التجربة المجانية',
+    url: '/signup?plan=premium',
+    actionType: 'link',
+    allowedPages: ['/p/subscription'],
+    metaJson: { plan: 'premium' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '9',
+    key: 'landing.subscription.compare_plans',
+    text_en: 'Compare Plans',
+    text_ar: 'قارن الخطط',
+    url: '#pricing',
+    actionType: 'scroll_anchor',
+    allowedPages: ['/p/subscription'],
+    metaJson: { anchorId: 'pricing' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '10',
+    key: 'landing.subscription.get_started',
+    text_en: 'Get Started',
+    text_ar: 'ابدأ الآن',
+    url: '/signup',
+    actionType: 'link',
+    allowedPages: ['/p/subscription'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Zero Commission Promo
+  {
+    id: '11',
+    key: 'landing.zero_commission.claim_offer',
+    text_en: 'Claim Offer',
+    text_ar: 'احصل على العرض',
+    url: '/signup?promo=zero-commission',
+    actionType: 'link',
+    allowedPages: ['/p/zero-commission'],
+    metaJson: { promo: 'zero-commission' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Education Hub
+  {
+    id: '12',
+    key: 'landing.education_hub.browse_courses',
+    text_en: 'Browse Courses',
+    text_ar: 'تصفح الدورات',
+    url: '/blog?category=education',
+    actionType: 'link',
+    allowedPages: ['/p/education-hub'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Partners Page
+  {
+    id: '13',
+    key: 'landing.partners.become_partner',
+    text_en: 'Become a Partner',
+    text_ar: 'انضم كـ شريك',
+    url: '#signup',
+    actionType: 'scroll_anchor',
+    allowedPages: ['/p/baraka-partners'],
+    metaJson: { anchorId: 'signup' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '14',
+    key: 'landing.partners.learn_more',
+    text_en: 'Learn More',
+    text_ar: 'المزيد',
+    url: '#why-baraka',
+    actionType: 'scroll_anchor',
+    allowedPages: ['/p/baraka-partners'],
+    metaJson: { anchorId: 'why-baraka' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // App Download
+  {
+    id: '15',
+    key: 'landing.app_download.ios',
+    text_en: 'Download for iOS',
+    text_ar: 'حمّل لـ iOS',
+    url: BARAKA_STORE_URLS.ios,
+    actionType: 'link',
+    allowedPages: ['/p/app-download', '/p/*'],
+    metaJson: { os: 'ios' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '16',
+    key: 'landing.app_download.android',
+    text_en: 'Download for Android',
+    text_ar: 'حمّل لـ Android',
+    url: BARAKA_STORE_URLS.android,
+    actionType: 'link',
+    allowedPages: ['/p/app-download', '/p/*'],
+    metaJson: { os: 'android' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  // Refer & Earn
+  {
+    id: '17',
+    key: 'landing.refer_earn.get_my_link',
+    text_en: 'Get My Link',
+    text_ar: 'احصل على رابطي',
+    url: '/app/referral',
+    actionType: 'link',
+    allowedPages: ['/p/refer-earn', '/refer-earn'],
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '18',
+    key: 'landing.refer_earn.learn_how',
+    text_en: 'Learn How It Works',
+    text_ar: 'تعرف على طريقة العمل',
+    url: '#how-it-works',
+    actionType: 'scroll_anchor',
+    allowedPages: ['/p/refer-earn', '/refer-earn'],
+    metaJson: { anchorId: 'how-it-works' },
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  },
 ];
 
 // Seed Landing Pages
@@ -1892,6 +2135,19 @@ export interface IStorage {
   // App Download Config
   getAppDownloadConfig(): Promise<AppDownloadConfig>;
   updateAppDownloadConfig(config: Partial<AppDownloadConfig>): Promise<AppDownloadConfig>;
+  
+  // CTA Registry
+  getCallToActions(): Promise<CallToAction[]>;
+  getCallToAction(id: string): Promise<CallToAction | undefined>;
+  getCallToActionByKey(key: string): Promise<CallToAction | undefined>;
+  createCallToAction(cta: InsertCallToAction): Promise<CallToAction>;
+  updateCallToAction(id: string, cta: Partial<CallToAction>): Promise<CallToAction | undefined>;
+  deleteCallToAction(id: string): Promise<boolean>;
+  
+  // CTA Events
+  createCTAEvent(event: InsertCTAEvent): Promise<CTAEvent>;
+  getCTAEvents(filters?: { ctaKey?: string; eventType?: string; startDate?: string; endDate?: string }): Promise<CTAEvent[]>;
+  getCTAPerformance(): Promise<{ ctaKey: string; clicks: number; qrViews: number; storeRedirects: number }[]>;
 }
 
 // Dashboard Summary Types
@@ -1952,6 +2208,8 @@ export class MemStorage implements IStorage {
   private marketingPixels: Map<string, MarketingPixel>;
   private pixelEventMaps: Map<string, PixelEventMap>;
   private appDownloadConfig: AppDownloadConfig;
+  private callToActions: Map<string, CallToAction>;
+  private ctaEvents: Map<string, CTAEvent>;
 
   constructor() {
     this.users = new Map();
@@ -1976,6 +2234,8 @@ export class MemStorage implements IStorage {
     this.marketingPixels = new Map();
     this.pixelEventMaps = new Map();
     this.appDownloadConfig = { ...seedAppDownloadConfig };
+    this.callToActions = new Map();
+    this.ctaEvents = new Map();
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -1994,6 +2254,9 @@ export class MemStorage implements IStorage {
     
     // Seed banner events
     seedBannerEvents.forEach(event => this.bannerEvents.set(event.id, event));
+    
+    // Seed CTAs
+    seedCallToActions.forEach(cta => this.callToActions.set(cta.id, cta));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -2646,6 +2909,111 @@ export class MemStorage implements IStorage {
       updatedAt: new Date().toISOString(),
     };
     return this.appDownloadConfig;
+  }
+
+  // CTA Registry Methods
+  async getCallToActions(): Promise<CallToAction[]> {
+    return Array.from(this.callToActions.values());
+  }
+
+  async getCallToAction(id: string): Promise<CallToAction | undefined> {
+    return this.callToActions.get(id);
+  }
+
+  async getCallToActionByKey(key: string): Promise<CallToAction | undefined> {
+    return Array.from(this.callToActions.values()).find(cta => cta.key === key);
+  }
+
+  async createCallToAction(cta: InsertCallToAction): Promise<CallToAction> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newCTA: CallToAction = {
+      ...cta,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.callToActions.set(id, newCTA);
+    return newCTA;
+  }
+
+  async updateCallToAction(id: string, cta: Partial<CallToAction>): Promise<CallToAction | undefined> {
+    const existing = this.callToActions.get(id);
+    if (!existing) return undefined;
+    
+    const updated: CallToAction = {
+      ...existing,
+      ...cta,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.callToActions.set(id, updated);
+    return updated;
+  }
+
+  async deleteCallToAction(id: string): Promise<boolean> {
+    return this.callToActions.delete(id);
+  }
+
+  // CTA Events Methods
+  async createCTAEvent(event: InsertCTAEvent): Promise<CTAEvent> {
+    const id = randomUUID();
+    const newEvent: CTAEvent = {
+      ...event,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.ctaEvents.set(id, newEvent);
+    return newEvent;
+  }
+
+  async getCTAEvents(filters?: { ctaKey?: string; eventType?: string; startDate?: string; endDate?: string }): Promise<CTAEvent[]> {
+    let events = Array.from(this.ctaEvents.values());
+    
+    if (filters?.ctaKey) {
+      events = events.filter(e => e.ctaKey === filters.ctaKey);
+    }
+    if (filters?.eventType) {
+      events = events.filter(e => e.eventType === filters.eventType);
+    }
+    if (filters?.startDate) {
+      events = events.filter(e => e.createdAt >= filters.startDate!);
+    }
+    if (filters?.endDate) {
+      events = events.filter(e => e.createdAt <= filters.endDate!);
+    }
+    
+    return events.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async getCTAPerformance(): Promise<{ ctaKey: string; clicks: number; qrViews: number; storeRedirects: number }[]> {
+    const events = Array.from(this.ctaEvents.values());
+    const performance = new Map<string, { clicks: number; qrViews: number; storeRedirects: number }>();
+    
+    events.forEach(event => {
+      if (!performance.has(event.ctaKey)) {
+        performance.set(event.ctaKey, { clicks: 0, qrViews: 0, storeRedirects: 0 });
+      }
+      const stats = performance.get(event.ctaKey)!;
+      
+      switch (event.eventType) {
+        case 'cta_click':
+          stats.clicks++;
+          break;
+        case 'qr_modal_view':
+          stats.qrViews++;
+          break;
+        case 'store_redirect':
+          stats.storeRedirects++;
+          break;
+      }
+    });
+    
+    return Array.from(performance.entries()).map(([ctaKey, stats]) => ({
+      ctaKey,
+      ...stats,
+    }));
   }
 }
 
