@@ -35,6 +35,30 @@ export const insertPriceAlertSubscriptionSchema = createInsertSchema(priceAlertS
 export type InsertPriceAlertSubscription = z.infer<typeof insertPriceAlertSubscriptionSchema>;
 export type PriceAlertSubscription = typeof priceAlertSubscriptions.$inferSelect;
 
+// Stock Watch Subscription - for watching specific stocks with notifications
+export const stockWatchSubscriptions = pgTable("stock_watch_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(),
+  mobile: text("mobile").notNull(),
+  ticker: text("ticker").notNull(),
+  stockName: text("stock_name").notNull(),
+  frequency: text("frequency").notNull(), // 'daily' | 'weekly' | 'monthly'
+  locale: text("locale").notNull().default('en'),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertStockWatchSubscriptionSchema = createInsertSchema(stockWatchSubscriptions).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email(),
+  mobile: z.string().min(7).max(20),
+  frequency: z.enum(['daily', 'weekly', 'monthly']),
+});
+
+export type InsertStockWatchSubscription = z.infer<typeof insertStockWatchSubscriptionSchema>;
+export type StockWatchSubscription = typeof stockWatchSubscriptions.$inferSelect;
+
 // Newsletter Signup
 export const newsletterSignups = pgTable("newsletter_signups", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

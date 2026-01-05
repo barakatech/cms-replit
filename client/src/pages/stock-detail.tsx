@@ -10,7 +10,8 @@ import {
   Sun, 
   ChevronRight,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Bell
 } from 'lucide-react';
 import { mockStocks, type StockPage } from '@/lib/mockData';
 import { 
@@ -32,6 +33,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import BarakaHeader from '@/components/BarakaHeader';
 import SignUpCTA from '@/components/SignUpCTA';
+import WatchStockModal from '@/components/WatchStockModal';
 
 export default function StockDetail() {
   const params = useParams<{ slug: string }>();
@@ -43,6 +45,7 @@ export default function StockDetail() {
   const [language, setLanguage] = useState<'en' | 'ar'>(localeParam || 'en');
   const { resolvedTheme, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [watchModalOpen, setWatchModalOpen] = useState(false);
   
   const isRTL = language === 'ar';
   
@@ -164,6 +167,16 @@ export default function StockDetail() {
                 <Globe className="h-4 w-4 mr-1" />
                 {language === 'en' ? 'AR' : 'EN'}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setWatchModalOpen(true)}
+                className="hidden sm:flex"
+                data-testid="button-watch-stock"
+              >
+                <Bell className="h-4 w-4 mr-1" />
+                {language === 'en' ? `Watch ${stock.ticker}` : `متابعة ${stock.ticker}`}
+              </Button>
               <SignUpCTA 
                 language={language}
                 className="hidden sm:flex"
@@ -277,6 +290,14 @@ export default function StockDetail() {
           </div>
         </div>
       </footer>
+
+      <WatchStockModal
+        open={watchModalOpen}
+        onOpenChange={setWatchModalOpen}
+        ticker={stock.ticker}
+        stockName={stock.companyName}
+        language={language}
+      />
     </div>
   );
 }

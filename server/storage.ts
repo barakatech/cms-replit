@@ -3,6 +3,8 @@ import {
   type InsertUser, 
   type InsertPriceAlertSubscription, 
   type PriceAlertSubscription,
+  type InsertStockWatchSubscription,
+  type StockWatchSubscription,
   type InsertNewsletterSignup,
   type NewsletterSignup,
   type DiscoverSettings,
@@ -2037,6 +2039,9 @@ export interface IStorage {
   createPriceAlertSubscription(subscription: InsertPriceAlertSubscription): Promise<PriceAlertSubscription>;
   getPriceAlertSubscriptions(): Promise<PriceAlertSubscription[]>;
   
+  createStockWatchSubscription(subscription: InsertStockWatchSubscription): Promise<StockWatchSubscription>;
+  getStockWatchSubscriptions(): Promise<StockWatchSubscription[]>;
+  
   createNewsletterSignup(signup: InsertNewsletterSignup): Promise<NewsletterSignup>;
   getNewsletterSignups(): Promise<NewsletterSignup[]>;
   
@@ -2202,6 +2207,7 @@ const seedAppDownloadConfig: AppDownloadConfig = {
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private priceAlertSubscriptions: Map<string, PriceAlertSubscription>;
+  private stockWatchSubscriptions: Map<string, StockWatchSubscription>;
   private newsletterSignups: Map<string, NewsletterSignup>;
   private discoverSettings: DiscoverSettings;
   private stockThemes: Map<string, StockTheme>;
@@ -2226,6 +2232,7 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.priceAlertSubscriptions = new Map();
+    this.stockWatchSubscriptions = new Map();
     this.newsletterSignups = new Map();
     this.discoverSettings = { ...seedDiscoverSettings };
     this.stockThemes = new Map();
@@ -2304,6 +2311,26 @@ export class MemStorage implements IStorage {
 
   async getPriceAlertSubscriptions(): Promise<PriceAlertSubscription[]> {
     return Array.from(this.priceAlertSubscriptions.values());
+  }
+
+  async createStockWatchSubscription(subscription: InsertStockWatchSubscription): Promise<StockWatchSubscription> {
+    const id = randomUUID();
+    const newSubscription: StockWatchSubscription = { 
+      email: subscription.email,
+      mobile: subscription.mobile,
+      ticker: subscription.ticker,
+      stockName: subscription.stockName,
+      frequency: subscription.frequency,
+      locale: subscription.locale ?? 'en',
+      id, 
+      createdAt: new Date() 
+    };
+    this.stockWatchSubscriptions.set(id, newSubscription);
+    return newSubscription;
+  }
+
+  async getStockWatchSubscriptions(): Promise<StockWatchSubscription[]> {
+    return Array.from(this.stockWatchSubscriptions.values());
   }
 
   async createNewsletterSignup(signup: InsertNewsletterSignup): Promise<NewsletterSignup> {

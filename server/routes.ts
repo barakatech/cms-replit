@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -100,6 +100,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/price-alerts/subscriptions", async (_req, res) => {
     const subscriptions = await storage.getPriceAlertSubscriptions();
+    res.json(subscriptions);
+  });
+
+  // Stock Watch Subscription
+  app.post("/api/stock-watch/subscribe", async (req, res) => {
+    try {
+      const data = insertStockWatchSubscriptionSchema.parse(req.body);
+      const subscription = await storage.createStockWatchSubscription(data);
+      res.json({ success: true, subscription });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ success: false, error: error.errors });
+      } else {
+        res.status(500).json({ success: false, error: "Failed to create watch subscription" });
+      }
+    }
+  });
+
+  app.get("/api/stock-watch/subscriptions", async (_req, res) => {
+    const subscriptions = await storage.getStockWatchSubscriptions();
     res.json(subscriptions);
   });
 
