@@ -18,7 +18,16 @@ import {
   Globe,
   Moon,
   Sun,
-  Eye
+  Eye,
+  Cpu,
+  Car,
+  Monitor,
+  CreditCard,
+  Coins,
+  Heart,
+  ShoppingCart,
+  Fuel,
+  type LucideIcon
 } from 'lucide-react';
 import { mockStocks } from '@/lib/mockData';
 import { marketDataProvider, type MarketData } from '@/lib/marketDataProvider';
@@ -212,30 +221,78 @@ export default function StocksDiscover() {
     );
   };
 
-  const CollectionCard = ({ collection }: { collection: StockCollection }) => {
+  const iconMap: Record<string, LucideIcon> = {
+    Moon,
+    Cpu,
+    Car,
+    Monitor,
+    CreditCard,
+    Coins,
+    Heart,
+    ShoppingCart,
+    Fuel,
+  };
+
+  const getIcon = (iconName: string) => {
+    return iconMap[iconName] || Star;
+  };
+
+  const FeaturedThemeCard = ({ collection }: { collection: StockCollection }) => {
+    const IconComponent = getIcon(collection.iconName);
     return (
       <Link href={`/stocks/themes/${collection.slug}`}>
-        <Card className="hover-elevate cursor-pointer h-full" data-testid={`collection-${collection.slug}`}>
-          <CardContent className="p-4">
-            <div className={`flex items-start gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <span className="text-2xl">{collection.icon}</span>
-              <div className={isRTL ? 'text-right' : ''}>
-                <h3 className="font-semibold">{collection.title[language]}</h3>
-                <p className="text-xs text-muted-foreground line-clamp-2">
+        <Card className="hover-elevate cursor-pointer" data-testid={`featured-theme-${collection.slug}`}>
+          <CardContent className="p-5">
+            <Badge variant="outline" className="mb-4 text-xs">
+              {language === 'en' ? 'Theme of the Month' : 'موضوع الشهر'}
+            </Badge>
+            <div className={`flex items-start gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className="flex-shrink-0">
+                <IconComponent className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className={`flex-1 ${isRTL ? 'text-right' : ''}`}>
+                <h3 className="text-lg font-semibold mb-1">{collection.title[language]}</h3>
+                <p className="text-sm text-muted-foreground mb-4">
                   {collection.description[language]}
                 </p>
+                <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-end' : ''}`}>
+                  {collection.tickers.slice(0, 4).map(ticker => (
+                    <Badge key={ticker} variant="outline" className="text-xs font-mono">
+                      {ticker}
+                    </Badge>
+                  ))}
+                  {collection.tickers.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{collection.tickers.length - 4}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex flex-wrap gap-1 mt-3">
-              {collection.tickers.slice(0, 6).map(ticker => (
-                <Badge key={ticker} variant="secondary" className="text-xs">
-                  {ticker}
-                </Badge>
-              ))}
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  };
+
+  const ThemeRow = ({ collection }: { collection: StockCollection }) => {
+    const IconComponent = getIcon(collection.iconName);
+    return (
+      <Link href={`/stocks/themes/${collection.slug}`}>
+        <Card className="hover-elevate cursor-pointer" data-testid={`theme-row-${collection.slug}`}>
+          <CardContent className="p-4">
+            <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <IconComponent className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <div className={isRTL ? 'text-right' : ''}>
+                  <h3 className="font-medium">{collection.title[language]}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {collection.tickers.length} {t.stocks}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className={`h-5 w-5 text-muted-foreground flex-shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
             </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              {collection.tickers.length} {t.stocks}
-            </p>
           </CardContent>
         </Card>
       </Link>
@@ -381,17 +438,37 @@ export default function StocksDiscover() {
         <Separator />
 
         <section className="py-8 container mx-auto px-4">
-          <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-2 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Star className="h-5 w-5 text-primary" />
             <h2 className={`text-xl font-semibold ${isRTL ? 'text-right' : ''}`}>
-              {t.exploreByTheme}
+              {language === 'en' ? 'Stock Themes & Trackers' : 'موضوعات ومتتبعات الأسهم'}
             </h2>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mockStockCollections.filter(c => c.status === 'active').slice(0, 8).map(collection => (
-              <CollectionCard key={collection.id} collection={collection} />
-            ))}
-          </div>
+          {(() => {
+            const activeCollections = mockStockCollections.filter(c => c.status === 'active');
+            const featuredTheme = activeCollections.find(c => c.isFeatured);
+            const otherThemes = activeCollections.filter(c => !c.isFeatured);
+            
+            return (
+              <div className="space-y-6">
+                {featuredTheme && (
+                  <FeaturedThemeCard collection={featuredTheme} />
+                )}
+                
+                <div>
+                  <h3 className={`text-sm font-medium text-muted-foreground mb-3 ${isRTL ? 'text-right' : ''}`}>
+                    {language === 'en' ? 'Other Themes & Trackers' : 'موضوعات ومتتبعات أخرى'}
+                  </h3>
+                  <div className="space-y-2">
+                    {otherThemes.slice(0, 6).map(collection => (
+                      <ThemeRow key={collection.id} collection={collection} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </section>
 
         <Separator />

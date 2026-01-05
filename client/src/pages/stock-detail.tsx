@@ -31,6 +31,7 @@ import {
 } from '@/components/stock-blocks';
 import { useTheme } from '@/hooks/use-theme';
 import BarakaHeader from '@/components/BarakaHeader';
+import SignUpCTA from '@/components/SignUpCTA';
 
 export default function StockDetail() {
   const params = useParams<{ slug: string }>();
@@ -163,9 +164,11 @@ export default function StockDetail() {
                 <Globe className="h-4 w-4 mr-1" />
                 {language === 'en' ? 'AR' : 'EN'}
               </Button>
-              <Button className="hidden sm:flex" data-testid="button-trade-header">
-                {language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
-              </Button>
+              <SignUpCTA 
+                language={language}
+                className="hidden sm:flex"
+                customText={language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
+              />
             </div>
           </div>
         </div>

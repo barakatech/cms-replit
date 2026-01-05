@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Share2, Bell, Star } from 'lucide-react';
 import { type StockPage } from '@/lib/mockData';
+import SignUpCTA from '@/components/SignUpCTA';
 
 interface StockHeroProps {
   stock: StockPage;
@@ -42,9 +43,10 @@ export function StockHero({ stock, language }: StockHeroProps) {
           <Button variant="ghost" size="icon" data-testid="button-share">
             <Share2 className="h-5 w-5" />
           </Button>
-          <Button data-testid="button-trade">
-            {language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
-          </Button>
+          <SignUpCTA 
+            language={language}
+            customText={language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
+          />
         </div>
       </div>
 

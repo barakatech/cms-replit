@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Star, TrendingUp } from 'lucide-react';
 import { type StockPage } from '@/lib/mockData';
+import SignUpCTA from '@/components/SignUpCTA';
 
 interface TradeWidgetBlockProps {
   stock: StockPage;
@@ -130,9 +131,12 @@ export function TradeWidgetBlock({ stock, language }: TradeWidgetBlockProps) {
           )}
         </div>
 
-        <Button className="w-full" size="lg" data-testid="button-trade-widget">
-          {t.signUp}
-        </Button>
+        <SignUpCTA 
+          language={language} 
+          size="lg" 
+          className="w-full" 
+          customText={t.signUp}
+        />
 
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" className="w-full" data-testid="button-watch">
