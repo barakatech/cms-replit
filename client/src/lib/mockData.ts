@@ -1,5 +1,12 @@
 export type StockStatus = 'draft' | 'in_review' | 'published';
 
+export interface CompanyMeta {
+  ceo: string;
+  employees: string;
+  headquarters: string;
+  founded: string;
+}
+
 export interface StockPage {
   id: string;
   ticker: string;
@@ -12,6 +19,7 @@ export interface StockPage {
     ar: { title: string; description: string };
   };
   indexed: boolean;
+  companyMeta?: CompanyMeta;
   content: {
     en: {
       overview: string;
@@ -65,6 +73,12 @@ export const mockStocks: StockPage[] = [
       },
     },
     indexed: true,
+    companyMeta: {
+      ceo: 'Tim Cook',
+      employees: '164,000',
+      headquarters: 'Cupertino, CA',
+      founded: '1976',
+    },
     content: {
       en: {
         overview: 'Apple Inc. is a multinational technology company that designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company is known for its innovative products including iPhone, Mac, iPad, Apple Watch, and AirPods.',

@@ -17,12 +17,17 @@ interface CompanyMeta {
   founded: string;
 }
 
-const mockCompanyMeta: Record<string, CompanyMeta> = {
+const defaultCompanyMeta: Record<string, { ceo: string; employees: string; headquarters: string; founded: string }> = {
   AAPL: { ceo: 'Tim Cook', employees: '164,000', headquarters: 'Cupertino, CA', founded: '1976' },
   TSLA: { ceo: 'Elon Musk', employees: '140,000', headquarters: 'Austin, TX', founded: '2003' },
   MSFT: { ceo: 'Satya Nadella', employees: '221,000', headquarters: 'Redmond, WA', founded: '1975' },
   GOOGL: { ceo: 'Sundar Pichai', employees: '190,000', headquarters: 'Mountain View, CA', founded: '1998' },
   NVDA: { ceo: 'Jensen Huang', employees: '29,600', headquarters: 'Santa Clara, CA', founded: '1993' },
+  META: { ceo: 'Mark Zuckerberg', employees: '67,000', headquarters: 'Menlo Park, CA', founded: '2004' },
+  AMZN: { ceo: 'Andy Jassy', employees: '1,540,000', headquarters: 'Seattle, WA', founded: '1994' },
+  AMD: { ceo: 'Lisa Su', employees: '26,000', headquarters: 'Santa Clara, CA', founded: '1969' },
+  NFLX: { ceo: 'Ted Sarandos', employees: '13,000', headquarters: 'Los Gatos, CA', founded: '1997' },
+  INTC: { ceo: 'Pat Gelsinger', employees: '124,800', headquarters: 'Santa Clara, CA', founded: '1968' },
 };
 
 export function AboutCompanyBlock({ stock, language }: AboutCompanyBlockProps) {
@@ -30,7 +35,7 @@ export function AboutCompanyBlock({ stock, language }: AboutCompanyBlockProps) {
   const isRTL = language === 'ar';
   const content = stock.content[language];
   
-  const meta = mockCompanyMeta[stock.ticker] || {
+  const meta = stock.companyMeta || defaultCompanyMeta[stock.ticker] || {
     ceo: 'N/A',
     employees: 'N/A',
     headquarters: 'N/A',
