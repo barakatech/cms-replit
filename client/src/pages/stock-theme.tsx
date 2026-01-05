@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, Sparkles } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, Sparkles, Star } from 'lucide-react';
 import type { StockTheme, StockPage } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
+import ThemeIcon from '@/components/ThemeIcon';
+import SignUpCTA from '@/components/SignUpCTA';
 
 export default function StockThemePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -81,9 +83,11 @@ export default function StockThemePage() {
           </Link>
           
           <div className="flex items-center gap-4 mb-4">
-            <span className="text-4xl">{theme.icon}</span>
+            <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
+              <ThemeIcon name={theme.icon} className="h-8 w-8 text-primary" />
+            </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-3xl font-bold" data-testid="text-theme-title">{theme.title_en}</h1>
                 {theme.isNew && (
                   <Badge variant="secondary" className="gap-1">
@@ -92,19 +96,49 @@ export default function StockThemePage() {
                   </Badge>
                 )}
                 {theme.isFeatured && (
-                  <Badge variant="outline">Featured</Badge>
+                  <Badge variant="outline" className="gap-1 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200">
+                    <Star className="h-3 w-3" />
+                    Featured
+                  </Badge>
                 )}
+                {theme.badges?.map((badge) => (
+                  <Badge key={badge} variant="secondary">{badge}</Badge>
+                ))}
               </div>
               <p className="text-muted-foreground mt-1">{theme.description_en}</p>
             </div>
           </div>
           
+          {theme.longDescription_en && (
+            <p className="text-muted-foreground max-w-3xl mb-4">
+              {theme.longDescription_en}
+            </p>
+          )}
+          
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{theme.tickers.length} stocks</span>
-            <span>Theme ID: {theme.slug}</span>
           </div>
         </div>
       </div>
+
+      {theme.highlights && theme.highlights.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 py-8 border-b">
+          <h2 className="text-xl font-semibold mb-6">Why invest in {theme.title_en}?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {theme.highlights.map((highlight, idx) => (
+              <Card key={idx} className="bg-muted/30">
+                <CardContent className="pt-6">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                    <ThemeIcon name={highlight.icon} className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">{highlight.title_en}</h3>
+                  <p className="text-sm text-muted-foreground">{highlight.description_en}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h2 className="text-xl font-semibold mb-6">Stocks in this Theme</h2>
@@ -160,7 +194,26 @@ export default function StockThemePage() {
           ))}
         </div>
 
-        <Card className="mt-12 bg-muted/30">
+        <Card className="mt-12 bg-primary/5 border-primary/20">
+          <CardContent className="py-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Ready to invest in {theme.title_en}?</h3>
+                <p className="text-muted-foreground">
+                  Download Baraka to start trading these stocks commission-free.
+                </p>
+              </div>
+              <SignUpCTA 
+                variant="button" 
+                buttonText="Start Investing"
+                buttonVariant="default"
+                className="shrink-0"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 bg-muted/30">
           <CardContent className="py-8 text-center">
             <h3 className="text-xl font-semibold mb-2">Want to learn more?</h3>
             <p className="text-muted-foreground mb-4">

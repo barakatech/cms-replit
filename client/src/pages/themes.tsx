@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight, Sparkles, TrendingUp, Star } from 'lucide-react';
 import type { StockTheme } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
+import ThemeIcon from '@/components/ThemeIcon';
 
 export default function ThemesPage() {
   const { data: stockThemes = [], isLoading } = useQuery<StockTheme[]>({
@@ -69,7 +70,9 @@ export default function ThemesPage() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <span className="text-4xl">{theme.icon}</span>
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <ThemeIcon name={theme.icon} className="h-6 w-6 text-primary" />
+                          </div>
                           <div>
                             <CardTitle className="text-xl group-hover:text-primary transition-colors">
                               {theme.title_en}
@@ -124,7 +127,9 @@ export default function ThemesPage() {
                   <Card className="hover-elevate cursor-pointer h-full group" data-testid={`card-new-${theme.slug}`}>
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-3 mb-3">
-                        <span className="text-3xl">{theme.icon}</span>
+                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <ThemeIcon name={theme.icon} className="h-5 w-5 text-primary" />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
                             {theme.title_en}
@@ -157,7 +162,9 @@ export default function ThemesPage() {
                 <Card className="hover-elevate cursor-pointer h-full group" data-testid={`card-theme-${theme.slug}`}>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="text-3xl">{theme.icon}</span>
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <ThemeIcon name={theme.icon} className="h-5 w-5 text-primary" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
                           {theme.title_en}

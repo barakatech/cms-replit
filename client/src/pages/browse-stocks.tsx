@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { StockPage, StockTheme } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
+import ThemeIcon from '@/components/ThemeIcon';
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'ticker' | 'sector';
@@ -212,8 +213,8 @@ export default function BrowseStocksPage() {
             <div className="flex flex-wrap gap-2">
               {stockThemes.slice(0, 8).map(theme => (
                 <Link key={theme.id} href={`/stocks/themes/${theme.slug}`}>
-                  <Badge variant="outline" className="cursor-pointer gap-1 py-1.5 px-3" data-testid={`theme-${theme.slug}`}>
-                    <span>{theme.icon}</span>
+                  <Badge variant="outline" className="cursor-pointer gap-1.5 py-1.5 px-3" data-testid={`theme-${theme.slug}`}>
+                    <ThemeIcon name={theme.icon} className="h-3.5 w-3.5" />
                     {theme.title_en}
                     <ChevronRight className="h-3 w-3" />
                   </Badge>

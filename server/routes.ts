@@ -57,6 +57,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(themes);
   });
 
+  app.get("/api/discover/themes/:slug", async (req, res) => {
+    const theme = await storage.getStockThemeBySlug(req.params.slug);
+    if (!theme) {
+      return res.status(404).json({ error: "Theme not found" });
+    }
+    res.json(theme);
+  });
+
+  app.get("/api/discover/collections", async (_req, res) => {
+    const collections = await storage.getStockCollections();
+    res.json(collections);
+  });
+
+  app.get("/api/discover/collections/:slug", async (req, res) => {
+    const collection = await storage.getStockCollectionBySlug(req.params.slug);
+    if (!collection) {
+      return res.status(404).json({ error: "Collection not found" });
+    }
+    res.json(collection);
+  });
+
   app.get("/api/discover/offers", async (_req, res) => {
     const offers = await storage.getOfferBanners();
     res.json(offers);
