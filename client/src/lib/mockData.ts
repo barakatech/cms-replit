@@ -224,6 +224,68 @@ export const mockStocks: StockPage[] = [
       manual: [],
     },
   },
+  {
+    id: '4',
+    ticker: 'META',
+    companyName: 'Meta Platforms, Inc.',
+    languages: ['en', 'ar'],
+    status: 'published',
+    lastUpdated: '2026-01-05',
+    metadata: {
+      en: {
+        title: 'Meta Platforms (META) Stock - Buy Meta Shares on baraka',
+        description: 'Invest in Meta Platforms (META) on baraka. Get real-time prices, market data, and expert analysis for the world\'s leading social media and metaverse company.',
+      },
+      ar: {
+        title: 'سهم ميتا بلاتفورمز (META) - اشترِ أسهم ميتا على بركة',
+        description: 'استثمر في ميتا بلاتفورمز (META) على بركة. احصل على الأسعار الفورية وبيانات السوق والتحليلات المتخصصة لأكبر شركة وسائط اجتماعية وميتافيرس في العالم.',
+      },
+    },
+    indexed: true,
+    content: {
+      en: {
+        overview: 'Meta Platforms, Inc. (formerly Facebook, Inc.) is an American multinational technology conglomerate headquartered in Menlo Park, California. The company owns and operates Facebook, Instagram, Threads, and WhatsApp, among other products and services. Meta is also investing heavily in virtual and augmented reality through its Reality Labs division.',
+        thesis: 'Meta represents a compelling investment opportunity due to its dominant position in social media, massive user base of over 3 billion people, growing advertising business, and ambitious metaverse strategy. The company\'s AI investments and Reels product are driving engagement and revenue growth.',
+        risks: 'Key risks include regulatory scrutiny around data privacy and antitrust concerns, competition from TikTok and other platforms, heavy spending on Reality Labs with uncertain returns, and dependence on advertising revenue.',
+        faqs: [
+          { question: 'What is Meta\'s main source of revenue?', answer: 'Advertising revenue from Facebook and Instagram accounts for the vast majority of Meta\'s revenue.' },
+          { question: 'Does Meta pay dividends?', answer: 'Meta initiated its first-ever dividend in 2024, signaling confidence in its cash flow generation.' },
+          { question: 'What is the metaverse?', answer: 'The metaverse is Meta\'s vision for immersive virtual experiences, powered by VR/AR technology through products like Meta Quest.' },
+        ],
+        highlights: 'Social media dominance, 3B+ monthly users, Growing AI capabilities, Metaverse pioneer, Strong cash flow',
+      },
+      ar: {
+        overview: 'ميتا بلاتفورمز هي تكتل تقني أمريكي متعدد الجنسيات يقع مقرها في مينلو بارك، كاليفورنيا. تمتلك الشركة وتدير فيسبوك وإنستغرام وثريدز وواتساب، من بين منتجات وخدمات أخرى.',
+        thesis: 'تمثل ميتا فرصة استثمارية مقنعة بفضل موقعها المهيمن في وسائل التواصل الاجتماعي وقاعدة المستخدمين الضخمة التي تتجاوز 3 مليارات شخص.',
+        risks: 'تشمل المخاطر الرئيسية التدقيق التنظيمي حول خصوصية البيانات ومخاوف مكافحة الاحتكار، والمنافسة من تيك توك ومنصات أخرى.',
+        faqs: [
+          { question: 'ما هو المصدر الرئيسي لإيرادات ميتا؟', answer: 'تمثل إيرادات الإعلانات من فيسبوك وإنستغرام الغالبية العظمى من إيرادات ميتا.' },
+          { question: 'هل تدفع ميتا أرباحاً؟', answer: 'بدأت ميتا في دفع أرباح لأول مرة في 2024.' },
+        ],
+        highlights: 'هيمنة وسائل التواصل الاجتماعي، أكثر من 3 مليار مستخدم شهري، قدرات ذكاء اصطناعي متنامية',
+      },
+    },
+    dynamicData: {
+      price: 524.36,
+      change: 8.72,
+      changePercent: 1.69,
+      marketCap: '$1.35T',
+      volume: '18.2M',
+      pe: '27.4',
+      eps: '$19.14',
+      dividend: '0.42%',
+      sentiment: { buy: 78, hold: 18, sell: 4 },
+      performance: { '1D': 1.69, '1W': 4.2, '1M': 12.3, '1Y': 185.6 },
+    },
+    internalLinks: {
+      autoSuggestions: [
+        { ticker: 'GOOGL', reason: 'Advertising competitors' },
+        { ticker: 'SNAP', reason: 'Social media sector' },
+        { ticker: 'PINS', reason: 'Digital advertising' },
+      ],
+      manual: ['AAPL', 'MSFT', 'AMZN'],
+    },
+  },
 ];
 
 export interface Asset {
