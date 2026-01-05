@@ -204,9 +204,8 @@ export default function StockThemePage() {
                 </p>
               </div>
               <SignUpCTA 
-                variant="button" 
-                buttonText="Start Investing"
-                buttonVariant="default"
+                variant="default"
+                customText="Start Investing"
                 className="shrink-0"
               />
             </div>

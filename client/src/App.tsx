@@ -42,6 +42,7 @@ function Router() {
       <Route path="/stocks" component={StocksDiscover} />
       <Route path="/stocks/browse" component={BrowseStocksPage} />
       <Route path="/themes" component={ThemesPage} />
+      <Route path="/stocks/themes" component={ThemesPage} />
       <Route path="/stocks/themes/:slug" component={StockThemePage} />
       <Route path="/themes/:slug" component={StockThemePage} />
       <Route path="/stocks/:slug" component={StockDetail} />

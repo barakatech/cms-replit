@@ -693,6 +693,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // PUBLIC STOCK THEME & LANDING PAGE ROUTES
+  // ============================================
+
+  // Get all published stock themes (public)
+  app.get("/api/stocks/themes", async (_req, res) => {
+    const themes = await storage.getStockThemes();
+    const publishedThemes = themes.filter(t => t.status === 'published');
+    res.json(publishedThemes);
+  });
+
+  // Get theme detail with associated stocks (public)
+  app.get("/api/stocks/themes/:slug", async (req, res) => {
+    const theme = await storage.getStockThemeBySlug(req.params.slug);
+    if (!theme || theme.status !== 'published') {
+      return res.status(404).json({ error: "Theme not found" });
+    }
+
+    // Get stock pages for this theme's tickers
+    const allStocks = await storage.getStockPages();
+    const themeStocks = allStocks.filter(stock => 
+      theme.tickers.includes(stock.ticker) && stock.status === 'published'
+    ).map(stock => ({
+      id: stock.id,
+      ticker: stock.ticker,
+      slug: stock.slug,
+      companyName_en: stock.companyName_en,
+      companyName_ar: stock.companyName_ar,
+      exchange: stock.exchange,
+      currency: stock.currency,
+      tags: stock.tags,
+    }));
+
+    res.json({
+      ...theme,
+      stocks: themeStocks,
+    });
+  });
+
+  // Get stock landing page by slug (public)
+  app.get("/api/stocks/:slug", async (req, res) => {
+    const stock = await storage.getStockPageBySlug(req.params.slug);
+    if (!stock) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+    // Allow draft stocks in preview mode (check query param)
+    const isPreview = req.query.preview === 'true';
+    if (stock.status !== 'published' && !isPreview) {
+      return res.status(404).json({ error: "Stock not found" });
+    }
+    res.json(stock);
+  });
+
+  // Get stocks for a specific theme by theme ID (public)
+  app.get("/api/stocks/themes/:slug/stocks", async (req, res) => {
+    const theme = await storage.getStockThemeBySlug(req.params.slug);
+    if (!theme || theme.status !== 'published') {
+      return res.status(404).json({ error: "Theme not found" });
+    }
+
+    const allStocks = await storage.getStockPages();
+    const themeStocks = allStocks.filter(stock => 
+      theme.tickers.includes(stock.ticker) && stock.status === 'published'
+    );
+
+    res.json(themeStocks);
+  });
+
+  // ============================================
   // REST API for Presence (fallback)
   // ============================================
 
