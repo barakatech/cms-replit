@@ -214,7 +214,7 @@ export default function StocksDiscover() {
 
   const CollectionCard = ({ collection }: { collection: StockCollection }) => {
     return (
-      <Link href={`/stocks?theme=${collection.slug}`}>
+      <Link href={`/stocks/themes/${collection.slug}`}>
         <Card className="hover-elevate cursor-pointer h-full" data-testid={`collection-${collection.slug}`}>
           <CardContent className="p-4">
             <div className={`flex items-start gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
