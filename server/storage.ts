@@ -30,6 +30,9 @@ import {
   type InsertBlogPost,
   type StockPage,
   type InsertStockPage,
+  type StockPageBlock,
+  type StockThemeMember,
+  type InsertStockThemeMember,
   type MarketingPixel,
   type InsertMarketingPixel,
   type PixelEventMap,
@@ -37,6 +40,22 @@ import {
   type AppDownloadConfig
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+
+// Helper function to generate default page builder blocks for stock pages
+function generateDefaultPageBlocks(): StockPageBlock[] {
+  return [
+    { id: randomUUID(), type: 'stockHeader', enabled: true, order: 1 },
+    { id: randomUUID(), type: 'priceSnapshot', enabled: true, order: 2 },
+    { id: randomUUID(), type: 'priceChart', enabled: true, order: 3, config: { defaultTimeframe: '1M' } },
+    { id: randomUUID(), type: 'keyStatistics', enabled: true, order: 4 },
+    { id: randomUUID(), type: 'aboutCompany', enabled: true, order: 5 },
+    { id: randomUUID(), type: 'analystRatings', enabled: true, order: 6 },
+    { id: randomUUID(), type: 'earnings', enabled: true, order: 7 },
+    { id: randomUUID(), type: 'newsList', enabled: true, order: 8, config: { maxItems: 5 } },
+    { id: randomUUID(), type: 'trendingStocks', enabled: true, order: 9 },
+    { id: randomUUID(), type: 'risksDisclosure', enabled: true, order: 10 },
+  ];
+}
 
 const seedDiscoverSettings: DiscoverSettings = {
   id: '1',
@@ -469,88 +488,61 @@ const seedBlogPosts: BlogPost[] = [
   },
 ];
 
+// Helper to create stock page with defaults
+function createStockPage(data: {
+  id: string;
+  ticker: string;
+  companyName_en: string;
+  companyName_ar: string;
+  description_en: string;
+  description_ar: string;
+  sector: string;
+  exchange: string;
+  tags?: string[];
+  relatedTickers?: string[];
+}): StockPage {
+  const slug = data.ticker.toLowerCase();
+  return {
+    id: data.id,
+    ticker: data.ticker,
+    slug,
+    companyName_en: data.companyName_en,
+    companyName_ar: data.companyName_ar,
+    description_en: data.description_en,
+    description_ar: data.description_ar,
+    content_en: `<p>${data.description_en}</p>`,
+    content_ar: `<p>${data.description_ar}</p>`,
+    sector: data.sector,
+    exchange: data.exchange,
+    currency: 'USD',
+    tags: data.tags || [],
+    status: 'published',
+    seo_en: {
+      metaTitle: `${data.companyName_en} (${data.ticker}) Stock | Baraka`,
+      metaDescription: `Trade ${data.companyName_en} (${data.ticker}) stock on Baraka. ${data.description_en}`,
+      robotsIndex: true,
+      robotsFollow: true,
+    },
+    seo_ar: {
+      metaTitle: `سهم ${data.companyName_ar} (${data.ticker}) | بركة`,
+      metaDescription: `تداول سهم ${data.companyName_ar} (${data.ticker}) على بركة. ${data.description_ar}`,
+      robotsIndex: true,
+      robotsFollow: true,
+    },
+    pageBuilderJson: generateDefaultPageBlocks(),
+    relatedTickers: data.relatedTickers || [],
+    publishedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 // Seed Stock Pages
 const seedStockPages: StockPage[] = [
-  {
-    id: '1',
-    ticker: 'AAPL',
-    slug: 'apple-aapl',
-    companyName_en: 'Apple Inc.',
-    companyName_ar: 'شركة أبل',
-    description_en: 'Apple designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.',
-    description_ar: 'تصمم أبل وتصنع وتسوق الهواتف الذكية وأجهزة الكمبيوتر الشخصية والأجهزة اللوحية.',
-    content_en: '<p>Apple Inc. is one of the world\'s most valuable companies...</p>',
-    content_ar: '<p>شركة أبل هي واحدة من أكثر الشركات قيمة في العالم...</p>',
-    sector: 'Technology',
-    exchange: 'NASDAQ',
-    status: 'published',
-    seo: {
-      metaTitle_en: 'Apple (AAPL) Stock | Baraka',
-      metaTitle_ar: 'سهم أبل (AAPL) | بركة',
-    },
-    relatedTickers: ['MSFT', 'GOOGL', 'AMZN'],
-    publishedAt: '2024-01-01T00:00:00Z',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-  },
-  {
-    id: '2',
-    ticker: 'TSLA',
-    slug: 'tesla-tsla',
-    companyName_en: 'Tesla, Inc.',
-    companyName_ar: 'شركة تسلا',
-    description_en: 'Tesla designs, develops, manufactures, and sells electric vehicles and energy storage products.',
-    description_ar: 'تصمم تسلا وتطور وتصنع وتبيع السيارات الكهربائية ومنتجات تخزين الطاقة.',
-    content_en: '<p>Tesla has revolutionized the automotive industry...</p>',
-    content_ar: '<p>أحدثت تسلا ثورة في صناعة السيارات...</p>',
-    sector: 'Automotive',
-    exchange: 'NASDAQ',
-    status: 'published',
-    seo: {},
-    relatedTickers: ['RIVN', 'LCID', 'NIO'],
-    publishedAt: '2024-01-01T00:00:00Z',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-  },
-  {
-    id: '3',
-    ticker: 'NVDA',
-    slug: 'nvidia-nvda',
-    companyName_en: 'NVIDIA Corporation',
-    companyName_ar: 'شركة إنفيديا',
-    description_en: 'NVIDIA designs graphics processing units and system on chip units for gaming, professional, and datacenter markets.',
-    description_ar: 'تصمم إنفيديا وحدات معالجة الرسومات والرقائق المتكاملة لأسواق الألعاب والمحترفين ومراكز البيانات.',
-    content_en: '<p>NVIDIA is at the forefront of AI computing...</p>',
-    content_ar: '<p>إنفيديا في طليعة حوسبة الذكاء الاصطناعي...</p>',
-    sector: 'Technology',
-    exchange: 'NASDAQ',
-    status: 'published',
-    seo: {},
-    relatedTickers: ['AMD', 'INTC', 'AVGO'],
-    publishedAt: '2024-01-01T00:00:00Z',
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-  },
-  {
-    id: '4',
-    ticker: 'MSFT',
-    slug: 'microsoft-msft',
-    companyName_en: 'Microsoft Corporation',
-    companyName_ar: 'شركة مايكروسوفت',
-    description_en: 'Microsoft develops, licenses, and supports software, services, devices, and solutions worldwide.',
-    description_ar: 'تطور مايكروسوفت وترخص وتدعم البرمجيات والخدمات والأجهزة والحلول في جميع أنحاء العالم.',
-    content_en: '<p>Microsoft Corporation is one of the world\'s largest technology companies. Founded by Bill Gates and Paul Allen in 1975, Microsoft has grown to become a leader in cloud computing (Azure), productivity software (Microsoft 365), and enterprise solutions. The company\'s diversified business model spans consumer products, gaming (Xbox), and artificial intelligence initiatives.</p>',
-    content_ar: '<p>شركة مايكروسوفت هي واحدة من أكبر شركات التكنولوجيا في العالم. تأسست على يد بيل غيتس وبول ألين في عام 1975، ونمت لتصبح رائدة في الحوسبة السحابية (Azure) وبرامج الإنتاجية (Microsoft 365) والحلول المؤسسية.</p>',
-    sector: 'Technology',
-    exchange: 'NASDAQ',
-    status: 'published',
-    seo: {
-      metaTitle_en: 'Microsoft (MSFT) Stock | Baraka',
-      metaTitle_ar: 'سهم مايكروسوفت (MSFT) | بركة',
-      metaDescription_en: 'Trade Microsoft (MSFT) stock on Baraka. Learn about the cloud computing giant\'s business model and performance.',
-      metaDescription_ar: 'تداول سهم مايكروسوفت (MSFT) على بركة. تعرف على نموذج أعمال عملاق الحوسبة السحابية وأدائه.',
-    },
-    relatedTickers: ['AAPL', 'GOOGL', 'AMZN'],
+  createStockPage({ id: '1', ticker: 'AAPL', companyName_en: 'Apple Inc.', companyName_ar: 'شركة أبل', description_en: 'Apple designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.', description_ar: 'تصمم أبل وتصنع وتسوق الهواتف الذكية وأجهزة الكمبيوتر الشخصية والأجهزة اللوحية.', sector: 'Technology', exchange: 'NASDAQ', tags: ['mega-cap', 'tech', 'halal'], relatedTickers: ['MSFT', 'GOOGL', 'AMZN'] }),
+  createStockPage({ id: '2', ticker: 'TSLA', companyName_en: 'Tesla, Inc.', companyName_ar: 'شركة تسلا', description_en: 'Tesla designs, develops, manufactures, and sells electric vehicles and energy storage products.', description_ar: 'تصمم تسلا وتطور وتصنع وتبيع السيارات الكهربائية ومنتجات تخزين الطاقة.', sector: 'Automotive', exchange: 'NASDAQ', tags: ['mega-cap', 'ev', 'most-active'], relatedTickers: ['RIVN', 'LCID', 'NIO'] }),
+  createStockPage({ id: '3', ticker: 'NVDA', companyName_en: 'NVIDIA Corporation', companyName_ar: 'شركة إنفيديا', description_en: 'NVIDIA designs graphics processing units and system on chip units for AI and gaming.', description_ar: 'تصمم إنفيديا وحدات معالجة الرسومات للذكاء الاصطناعي والألعاب.', sector: 'Technology', exchange: 'NASDAQ', tags: ['mega-cap', 'ai', 'halal', 'most-active'], relatedTickers: ['AMD', 'AVGO', 'INTC'] }),
+  createStockPage({ id: '4', ticker: 'MSFT', companyName_en: 'Microsoft Corporation', companyName_ar: 'شركة مايكروسوفت', description_en: 'Microsoft develops software, services, devices, and cloud computing solutions worldwide.', description_ar: 'تطور مايكروسوفت البرمجيات والخدمات والحوسبة السحابية في جميع أنحاء العالم.', sector: 'Technology', exchange: 'NASDAQ', tags: ['mega-cap', 'ai', 'halal'], relatedTickers: ['AAPL', 'GOOGL', 'AMZN'] }),
     publishedAt: '2024-01-01T00:00:00Z',
     createdAt: '2024-02-01T00:00:00Z',
     updatedAt: '2024-02-01T00:00:00Z',

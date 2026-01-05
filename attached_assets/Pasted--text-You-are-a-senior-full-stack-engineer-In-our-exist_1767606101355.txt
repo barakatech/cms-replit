@@ -1,0 +1,211 @@
+```text
+You are a senior full-stack engineer. In our existing Next.js + Prisma CMS (Stocks + Themes + Landing Page Builder + Banners + EN/AR + RTL + Light/Dark), implement complete end-to-end support for:
+
+1) Stock Themes (collections like Halal Stocks, AI Leaders, etc.)
+2) Theme detail pages listing constituent stocks
+3) Auto-creation of a Stock Landing Page for every stock inside a theme
+4) Click-through from theme → stock → stock landing page (/stocks/[symbol])
+
+IMPORTANT
+- Market data is dummy now but will be from a real-time API later (use MarketDataProvider abstraction).
+- Do not scrape external sites.
+- Keep copy unique to Baraka and compliance-friendly.
+
+===========================================================
+A) DATA MODELS (PRISMA)
+===========================================================
+
+1) Stock
+- id
+- symbol (unique, e.g., "TSLA")
+- name
+- exchange (optional)
+- currency (optional)
+- slug (derived: symbol lowercased)
+- status: draft|published
+- tags: string[]
+- themeIds (relation)
+- seo_en: { metaTitle, metaDescription, canonical, robotsIndex, robotsFollow, schemasJson[] }
+- seo_ar: { metaTitle, metaDescription, canonical, robotsIndex, robotsFollow, schemasJson[] }
+- pageBuilderJson (blocks for stock detail page, localized)
+- createdAt, updatedAt
+
+2) StockTheme
+- id
+- slug (unique)
+- title_en, title_ar
+- description_en, description_ar
+- heroImageUrl (optional)
+- badges (string[])
+- status: draft|published
+- seo_en + seo_ar (same shape as stock)
+- createdAt, updatedAt
+
+3) StockThemeMember (join table)
+- id
+- themeId
+- stockId
+- order (int)
+- isFeatured (boolean)
+
+===========================================================
+B) PUBLIC ROUTES
+===========================================================
+
+1) Theme Hub
+- /stocks/themes
+Lists all themes (cards), search themes, filter chips, shows featured themes.
+Each theme card links to /stocks/themes/[slug].
+
+2) Theme Detail Page (must list stocks)
+- /stocks/themes/[slug]
+Layout:
+- Hero: theme title, unique Baraka copy, CTA "Browse all stocks"
+- Sticky subnav: Overview | Stocks | Learn | FAQ
+- Stocks section:
+  - Search within theme
+  - Sort (A–Z / Featured / Most Active placeholder)
+  - Stock list cards/table:
+    - logo (optional), symbol, name
+    - price + % change (from MarketDataProvider dummy)
+    - sentiment chip (dummy)
+    - CTA “View” -> /stocks/[symbolLowercase]
+- Learn module: related blog posts (tag match)
+- Offers/Banners placements
+- Newsletter signup + mobile app install banner (Adjust deep link)
+
+3) Stock Landing Page
+- /stocks/[slug] (slug = symbol lowercase)
+This must already exist or be created. It must render:
+- Stock header
+- Price snapshot + chart placeholder
+- Key statistics
+- Market sentiment module
+- News placeholder
+- Disclosures
+All blocks editable in CMS (page builder).
+
+===========================================================
+C) ADMIN ROUTES / CMS UX
+===========================================================
+
+1) Themes Management
+- /admin/stocks/themes
+CRUD themes + assign stocks.
+Features:
+- Create/edit/publish theme
+- Add stocks via search (autocomplete by symbol/name)
+- Drag/drop reorder members
+- Mark featured members
+- Localized fields EN/AR
+- SEO panel per locale
+- Preview theme page EN/AR
+
+2) Stocks Management
+- /admin/stocks
+CRUD stocks + edit stock page builder blocks.
+Features:
+- Bulk create stocks from a list (paste CSV/symbol list)
+- “Generate landing pages” action:
+  - Ensures each selected stock has a complete default pageBuilderJson
+  - Publishes or keeps draft based on user choice (default: draft)
+
+3) Bulk generator tool
+- /admin/stocks/tools/generate-pages
+Inputs:
+- select a theme (or all themes)
+- options:
+  - create missing stock records
+  - create missing stock landing pages (pageBuilderJson)
+  - publish pages automatically (default OFF)
+Outputs:
+- summary counts: created stocks, created pages, updated pages
+
+===========================================================
+D) REQUIRED FEATURE: AUTO-CREATE LANDING PAGES FOR THEME STOCKS
+===========================================================
+
+When a stock is added to a theme:
+- If Stock record exists but pageBuilderJson is empty -> auto-generate default stock page blocks
+- If Stock record does not exist -> create it + generate its page blocks (draft)
+- Ensure it becomes reachable at /stocks/[symbolLowercase]
+- Ensure Theme page links to it
+
+Default page blocks to generate:
+- StockHeaderBlock (name, symbol, exchange)
+- PriceSnapshotBlock (market data driven)
+- PriceChartBlock (dummy series)
+- KeyStatisticsBlock (market data driven)
+- AboutCompanyBlock (CMS text placeholder + show more)
+- AnalystRatingsBlock (optional, dummy)
+- EarningsBlock (optional, dummy)
+- NewsListBlock (CMS curated placeholder)
+- TrendingStocksBlock (CMS/dummy)
+- RisksDisclosureBlock (mandatory)
+
+===========================================================
+E) THEMES TO CREATE + STOCKS TO ASSIGN
+===========================================================
+
+Create these themes (seed with sensible members). Use stocks from the Top 50 seed universe we already used.
+Each theme must have EN/AR title + description (unique Baraka copy) and 12–20 members.
+
+1) Halal Stocks
+Members (examples from our seed list): AAPL, MSFT, NVDA, AMD, AVGO, ORCL, MA, V, CSCO, MRVL, INTC, IBM
+(Note: This is a demo list; add a disclaimer “screening methodology may vary”.)
+
+2) AI Leaders
+Members: NVDA, AMD, AVGO, MSFT, GOOG, META, ORCL, CRM, PANW, CRWD, ADBE, MRVL
+
+3) Titans (Mega Caps)
+Members: AAPL, MSFT, AMZN, GOOG, META, JPM, UNH, LLY, COST, WMT, V, MA
+
+4) Most Active (Top by Volume)
+Members: use the full “Top 50 seed list” (TSLA, NVDA, MU, MSFT, AMZN, AAPL, PLTR, META, AVGO, AMD, GOOG, INTC, NFLX, APP, MSTR, HOOD, ORCL, LLY, JPM, GS, BA, CRM, UNH, LRCX, MA, COIN, AMAT, COST, ADBE, CVNA, V, WMT, ASTS, SOFI, CRWD, IBM, MRVL, JNJ, WDAY, PANW, TMO, CSCO, CVX, MRK, etc.)
+
+5) 52-Week Highs
+Members: choose 12–20 from seed list and mark as “highs” (dummy tag)
+
+6) 52-Week Lows
+Members: choose 12–20 from seed list and mark as “lows” (dummy tag)
+
+7) Bitcoin / Crypto Exposure (equity-linked)
+Members: COIN, MSTR, HOOD, (plus other relevant from list if present)
+
+8) Dividend Staples (demo)
+Members: JPM, CVX, MRK, JNJ, CSCO, IBM, WMT, COST, (plus others)
+
+For each theme:
+- Add a short theme disclaimer block (localized) if theme implies screening (Halal, Dividend).
+
+===========================================================
+F) THEME → STOCK NAVIGATION (MUST WORK)
+===========================================================
+
+On /stocks/themes/[slug]:
+- Each stock row/card must link to /stocks/[symbolLowercase]
+- That stock page must exist (created or generated)
+- If page is draft and user is not logged in:
+  - show 404 or redirect to /stocks/browse
+- If logged-in CMS user in preview mode:
+  - allow preview of draft stock page
+
+===========================================================
+G) SEED DATA + ACCEPTANCE CRITERIA
+===========================================================
+
+Seed:
+- All themes above
+- At least 50 stock records
+- Stock landing pages generated for all theme members (at least the Top 50)
+- Theme pages published; stock pages can be draft or published (choose published for demo)
+
+Acceptance criteria:
+- Theme pages render with stock lists and market data placeholders
+- Clicking any stock takes user to a valid stock landing page
+- Admin can add/remove stocks from themes and auto-generate missing landing pages
+- EN/AR + RTL + Light/Dark work across theme and stock pages
+- SEO fields exist and are applied
+
+Now implement this end-to-end in the existing Replit CMS project.
+```

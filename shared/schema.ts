@@ -640,6 +640,101 @@ export interface BlogPost {
 export type InsertBlogPost = Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>;
 
 // ============================================
+// STOCK PAGE BUILDER BLOCKS
+// ============================================
+
+export type StockPageBlockType = 
+  | 'stockHeader'
+  | 'priceSnapshot'
+  | 'priceChart'
+  | 'keyStatistics'
+  | 'aboutCompany'
+  | 'analystRatings'
+  | 'earnings'
+  | 'newsList'
+  | 'trendingStocks'
+  | 'risksDisclosure';
+
+export interface StockPageBlockBase {
+  id: string;
+  type: StockPageBlockType;
+  enabled: boolean;
+  order: number;
+}
+
+export interface StockHeaderBlock extends StockPageBlockBase {
+  type: 'stockHeader';
+}
+
+export interface PriceSnapshotBlock extends StockPageBlockBase {
+  type: 'priceSnapshot';
+}
+
+export interface PriceChartBlock extends StockPageBlockBase {
+  type: 'priceChart';
+  config?: {
+    defaultTimeframe?: '1D' | '1W' | '1M' | '3M' | '1Y' | 'ALL';
+  };
+}
+
+export interface KeyStatisticsBlock extends StockPageBlockBase {
+  type: 'keyStatistics';
+}
+
+export interface AboutCompanyBlock extends StockPageBlockBase {
+  type: 'aboutCompany';
+  content_en?: string;
+  content_ar?: string;
+}
+
+export interface AnalystRatingsBlock extends StockPageBlockBase {
+  type: 'analystRatings';
+}
+
+export interface EarningsBlock extends StockPageBlockBase {
+  type: 'earnings';
+}
+
+export interface NewsListBlock extends StockPageBlockBase {
+  type: 'newsList';
+  config?: {
+    maxItems?: number;
+  };
+}
+
+export interface TrendingStocksBlock extends StockPageBlockBase {
+  type: 'trendingStocks';
+  tickers?: string[];
+}
+
+export interface RisksDisclosureBlock extends StockPageBlockBase {
+  type: 'risksDisclosure';
+  content_en?: string;
+  content_ar?: string;
+}
+
+export type StockPageBlock = 
+  | StockHeaderBlock
+  | PriceSnapshotBlock
+  | PriceChartBlock
+  | KeyStatisticsBlock
+  | AboutCompanyBlock
+  | AnalystRatingsBlock
+  | EarningsBlock
+  | NewsListBlock
+  | TrendingStocksBlock
+  | RisksDisclosureBlock;
+
+export interface StockPageSEO {
+  metaTitle?: string;
+  metaDescription?: string;
+  canonical?: string;
+  robotsIndex?: boolean;
+  robotsFollow?: boolean;
+  schemasJson?: object[];
+}
+
+// ============================================
 // STOCK PAGES (for Stocks section)
 // ============================================
 
@@ -655,13 +750,12 @@ export interface StockPage {
   content_ar: string;
   sector: string;
   exchange: string;
+  currency?: string;
+  tags: string[];
   status: 'draft' | 'published' | 'archived';
-  seo: {
-    metaTitle_en?: string;
-    metaTitle_ar?: string;
-    metaDescription_en?: string;
-    metaDescription_ar?: string;
-  };
+  seo_en: StockPageSEO;
+  seo_ar: StockPageSEO;
+  pageBuilderJson: StockPageBlock[];
   relatedTickers: string[];
   publishedAt?: string;
   createdAt: string;
@@ -669,6 +763,21 @@ export interface StockPage {
 }
 
 export type InsertStockPage = Omit<StockPage, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ============================================
+// STOCK THEME MEMBER (join table)
+// ============================================
+
+export interface StockThemeMember {
+  id: string;
+  themeId: string;
+  stockId: string;
+  order: number;
+  isFeatured: boolean;
+  createdAt: string;
+}
+
+export type InsertStockThemeMember = Omit<StockThemeMember, 'id' | 'createdAt'>;
 
 // ============================================
 // REAL-TIME PRESENCE (for collaborative editing)
