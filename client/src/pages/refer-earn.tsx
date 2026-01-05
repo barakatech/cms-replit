@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import BarakaHeader from '@/components/BarakaHeader';
+import SignUpCTA from '@/components/SignUpCTA';
 
 export default function ReferEarnPage() {
   const [copied, setCopied] = useState(false);
@@ -98,10 +99,11 @@ export default function ReferEarnPage() {
                   <Share2 className="h-4 w-4" />
                   Share Now
                 </Button>
-                <Button size="lg" variant="outline" className="gap-2" data-testid="button-download">
-                  <Smartphone className="h-4 w-4" />
-                  Download App
-                </Button>
+                <SignUpCTA 
+                  size="lg" 
+                  variant="outline" 
+                  customText="Download App"
+                />
               </div>
             </div>
           </div>
