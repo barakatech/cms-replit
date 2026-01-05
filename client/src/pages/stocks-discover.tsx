@@ -238,61 +238,50 @@ export default function StocksDiscover() {
     return iconMap[iconName] || Star;
   };
 
-  const FeaturedThemeCard = ({ collection }: { collection: StockCollection }) => {
+  const ThemeCard = ({ collection, isFeatured = false }: { collection: StockCollection; isFeatured?: boolean }) => {
     const IconComponent = getIcon(collection.iconName);
     return (
       <Link href={`/stocks/themes/${collection.slug}`}>
-        <Card className="hover-elevate cursor-pointer" data-testid={`featured-theme-${collection.slug}`}>
+        <Card 
+          className="hover-elevate cursor-pointer h-full group relative overflow-visible" 
+          data-testid={`theme-card-${collection.slug}`}
+        >
           <CardContent className="p-5">
-            <Badge variant="outline" className="mb-4 text-xs">
-              {language === 'en' ? 'Theme of the Month' : 'موضوع الشهر'}
-            </Badge>
-            <div className={`flex items-start gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="flex-shrink-0">
-                <IconComponent className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div className={`flex-1 ${isRTL ? 'text-right' : ''}`}>
-                <h3 className="text-lg font-semibold mb-1">{collection.title[language]}</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {collection.description[language]}
-                </p>
-                <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-end' : ''}`}>
-                  {collection.tickers.slice(0, 4).map(ticker => (
-                    <Badge key={ticker} variant="outline" className="text-xs font-mono">
-                      {ticker}
-                    </Badge>
-                  ))}
-                  {collection.tickers.length > 4 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{collection.tickers.length - 4}
-                    </Badge>
-                  )}
+            <div className={`flex flex-col h-full ${isRTL ? 'text-right' : ''}`}>
+              <div className={`flex items-center gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <IconComponent className="h-5 w-5 text-primary" />
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-    );
-  };
-
-  const ThemeRow = ({ collection }: { collection: StockCollection }) => {
-    const IconComponent = getIcon(collection.iconName);
-    return (
-      <Link href={`/stocks/themes/${collection.slug}`}>
-        <Card className="hover-elevate cursor-pointer" data-testid={`theme-row-${collection.slug}`}>
-          <CardContent className="p-4">
-            <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <IconComponent className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                <div className={isRTL ? 'text-right' : ''}>
-                  <h3 className="font-medium">{collection.title[language]}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
+                    {collection.title[language]}
+                  </h3>
                   <p className="text-xs text-muted-foreground">
                     {collection.tickers.length} {t.stocks}
                   </p>
                 </div>
+                {isFeatured && (
+                  <Badge variant="outline" className="text-xs shrink-0 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200">
+                    <Star className="h-3 w-3 mr-1" />
+                    {language === 'en' ? 'Featured' : 'مميز'}
+                  </Badge>
+                )}
               </div>
-              <ChevronRight className={`h-5 w-5 text-muted-foreground flex-shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
+              <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
+                {collection.description[language]}
+              </p>
+              <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-end' : ''}`}>
+                {collection.tickers.slice(0, 3).map(ticker => (
+                  <Badge key={ticker} variant="secondary" className="text-xs font-mono">
+                    {ticker}
+                  </Badge>
+                ))}
+                {collection.tickers.length > 3 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{collection.tickers.length - 3}
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -439,39 +428,32 @@ export default function StocksDiscover() {
         <Separator />
 
         <section className="py-8 container mx-auto px-4">
-          <div className={`flex items-center gap-2 mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Star className="h-5 w-5 text-primary" />
-            <h2 className={`text-xl font-semibold ${isRTL ? 'text-right' : ''}`}>
-              {language === 'en' ? 'Stock Themes & Trackers' : 'موضوعات ومتتبعات الأسهم'}
-            </h2>
+          <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Star className="h-5 w-5 text-primary" />
+              <h2 className={`text-xl font-semibold`}>
+                {language === 'en' ? 'Stock Themes & Trackers' : 'موضوعات ومتتبعات الأسهم'}
+              </h2>
+            </div>
+            <Link href="/stocks/themes">
+              <Button variant="ghost" size="sm" data-testid="link-view-all-themes">
+                {t.viewAll}
+                <ChevronRight className={`h-4 w-4 ml-1 ${isRTL ? 'rotate-180' : ''}`} />
+              </Button>
+            </Link>
           </div>
           
-          {(() => {
-            const activeCollections = mockStockCollections.filter(c => c.status === 'active');
-            const featuredTheme = activeCollections.find(c => c.isFeatured);
-            const otherThemes = activeCollections.filter(c => !c.isFeatured);
-            
-            return (
-              <div className="space-y-6">
-                {featuredTheme && (
-                  <FeaturedThemeCard collection={featuredTheme} />
-                )}
-                
-                {otherThemes.length > 0 && (
-                  <div>
-                    <h3 className={`text-sm font-medium text-muted-foreground mb-3 ${isRTL ? 'text-right' : ''}`}>
-                      {language === 'en' ? 'Other Themes & Trackers' : 'موضوعات ومتتبعات أخرى'}
-                    </h3>
-                    <div className="space-y-2">
-                      {otherThemes.map(collection => (
-                        <ThemeRow key={collection.id} collection={collection} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {mockStockCollections
+              .filter(c => c.status === 'active')
+              .map(collection => (
+                <ThemeCard 
+                  key={collection.id} 
+                  collection={collection} 
+                  isFeatured={collection.isFeatured}
+                />
+              ))}
+          </div>
         </section>
 
         <Separator />
