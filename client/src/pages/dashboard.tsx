@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -29,19 +30,24 @@ import {
   LogOut,
   Key
 } from 'lucide-react';
-import type { DashboardSummary } from '../../../server/storage';
+import type { DashboardSummary, TrafficTimeSeries } from '../../../server/storage';
 import type { UserPresence } from '@shared/schema';
 import { useAuth, DEMO_CREDENTIALS } from '@/lib/auth-context';
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [dateRange, setDateRange] = useState('7d');
+  const [trafficFilter, setTrafficFilter] = useState<'all' | 'stocks' | 'blogs'>('all');
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const { logout, userEmail } = useAuth();
 
   const { data: summary, isLoading } = useQuery<DashboardSummary>({
     queryKey: ['/api/admin/analytics/summary', dateRange],
+  });
+
+  const { data: trafficData, isLoading: isTrafficLoading } = useQuery<TrafficTimeSeries>({
+    queryKey: ['/api/admin/analytics/traffic', dateRange, trafficFilter],
   });
 
   const { data: activeEditors } = useQuery<UserPresence[]>({
@@ -130,6 +136,98 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Activity className="h-5 w-5 text-brand" />
+              Traffic Overview
+            </CardTitle>
+            <CardDescription>Page views over time</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={trafficFilter} onValueChange={(v) => setTrafficFilter(v as 'all' | 'stocks' | 'blogs')}>
+              <SelectTrigger className="w-36" data-testid="select-traffic-filter">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Pages</SelectItem>
+                <SelectItem value="stocks">Stock Pages</SelectItem>
+                <SelectItem value="blogs">Blog Pages</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isTrafficLoading ? (
+            <Skeleton className="h-[250px] w-full" />
+          ) : trafficData?.data?.length ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Views</p>
+                  <p className="text-2xl font-bold" data-testid="text-traffic-total">{trafficData.totalViews.toLocaleString()}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  {trafficData.changePercent >= 0 ? (
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                  )}
+                  <span className={`text-sm font-medium ${trafficData.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {trafficData.changePercent >= 0 ? '+' : ''}{trafficData.changePercent.toFixed(1)}%
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-1">vs previous period</span>
+                </div>
+              </div>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trafficData.data}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                      }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px'
+                      }}
+                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                      formatter={(value: number) => [value.toLocaleString(), 'Views']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="views" 
+                      stroke="hsl(var(--brand))" 
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4, strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Activity className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No traffic data available</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

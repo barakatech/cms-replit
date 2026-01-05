@@ -427,9 +427,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DASHBOARD SUMMARY API
   // ============================================
 
-  // Get dashboard summary (admin)
-  app.get("/api/admin/analytics/summary", async (req, res) => {
-    const range = req.query.range as string || '7d';
+  // Get dashboard summary (admin) - supports both query params and path params
+  app.get("/api/admin/analytics/summary/:range?", async (req, res) => {
+    const range = req.params.range || req.query.range as string || '7d';
     const endDate = new Date();
     let startDate = new Date();
     
@@ -452,6 +452,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       end: endDate.toISOString(),
     });
     res.json(summary);
+  });
+
+  // Get traffic time series data (admin) - supports path params
+  app.get("/api/admin/analytics/traffic/:range/:filter", async (req, res) => {
+    const range = req.params.range || '7d';
+    const filter = (req.params.filter as 'all' | 'stocks' | 'blogs') || 'all';
+    const endDate = new Date();
+    let startDate = new Date();
+    
+    switch (range) {
+      case '7d':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '28d':
+        startDate.setDate(endDate.getDate() - 28);
+        break;
+      case '90d':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+    
+    const trafficData = await storage.getTrafficTimeSeries(
+      { start: startDate.toISOString(), end: endDate.toISOString() },
+      filter
+    );
+    res.json(trafficData);
   });
 
   // ============================================

@@ -2116,6 +2116,7 @@ export interface IStorage {
   
   // Dashboard Analytics
   getDashboardSummary(dateRange: { start: string; end: string }): Promise<DashboardSummary>;
+  getTrafficTimeSeries(dateRange: { start: string; end: string }, filter: 'all' | 'stocks' | 'blogs'): Promise<TrafficTimeSeries>;
   
   // Marketing Pixels
   getMarketingPixels(): Promise<MarketingPixel[]>;
@@ -2169,6 +2170,17 @@ export interface DashboardSummary {
     missingSeo: number;
     recentlyPublished: number;
   };
+}
+
+export interface TrafficTimeSeriesPoint {
+  date: string;
+  views: number;
+}
+
+export interface TrafficTimeSeries {
+  data: TrafficTimeSeriesPoint[];
+  totalViews: number;
+  changePercent: number;
 }
 
 const seedAppDownloadConfig: AppDownloadConfig = {
@@ -2798,6 +2810,64 @@ export class MemStorage implements IStorage {
         recentlyPublished,
       },
     };
+  }
+
+  async getTrafficTimeSeries(dateRange: { start: string; end: string }, filter: 'all' | 'stocks' | 'blogs'): Promise<TrafficTimeSeries> {
+    const startDate = new Date(dateRange.start);
+    const endDate = new Date(dateRange.end);
+    const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const seededRandom = (seed: string): number => {
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        const char = seed.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs((Math.sin(hash) * 10000) % 1);
+    };
+    
+    const data: TrafficTimeSeriesPoint[] = [];
+    let totalViews = 0;
+    
+    for (let i = 0; i < dayCount; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const seed = `${dateStr}-${filter}`;
+      const randomFactor = seededRandom(seed);
+      
+      let baseViews: number;
+      switch (filter) {
+        case 'stocks':
+          baseViews = 800 + Math.floor(randomFactor * 400);
+          break;
+        case 'blogs':
+          baseViews = 300 + Math.floor(randomFactor * 200);
+          break;
+        default:
+          baseViews = 1200 + Math.floor(randomFactor * 600);
+      }
+      
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        baseViews = Math.floor(baseViews * 0.7);
+      }
+      
+      const trendFactor = 1 + (i / dayCount) * 0.15;
+      const views = Math.floor(baseViews * trendFactor);
+      
+      data.push({ date: dateStr, views });
+      totalViews += views;
+    }
+    
+    const midpoint = Math.floor(data.length / 2);
+    const firstHalf = data.slice(0, midpoint).reduce((sum, p) => sum + p.views, 0);
+    const secondHalf = data.slice(midpoint).reduce((sum, p) => sum + p.views, 0);
+    const changePercent = firstHalf > 0 ? ((secondHalf - firstHalf) / firstHalf) * 100 : 0;
+    
+    return { data, totalViews, changePercent };
   }
 
   // Marketing Pixels
