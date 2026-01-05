@@ -7,18 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight, Sparkles, TrendingUp, Star } from 'lucide-react';
 import type { StockTheme } from '@shared/schema';
 
-interface DiscoverSettings {
-  stockThemes?: StockTheme[];
-  featuredThemeNewSlug?: string;
-  featuredThemeMonthSlug?: string;
-}
-
 export default function ThemesPage() {
-  const { data: settings, isLoading } = useQuery<DiscoverSettings>({
-    queryKey: ['/api/discover-settings'],
+  const { data: stockThemes = [], isLoading } = useQuery<StockTheme[]>({
+    queryKey: ['/api/discover/themes'],
   });
-
-  const stockThemes = settings?.stockThemes || [];
   const featuredThemes = stockThemes.filter(t => t.isFeatured);
   const newThemes = stockThemes.filter(t => t.isNew);
   const allThemes = stockThemes.filter(t => !t.isFeatured);

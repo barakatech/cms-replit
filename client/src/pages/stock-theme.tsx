@@ -7,22 +7,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, Sparkles } from 'lucide-react';
 import type { StockTheme, StockPage } from '@shared/schema';
 
-interface DiscoverSettings {
-  stockThemes?: StockTheme[];
-}
-
 export default function StockThemePage() {
   const { slug } = useParams<{ slug: string }>();
   
-  const { data: settings, isLoading: themesLoading } = useQuery<DiscoverSettings>({
-    queryKey: ['/api/discover-settings'],
+  const { data: stockThemes = [], isLoading: themesLoading } = useQuery<StockTheme[]>({
+    queryKey: ['/api/discover/themes'],
   });
   
   const { data: stockPages = [], isLoading: stocksLoading } = useQuery<StockPage[]>({
     queryKey: ['/api/stock-pages'],
   });
 
-  const theme = settings?.stockThemes?.find((t: StockTheme) => t.slug === slug);
+  const theme = stockThemes.find((t: StockTheme) => t.slug === slug);
   const isLoading = themesLoading || stocksLoading;
 
   if (isLoading) {
