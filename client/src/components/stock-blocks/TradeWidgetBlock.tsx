@@ -12,9 +12,10 @@ import SignUpCTA from '@/components/SignUpCTA';
 interface TradeWidgetBlockProps {
   stock: StockPage;
   language: 'en' | 'ar';
+  onWatchClick?: () => void;
 }
 
-export function TradeWidgetBlock({ stock, language }: TradeWidgetBlockProps) {
+export function TradeWidgetBlock({ stock, language, onWatchClick }: TradeWidgetBlockProps) {
   const [investType, setInvestType] = useState<'shares' | 'amount'>('shares');
   const [shares, setShares] = useState('1');
   const [amount, setAmount] = useState('100');
@@ -139,7 +140,12 @@ export function TradeWidgetBlock({ stock, language }: TradeWidgetBlockProps) {
         />
 
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" className="w-full" data-testid="button-watch">
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={onWatchClick}
+            data-testid="button-watch"
+          >
             <Star className="h-4 w-4 mr-1" />
             {t.watch}
           </Button>

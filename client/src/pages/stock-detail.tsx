@@ -10,8 +10,7 @@ import {
   Sun, 
   ChevronRight,
   TrendingUp,
-  TrendingDown,
-  Bell
+  TrendingDown
 } from 'lucide-react';
 import { mockStocks, type StockPage } from '@/lib/mockData';
 import { 
@@ -167,16 +166,6 @@ export default function StockDetail() {
                 <Globe className="h-4 w-4 mr-1" />
                 {language === 'en' ? 'AR' : 'EN'}
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setWatchModalOpen(true)}
-                className="hidden sm:flex"
-                data-testid="button-watch-stock"
-              >
-                <Bell className="h-4 w-4 mr-1" />
-                {language === 'en' ? `Watch ${stock.ticker}` : `متابعة ${stock.ticker}`}
-              </Button>
               <SignUpCTA 
                 language={language}
                 className="hidden sm:flex"
@@ -251,7 +240,7 @@ export default function StockDetail() {
 
             <aside className={`lg:col-span-4 space-y-6 ${isRTL ? 'lg:col-start-1' : ''}`}>
               <div className="lg:sticky lg:top-24 space-y-6">
-                <TradeWidgetBlock stock={stock} language={language} />
+                <TradeWidgetBlock stock={stock} language={language} onWatchClick={() => setWatchModalOpen(true)} />
                 
                 <TrendingStocksBlock language={language} currentTicker={stock.ticker} />
 
