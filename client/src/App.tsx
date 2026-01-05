@@ -29,6 +29,7 @@ import AdminStocks from '@/pages/admin-stocks';
 import PageBuilder from '@/pages/page-builder';
 import LandingPagePublic from '@/pages/landing-page';
 import StockThemePage from '@/pages/stock-theme';
+import ThemesPage from '@/pages/themes';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/" component={() => <Redirect to="/discover" />} />
       <Route path="/discover" component={Discover} />
       <Route path="/stocks" component={StocksDiscover} />
+      <Route path="/themes" component={ThemesPage} />
       <Route path="/stocks/themes/:slug" component={StockThemePage} />
       <Route path="/themes/:slug" component={StockThemePage} />
       <Route path="/stocks/:slug" component={StockDetail} />
