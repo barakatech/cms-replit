@@ -31,6 +31,7 @@ import LandingPagePublic from '@/pages/landing-page';
 import StockThemePage from '@/pages/stock-theme';
 import ThemesPage from '@/pages/themes';
 import BrowseStocksPage from '@/pages/browse-stocks';
+import ReferEarnPage from '@/pages/refer-earn';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/themes/:slug" component={StockThemePage} />
       <Route path="/stocks/:slug" component={StockDetail} />
       <Route path="/blog" component={BlogHome} />
+      <Route path="/refer" component={ReferEarnPage} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
       <Route path="/admin/stocks">

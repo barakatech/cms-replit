@@ -30,6 +30,7 @@ import {
   PreviewBanner,
 } from '@/components/stock-blocks';
 import { useTheme } from '@/hooks/use-theme';
+import BarakaHeader from '@/components/BarakaHeader';
 
 export default function StockDetail() {
   const params = useParams<{ slug: string }>();
@@ -56,16 +57,19 @@ export default function StockDetail() {
 
   if (!stock) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h1 className="text-2xl font-bold mb-2">Stock not found</h1>
-            <p className="text-muted-foreground mb-4">The stock you're looking for doesn't exist.</p>
-            <Link href="/stocks">
-              <Button>Browse all stocks</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <BarakaHeader />
+        <div className="flex items-center justify-center py-20">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h1 className="text-2xl font-bold mb-2">Stock not found</h1>
+              <p className="text-muted-foreground mb-4">The stock you're looking for doesn't exist.</p>
+              <Link href="/stocks">
+                <Button>Browse all stocks</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

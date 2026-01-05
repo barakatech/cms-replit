@@ -19,6 +19,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import type { StockPage, StockTheme } from '@shared/schema';
+import BarakaHeader from '@/components/BarakaHeader';
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'ticker' | 'sector';
@@ -98,6 +99,7 @@ export default function BrowseStocksPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
+        <BarakaHeader />
         <div className="bg-gradient-to-b from-primary/5 to-background border-b">
           <div className="max-w-6xl mx-auto px-4 py-12">
             <Skeleton className="h-10 w-64 mb-4" />
@@ -117,6 +119,7 @@ export default function BrowseStocksPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <BarakaHeader />
       <div className="bg-gradient-to-b from-primary/5 to-background border-b">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="flex items-center gap-3 mb-4">

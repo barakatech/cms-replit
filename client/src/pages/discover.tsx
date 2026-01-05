@@ -35,6 +35,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import type { DiscoverSettings, StockTheme, OfferBanner } from '@shared/schema';
+import BarakaHeader from '@/components/BarakaHeader';
 
 export default function Discover() {
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
@@ -395,55 +396,7 @@ export default function Discover() {
       className={`min-h-screen bg-background ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-3">
-          <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <Link href="/discover">
-                <span className="text-xl font-bold text-primary cursor-pointer" data-testid="logo">baraka</span>
-              </Link>
-              <nav className={`hidden md:flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Link href="/stocks">
-                  <Button variant="ghost" size="sm" data-testid="nav-stocks">
-                    <TrendingUp className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-                    {t.stocks}
-                  </Button>
-                </Link>
-                <Link href="/blog">
-                  <Button variant="ghost" size="sm" data-testid="nav-blog">
-                    <BookOpen className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-                    {t.learn}
-                  </Button>
-                </Link>
-              </nav>
-            </div>
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="hidden sm:flex" data-testid="link-admin">
-                  {t.admin}
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                data-testid="button-theme-toggle"
-              >
-                {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-                data-testid="button-language-toggle"
-              >
-                <Globe className={`h-4 w-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
-                {language === 'en' ? 'AR' : 'EN'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <BarakaHeader />
 
       <main className="container mx-auto px-4">
         

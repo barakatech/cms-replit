@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, Sparkles } from 'lucide-react';
 import type { StockTheme, StockPage } from '@shared/schema';
+import BarakaHeader from '@/components/BarakaHeader';
 
 export default function StockThemePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -24,6 +25,7 @@ export default function StockThemePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
+        <BarakaHeader />
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Skeleton className="h-8 w-32 mb-8" />
           <Skeleton className="h-48 w-full mb-8 rounded-xl" />
@@ -39,17 +41,20 @@ export default function StockThemePage() {
 
   if (!theme) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="max-w-md mx-auto text-center p-8">
-          <h1 className="text-2xl font-bold mb-4">Theme Not Found</h1>
-          <p className="text-muted-foreground mb-6">The stock theme you're looking for doesn't exist.</p>
-          <Link href="/discover">
-            <Button data-testid="button-back-discover">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Discover
-            </Button>
-          </Link>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <BarakaHeader />
+        <div className="flex items-center justify-center flex-1 py-20">
+          <Card className="max-w-md mx-auto text-center p-8">
+            <h1 className="text-2xl font-bold mb-4">Theme Not Found</h1>
+            <p className="text-muted-foreground mb-6">The stock theme you're looking for doesn't exist.</p>
+            <Link href="/discover">
+              <Button data-testid="button-back-discover">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Discover
+              </Button>
+            </Link>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -65,6 +70,7 @@ export default function StockThemePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <BarakaHeader />
       <div className="bg-gradient-to-b from-muted/50 to-background border-b">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Link href="/discover">

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight, Sparkles, TrendingUp, Star } from 'lucide-react';
 import type { StockTheme } from '@shared/schema';
+import BarakaHeader from '@/components/BarakaHeader';
 
 export default function ThemesPage() {
   const { data: stockThemes = [], isLoading } = useQuery<StockTheme[]>({
@@ -18,6 +19,7 @@ export default function ThemesPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
+        <BarakaHeader />
         <div className="bg-gradient-to-b from-primary/5 to-background border-b">
           <div className="max-w-6xl mx-auto px-4 py-12">
             <Skeleton className="h-10 w-64 mb-4" />
@@ -37,6 +39,7 @@ export default function ThemesPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <BarakaHeader />
       <div className="bg-gradient-to-b from-primary/5 to-background border-b">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="flex items-center gap-3 mb-4">
