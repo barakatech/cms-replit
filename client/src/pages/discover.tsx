@@ -26,7 +26,16 @@ import {
   Check,
   AlertTriangle,
   Zap,
-  Loader2
+  Loader2,
+  Cpu,
+  Car,
+  Monitor,
+  CreditCard,
+  Coins,
+  Heart,
+  ShoppingCart,
+  Fuel,
+  type LucideIcon
 } from 'lucide-react';
 import { mockStocks, mockBlogs } from '@/lib/mockData';
 import { marketDataProvider, type MarketData } from '@/lib/marketDataProvider';
@@ -87,10 +96,19 @@ export default function Discover() {
   const newTheme = stockThemes.find(t => t.slug === settings?.featuredThemeNewSlug);
   const monthTheme = stockThemes.find(t => t.slug === settings?.featuredThemeMonthSlug);
   const otherThemes = stockThemes.filter(t => 
-    settings?.otherThemeSlugs.includes(t.slug)
+    t.slug !== settings?.featuredThemeNewSlug && t.slug !== settings?.featuredThemeMonthSlug
   );
 
   const currentTrendingTab = settings?.trendingTabs.find(t => t.key === trendingTab);
+
+  const iconMap: Record<string, LucideIcon> = {
+    Moon, Cpu, Car, Monitor, CreditCard, Coins, Heart, ShoppingCart, Fuel, Star, Globe, Sparkles, Zap,
+  };
+
+  const getThemeIcon = (iconName?: string): LucideIcon => {
+    if (!iconName) return Star;
+    return iconMap[iconName] || Star;
+  };
   
   if (settingsLoading || !settings) {
     return (
@@ -524,72 +542,101 @@ export default function Discover() {
             </h2>
             
             <div className="grid md:grid-cols-2 gap-4 mb-6">
-              {newTheme && (
-                <Link href={`/stocks/themes/${newTheme.slug}`}>
-                  <Card className="h-full hover-elevate cursor-pointer border-primary/30 bg-gradient-to-br from-primary/10 to-transparent" data-testid="theme-new">
-                    <CardContent className="p-6">
-                      <Badge className="mb-3 bg-primary">{t.newlyAdded}</Badge>
-                      <div className={`flex items-center gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                        <span className="text-3xl">{newTheme.icon}</span>
-                        <div>
-                          <h3 className="text-xl font-bold">{language === 'en' ? newTheme.title_en : newTheme.title_ar}</h3>
-                          <p className="text-sm text-muted-foreground">{language === 'en' ? newTheme.description_en : newTheme.description_ar}</p>
+              {newTheme && (() => {
+                const NewIcon = getThemeIcon(newTheme.icon);
+                return (
+                  <Link href={`/stocks/themes/${newTheme.slug}`}>
+                    <Card className="h-full hover-elevate cursor-pointer border-primary/30 bg-gradient-to-br from-primary/10 to-transparent" data-testid="theme-new">
+                      <CardContent className="p-6">
+                        <Badge className="mb-3 bg-primary">{t.newlyAdded}</Badge>
+                        <div className={`flex items-center gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <NewIcon className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold">{language === 'en' ? newTheme.title_en : newTheme.title_ar}</h3>
+                            <p className="text-sm text-muted-foreground">{language === 'en' ? newTheme.description_en : newTheme.description_ar}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className={`flex flex-wrap gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                        {newTheme.tickers.slice(0, 4).map(ticker => (
-                          <Badge key={ticker} variant="outline" className="text-xs">{ticker}</Badge>
-                        ))}
-                        {newTheme.tickers.length > 4 && (
-                          <Badge variant="outline" className="text-xs">+{newTheme.tickers.length - 4}</Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )}
-              {monthTheme && (
-                <Link href={`/stocks/themes/${monthTheme.slug}`}>
-                  <Card className="h-full hover-elevate cursor-pointer border-primary/30" data-testid="theme-month">
-                    <CardContent className="p-6">
-                      <Badge variant="secondary" className="mb-3">{t.themeOfMonth}</Badge>
-                      <div className={`flex items-center gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                        <span className="text-3xl">{monthTheme.icon}</span>
-                        <div>
-                          <h3 className="text-xl font-bold">{language === 'en' ? monthTheme.title_en : monthTheme.title_ar}</h3>
-                          <p className="text-sm text-muted-foreground">{language === 'en' ? monthTheme.description_en : monthTheme.description_ar}</p>
+                        <div className={`flex flex-wrap gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          {newTheme.tickers.slice(0, 4).map(ticker => (
+                            <Badge key={ticker} variant="outline" className="text-xs">{ticker}</Badge>
+                          ))}
+                          {newTheme.tickers.length > 4 && (
+                            <Badge variant="outline" className="text-xs">+{newTheme.tickers.length - 4}</Badge>
+                          )}
                         </div>
-                      </div>
-                      <div className={`flex flex-wrap gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                        {monthTheme.tickers.slice(0, 4).map(ticker => (
-                          <Badge key={ticker} variant="outline" className="text-xs">{ticker}</Badge>
-                        ))}
-                        {monthTheme.tickers.length > 4 && (
-                          <Badge variant="outline" className="text-xs">+{monthTheme.tickers.length - 4}</Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })()}
+              {monthTheme && (() => {
+                const MonthIcon = getThemeIcon(monthTheme.icon);
+                return (
+                  <Link href={`/stocks/themes/${monthTheme.slug}`}>
+                    <Card className="h-full hover-elevate cursor-pointer border-primary/30" data-testid="theme-month">
+                      <CardContent className="p-6">
+                        <Badge variant="secondary" className="mb-3">{t.themeOfMonth}</Badge>
+                        <div className={`flex items-center gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <MonthIcon className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold">{language === 'en' ? monthTheme.title_en : monthTheme.title_ar}</h3>
+                            <p className="text-sm text-muted-foreground">{language === 'en' ? monthTheme.description_en : monthTheme.description_ar}</p>
+                          </div>
+                        </div>
+                        <div className={`flex flex-wrap gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          {monthTheme.tickers.slice(0, 4).map(ticker => (
+                            <Badge key={ticker} variant="outline" className="text-xs">{ticker}</Badge>
+                          ))}
+                          {monthTheme.tickers.length > 4 && (
+                            <Badge variant="outline" className="text-xs">+{monthTheme.tickers.length - 4}</Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })()}
             </div>
 
             <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>{t.otherThemes}</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {otherThemes.map(theme => (
-                <Link key={theme.id} href={`/stocks/themes/${theme.slug}`}>
-                  <Card className="hover-elevate cursor-pointer" data-testid={`theme-${theme.slug}`}>
-                    <CardContent className={`p-4 flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <span className="text-2xl">{theme.icon}</span>
-                      <div className={isRTL ? 'text-right' : ''}>
-                        <h4 className="font-semibold">{language === 'en' ? theme.title_en : theme.title_ar}</h4>
-                        <p className="text-xs text-muted-foreground">{theme.tickers.length} stocks</p>
-                      </div>
-                      <ChevronRight className={`h-5 w-5 text-muted-foreground ${isRTL ? 'rotate-180 mr-auto' : 'ml-auto'}`} />
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+              {otherThemes.map(theme => {
+                const ThemeIconComponent = getThemeIcon(theme.icon);
+                return (
+                  <Link key={theme.id} href={`/stocks/themes/${theme.slug}`}>
+                    <Card className="hover-elevate cursor-pointer h-full group" data-testid={`theme-${theme.slug}`}>
+                      <CardContent className="p-5">
+                        <div className={`flex items-center gap-3 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <ThemeIconComponent className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : ''}`}>
+                            <h4 className="font-semibold truncate group-hover:text-primary transition-colors">
+                              {language === 'en' ? theme.title_en : theme.title_ar}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">{theme.tickers.length} stocks</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                          {language === 'en' ? theme.description_en : theme.description_ar}
+                        </p>
+                        <div className={`flex flex-wrap gap-1 ${isRTL ? 'justify-end' : ''}`}>
+                          {theme.tickers.slice(0, 3).map(ticker => (
+                            <Badge key={ticker} variant="secondary" className="text-xs">{ticker}</Badge>
+                          ))}
+                          {theme.tickers.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">+{theme.tickers.length - 3}</Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
