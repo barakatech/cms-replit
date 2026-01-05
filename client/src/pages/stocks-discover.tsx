@@ -233,7 +233,8 @@ export default function StocksDiscover() {
     Fuel,
   };
 
-  const getIcon = (iconName: string) => {
+  const getIcon = (iconName?: string): LucideIcon => {
+    if (!iconName) return Star;
     return iconMap[iconName] || Star;
   };
 
@@ -456,16 +457,18 @@ export default function StocksDiscover() {
                   <FeaturedThemeCard collection={featuredTheme} />
                 )}
                 
-                <div>
-                  <h3 className={`text-sm font-medium text-muted-foreground mb-3 ${isRTL ? 'text-right' : ''}`}>
-                    {language === 'en' ? 'Other Themes & Trackers' : 'موضوعات ومتتبعات أخرى'}
-                  </h3>
-                  <div className="space-y-2">
-                    {otherThemes.slice(0, 6).map(collection => (
-                      <ThemeRow key={collection.id} collection={collection} />
-                    ))}
+                {otherThemes.length > 0 && (
+                  <div>
+                    <h3 className={`text-sm font-medium text-muted-foreground mb-3 ${isRTL ? 'text-right' : ''}`}>
+                      {language === 'en' ? 'Other Themes & Trackers' : 'موضوعات ومتتبعات أخرى'}
+                    </h3>
+                    <div className="space-y-2">
+                      {otherThemes.map(collection => (
+                        <ThemeRow key={collection.id} collection={collection} />
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             );
           })()}

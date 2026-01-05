@@ -9,8 +9,8 @@ export interface StockCollection {
   heroImage?: string;
   order: number;
   status: 'active' | 'inactive';
-  icon: string;
-  iconName: string;
+  icon?: string;
+  iconName?: string;
   isFeatured?: boolean;
 }
 
