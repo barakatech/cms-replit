@@ -170,17 +170,32 @@ export default function AdminStocks() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/admin/stocks/${page.id}/edit`);
-                          }}
-                          data-testid={`button-edit-${page.id}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`/stocks/${page.ticker}`, '_blank');
+                            }}
+                            data-testid={`button-preview-${page.id}`}
+                            title="Preview"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/admin/stocks/${page.id}/edit`);
+                            }}
+                            data-testid={`button-edit-${page.id}`}
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

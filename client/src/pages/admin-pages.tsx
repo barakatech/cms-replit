@@ -259,8 +259,9 @@ export default function AdminPages() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={() => navigate(`/admin/pages/${page.id}/edit`)}
+                          onClick={() => window.open(`/p/${page.slug}`, '_blank')}
                           data-testid={`button-preview-${page.id}`}
+                          title="Preview"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

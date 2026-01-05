@@ -8,8 +8,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
@@ -51,6 +52,18 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/discover" data-testid="link-back-to-site">
+                <ExternalLink />
+                <span>Back to Main Site</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
