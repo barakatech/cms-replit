@@ -240,7 +240,7 @@ export default function StockDetail() {
                 
                 <TrendingStocksBlock language={language} currentTicker={stock.ticker} />
 
-                <div className="hidden lg:block bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-4">
+                <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-4">
                   <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
                     {language === 'en' 
                       ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
@@ -250,8 +250,15 @@ export default function StockDetail() {
               </div>
             </aside>
 
-            <div className="lg:hidden mt-6">
+            <div className="lg:hidden mt-6 space-y-4">
               <TrendingStocksBlock language={language} currentTicker={stock.ticker} />
+              <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-4">
+                <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
+                  {language === 'en' 
+                    ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
+                    : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
