@@ -93,6 +93,23 @@ export interface DiscoverSettings {
   };
 }
 
+export interface StockThemeHighlight {
+  icon: string;
+  title_en: string;
+  title_ar: string;
+  description_en: string;
+  description_ar: string;
+}
+
+export interface StockThemeSEO {
+  metaTitle_en?: string;
+  metaTitle_ar?: string;
+  metaDescription_en?: string;
+  metaDescription_ar?: string;
+  canonicalUrl?: string;
+  schemaJsonLd?: object;
+}
+
 export interface StockTheme {
   id: string;
   slug: string;
@@ -100,14 +117,45 @@ export interface StockTheme {
   title_ar: string;
   description_en: string;
   description_ar: string;
+  longDescription_en?: string;
+  longDescription_ar?: string;
   tickers: string[];
   heroImage: string;
   icon: string;
+  badges: string[];
+  highlights: StockThemeHighlight[];
+  sortMode: 'manual' | 'marketCap' | 'volume' | 'performance';
+  relatedPostTags: string[];
+  seo: StockThemeSEO;
   order: number;
-  status: 'active' | 'inactive';
+  status: 'draft' | 'published' | 'archived';
   isNew: boolean;
   isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export type InsertStockTheme = Omit<StockTheme, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Stock Collection (for dynamic lists like "Top by Volume")
+export type StockCollectionSortRule = 'volume' | 'marketCap' | 'gainers' | 'losers' | 'mostWatched' | 'manual';
+
+export interface StockCollection {
+  id: string;
+  slug: string;
+  title_en: string;
+  title_ar: string;
+  description_en?: string;
+  description_ar?: string;
+  sortRule: StockCollectionSortRule;
+  tickers: string[];
+  limit: number;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertStockCollection = Omit<StockCollection, 'id' | 'createdAt' | 'updatedAt'>;
 
 export interface OfferBanner {
   id: string;

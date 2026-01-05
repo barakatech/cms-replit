@@ -1,0 +1,205 @@
+You are a senior full-stack engineer. In our existing Next.js + Prisma CMS (Landing Page Builder + Stocks + Blog + Banners), implement:
+
+1) **Thematic Stocks Pages** (like eToro / Robinhood style “themes”) powered by CMS
+2) A **Browse All Stocks** landing page (like eToro Discover Stocks)
+3) Auto-generate **Top 50 Stock Detail Pages** in the CMS using a seed list (now) and a replaceable “top-by-volume” provider (later via API)
+
+IMPORTANT
+- Stock market data will eventually come from a 3rd-party real-time API; for now use dummy market data.
+- Keep all copy unique to Baraka (not copied).
+- Support EN/AR, RTL, Light/Dark (Baraka DS tokens).
+- SEO-friendly: meta title/description, canonical, schema fields editable per page.
+- UI should feel like top broker sites: sticky header, search-first, category chips, clean cards, “discover” layout.
+- Add preview mode in CMS for theme pages and stock pages.
+
+REFERENCE FOR “MOST ACTIVE / BY VOLUME”
+Use TradingView’s “Most actively traded US stocks” concept as the model for “Top by Volume” lists, but do NOT scrape at runtime; implement it as a pluggable provider with a seed list now. (TradingView shows a most-active list sorted by volume.) 
+
+------------------------------------------------------------
+A) CMS DATA MODELS (CREATE/CONFIRM)
+------------------------------------------------------------
+
+Stock
+- id, symbol, name, exchange, currency, sector (optional)
+- slug (/stocks/[symbol])
+- status: draft|published
+- seo: metaTitle, metaDescription, canonical, robots, schemaJsonLd
+- components (page builder blocks) [existing]
+- tags: ["halal", "dividend", "ai", "clean-energy", ...]
+- themeIds relation
+- createdAt, updatedAt
+
+StockTheme
+- id
+- slug (e.g. "halal-stocks", "ai-leaders")
+- title_en, title_ar
+- description_en, description_ar
+- heroImageUrl (optional)
+- badges (e.g. "Shariah-screened", "High liquidity")
+- stockSymbols (array) OR relation to Stock (preferred)
+- sortMode: manual|marketCap|volume|performance (placeholder for later)
+- seo fields per locale
+- status draft|published
+- createdAt, updatedAt
+
+StockCollection (optional but recommended)
+- supports "Top by Volume", "Trending", "Most Searched", etc.
+- slug, title, rulesJson, stockSymbols
+
+------------------------------------------------------------
+B) PUBLIC ROUTES (BUILD)
+------------------------------------------------------------
+
+1) Theme Hub
+- /stocks/themes
+Shows a grid of themes (cards), like eToro theme discovery:
+- Search themes
+- Filter chips (AI, Halal, Dividend, Energy, Tech, etc.)
+- Sections: Featured Themes, Popular Themes, New Themes
+- Each theme card shows title, short desc, #stocks, and 4 mini ticker pills
+
+2) Theme Detail Page
+- /stocks/themes/[slug]
+Layout (inspired by top brokers):
+- Hero: theme title + unique Baraka copy + CTA “Browse stocks”
+- “What this theme is” content block
+- Key highlights (3 cards)
+- Stock list table/cards:
+  - Symbol, Name, Price (dummy), Daily % (dummy), Market sentiment (dummy), “View stock”
+- Sorting controls (Name, Volume, Market cap – placeholders)
+- “Learn” module: related blog posts (tag match)
+- Newsletter + app install CTA
+SEO:
+- theme-specific meta and schema (CollectionPage or ItemList)
+
+3) Browse All Stocks Landing Page (Discover)
+- /stocks/browse
+Make it similar in spirit to eToro “discover stocks”:
+- Search bar (symbol/name)
+- Filter chips (Sector, Region, Shariah/“Halal”, Volatility, Dividend, etc.)
+- Sections:
+  - Top by Volume (from StockCollection provider)
+  - Trending (dummy for now)
+  - Biggest movers (dummy)
+  - Themes carousel (links to theme pages)
+  - Learn section (top educational articles)
+  - Offers/Banners section
+  - Newsletter signup
+- Stock cards should look modern: symbol + mini sparkline placeholder + price/% + sentiment chip
+
+4) Stock Detail Page (already exists) — ensure it supports:
+- Components blocks
+- SEO editable
+- Market sentiment module
+- “Related themes” module
+
+------------------------------------------------------------
+C) CMS ADMIN UI (BUILD/EXTEND)
+------------------------------------------------------------
+
+Admin pages:
+- /admin/stocks
+- /admin/stocks/themes
+- /admin/stocks/collections (optional)
+Capabilities:
+- Create/edit/publish themes
+- Add/remove stocks to a theme (search by symbol)
+- Theme preview (EN/AR)
+- Configure theme hero + highlights + related learn posts
+- Create “Top by Volume” collection (seed list now; later API-driven)
+
+------------------------------------------------------------
+D) “TOP 50 BY VOLUME” SEED LIST (CREATE STOCK PAGES NOW)
+------------------------------------------------------------
+
+Create 50 stock entries in the CMS and generate their stock landing pages with dummy market data.
+Use this seed list (modeled after “most active by volume” lists):
+
+Top 50 seed symbols (create pages for each):
+1) TSLA  2) NVDA  3) MU  4) MSFT  5) AMZN
+6) AAPL  7) PLTR  8) META  9) AVGO  10) AMD
+11) GOOG  12) INTC  13) NFLX  14) APP  15) MSTR
+16) SNDK  17) HOOD  18) ORCL  19) LLY  20) JPM
+21) GS  22) BA  23) CRM  24) RKLB  25) CRWV
+26) UNH  27) LRCX  28) MA  29) COIN  30) AMAT
+31) COST  32) ADBE  33) CVNA  34) V  35) GEV
+36) BMNR  37) WMT  38) ASTS  39) SOFI  40) CRWD
+41) IBM  42) MRVL  43) JNJ  44) WDAY  45) PANW
+46) TMO  47) CSCO  48) BE  49) CVX  50) MRK
+
+For each, create:
+- Stock record
+- Stock landing page components (overview, chart placeholder, stats, sentiment, news placeholder, related learn posts)
+- SEO defaults (meta title/description using symbol + name)
+- Schema defaults (FinancialProduct or WebPage JSON-LD placeholder)
+
+Also create a “Top by Volume” StockCollection that references the same 50 symbols.
+
+NOTE: This is a seed list for development. In production, replace collection rules to pull top-by-volume from the real-time data provider.
+
+------------------------------------------------------------
+E) THEMES TO CREATE (SEED THEMATIC PAGES)
+------------------------------------------------------------
+
+Create at least these theme pages in CMS with unique Baraka copy:
+
+1) Halal Stocks (Shariah-screened)
+slug: halal-stocks
+Description (EN, unique):
+“Explore shares that may align with Shariah screening approaches. Use this theme to discover companies often discussed in halal investing frameworks, then review details before investing.”
+(AR version required.)
+
+2) AI Leaders
+slug: ai-leaders
+
+3) Dividend Staples
+slug: dividend-staples
+
+4) Clean Energy
+slug: clean-energy
+
+5) US Mega Caps
+slug: us-mega-caps
+
+Each theme should include:
+- hero + highlights
+- 12–20 stocks assigned from the seed list (reasonable matches)
+- related blog posts module (tag-based)
+- newsletter + app install CTA
+
+------------------------------------------------------------
+F) BANNERS + OFFERS MODULES
+------------------------------------------------------------
+
+On /stocks/browse and /stocks/themes/[slug]:
+- Render banner placements from CMS (existing banner system)
+- Include a mobile-only app install banner component (if already built) that deep-links via Adjust (configured elsewhere)
+
+------------------------------------------------------------
+G) UX DETAILS (MAKE IT FEEL LIKE TOP BROKERS)
+------------------------------------------------------------
+
+Theme pages:
+- Clean hero with one primary CTA
+- Sticky sub-nav (Overview | Stocks | Learn | FAQ)
+- Stock list with quick filters + search
+- Small trust note / disclaimer area
+
+Browse page:
+- Search-first
+- Category chips
+- Curated rails (Top Volume, Trending, Themes)
+- Minimal, premium cards (Baraka DS tokens)
+
+------------------------------------------------------------
+H) ACCEPTANCE CRITERIA
+------------------------------------------------------------
+
+- /stocks/themes (hub) works and looks “broker-grade”
+- Theme detail pages render properly in EN/AR with RTL
+- /stocks/browse provides discovery layout + sections + search + filters
+- 50 stock pages created with dummy market data and SEO defaults
+- All pages support preview from CMS
+- Themes and collections are editable in CMS admin
+
+Now implement everything end-to-end in the existing Replit CMS project.

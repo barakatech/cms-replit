@@ -7,6 +7,9 @@ import {
   type NewsletterSignup,
   type DiscoverSettings,
   type StockTheme,
+  type InsertStockTheme,
+  type StockCollection,
+  type InsertStockCollection,
   type OfferBanner,
   type LandingPage,
   type InsertLandingPage,
@@ -72,126 +75,244 @@ const seedDiscoverSettings: DiscoverSettings = {
   },
 };
 
+const now = new Date().toISOString();
+
 const seedStockThemes: StockTheme[] = [
   {
     id: '1',
     slug: 'halal-stocks',
     title_en: 'Halal Stocks',
     title_ar: 'الأسهم الحلال',
-    description_en: 'Shariah-compliant stocks vetted by leading scholars',
-    description_ar: 'أسهم متوافقة مع الشريعة الإسلامية معتمدة من كبار العلماء',
-    tickers: ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'AMZN', 'META'],
+    description_en: 'Explore shares that may align with Shariah screening approaches',
+    description_ar: 'استكشف الأسهم التي قد تتوافق مع معايير الفحص الشرعي',
+    longDescription_en: 'Explore shares that may align with Shariah screening approaches. Use this theme to discover companies often discussed in halal investing frameworks, then review details before investing. These stocks are screened based on business activity, debt levels, and income sources.',
+    longDescription_ar: 'استكشف الأسهم التي قد تتوافق مع معايير الفحص الشرعي. استخدم هذا الموضوع لاكتشاف الشركات التي يتم مناقشتها غالبًا في أطر الاستثمار الحلال، ثم راجع التفاصيل قبل الاستثمار.',
+    tickers: ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'AMZN', 'META', 'AVGO', 'LLY', 'UNH', 'MA', 'JNJ', 'COST'],
     heroImage: '',
-    icon: '🌙',
+    icon: 'Moon',
+    badges: ['Shariah-screened', 'Popular'],
+    highlights: [
+      { icon: 'Shield', title_en: 'Shariah Screening', title_ar: 'الفحص الشرعي', description_en: 'Stocks vetted against Islamic finance principles', description_ar: 'أسهم تم فحصها وفقًا لمبادئ التمويل الإسلامي' },
+      { icon: 'TrendingUp', title_en: 'Growth Potential', title_ar: 'إمكانية النمو', description_en: 'Quality companies with strong fundamentals', description_ar: 'شركات ذات جودة عالية وأساسيات قوية' },
+      { icon: 'Globe', title_en: 'Diversified', title_ar: 'متنوع', description_en: 'Across multiple sectors and industries', description_ar: 'عبر قطاعات وصناعات متعددة' },
+    ],
+    sortMode: 'marketCap',
+    relatedPostTags: ['halal', 'shariah', 'islamic-finance'],
+    seo: { metaTitle_en: 'Halal Stocks - Shariah-Compliant Investing | Baraka', metaTitle_ar: 'الأسهم الحلال - الاستثمار المتوافق مع الشريعة | بركة' },
     order: 1,
-    status: 'active',
+    status: 'published',
     isNew: false,
     isFeatured: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: '2',
-    slug: 'ai-semiconductors',
-    title_en: 'AI & Semiconductors',
-    title_ar: 'الذكاء الاصطناعي وأشباه الموصلات',
-    description_en: 'Companies leading the AI and chip revolution',
-    description_ar: 'الشركات الرائدة في ثورة الذكاء الاصطناعي والرقائق',
-    tickers: ['NVDA', 'AMD', 'TSM', 'ASML', 'AVGO', 'INTC'],
+    slug: 'ai-leaders',
+    title_en: 'AI Leaders',
+    title_ar: 'رواد الذكاء الاصطناعي',
+    description_en: 'Companies at the forefront of artificial intelligence innovation',
+    description_ar: 'الشركات في طليعة ابتكارات الذكاء الاصطناعي',
+    longDescription_en: 'Discover companies leading the artificial intelligence revolution. From chip makers powering AI training to software companies deploying AI solutions, these stocks represent the cutting edge of technology.',
+    longDescription_ar: 'اكتشف الشركات التي تقود ثورة الذكاء الاصطناعي. من صانعي الرقائق التي تشغل تدريب الذكاء الاصطناعي إلى شركات البرمجيات التي تنشر حلول الذكاء الاصطناعي.',
+    tickers: ['NVDA', 'MSFT', 'GOOGL', 'META', 'AMD', 'AVGO', 'PLTR', 'MRVL', 'ORCL', 'CRM', 'IBM', 'ADBE'],
     heroImage: '',
-    icon: '🤖',
+    icon: 'Brain',
+    badges: ['High Growth', 'Tech'],
+    highlights: [
+      { icon: 'Cpu', title_en: 'AI Infrastructure', title_ar: 'البنية التحتية للذكاء الاصطناعي', description_en: 'Companies building AI chips and infrastructure', description_ar: 'شركات تبني رقائق وبنية تحتية للذكاء الاصطناعي' },
+      { icon: 'Sparkles', title_en: 'AI Applications', title_ar: 'تطبيقات الذكاء الاصطناعي', description_en: 'Software leaders deploying AI solutions', description_ar: 'رواد البرمجيات الذين ينشرون حلول الذكاء الاصطناعي' },
+      { icon: 'TrendingUp', title_en: 'Growth Market', title_ar: 'سوق النمو', description_en: 'Positioned in a rapidly expanding market', description_ar: 'موقعها في سوق سريع التوسع' },
+    ],
+    sortMode: 'marketCap',
+    relatedPostTags: ['ai', 'technology', 'semiconductors'],
+    seo: { metaTitle_en: 'AI Leader Stocks - Artificial Intelligence Companies | Baraka', metaTitle_ar: 'أسهم رواد الذكاء الاصطناعي | بركة' },
     order: 2,
-    status: 'active',
+    status: 'published',
     isNew: true,
     isFeatured: false,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: '3',
-    slug: 'ev-mobility',
-    title_en: 'EV & Mobility',
-    title_ar: 'السيارات الكهربائية والتنقل',
-    description_en: 'Electric vehicle and future mobility leaders',
-    description_ar: 'رواد السيارات الكهربائية والتنقل المستقبلي',
-    tickers: ['TSLA', 'NIO', 'RIVN', 'LCID', 'GM', 'F'],
+    slug: 'dividend-staples',
+    title_en: 'Dividend Staples',
+    title_ar: 'أساسيات توزيعات الأرباح',
+    description_en: 'Reliable dividend-paying stocks with consistent track records',
+    description_ar: 'أسهم موثوقة لتوزيع الأرباح مع سجلات ثابتة',
+    longDescription_en: 'Build a portfolio focused on income with these established dividend payers. These companies have track records of paying and growing dividends, offering potential income and stability.',
+    longDescription_ar: 'قم ببناء محفظة تركز على الدخل مع هؤلاء الموزعين للأرباح. هذه الشركات لديها سجلات في دفع وزيادة توزيعات الأرباح.',
+    tickers: ['JNJ', 'JPM', 'UNH', 'MA', 'V', 'COST', 'WMT', 'CVX', 'MRK', 'IBM', 'CSCO', 'TMO'],
     heroImage: '',
-    icon: '🚗',
+    icon: 'Coins',
+    badges: ['Income', 'Stable'],
+    highlights: [
+      { icon: 'DollarSign', title_en: 'Regular Income', title_ar: 'دخل منتظم', description_en: 'Consistent dividend payments', description_ar: 'مدفوعات أرباح منتظمة' },
+      { icon: 'Shield', title_en: 'Established Companies', title_ar: 'شركات راسخة', description_en: 'Blue-chip stocks with proven track records', description_ar: 'أسهم ممتازة مع سجلات مثبتة' },
+      { icon: 'TrendingUp', title_en: 'Dividend Growth', title_ar: 'نمو الأرباح', description_en: 'History of increasing dividends', description_ar: 'تاريخ من زيادة توزيعات الأرباح' },
+    ],
+    sortMode: 'manual',
+    relatedPostTags: ['dividends', 'income', 'investing'],
+    seo: { metaTitle_en: 'Dividend Stocks - Income Investing | Baraka', metaTitle_ar: 'أسهم توزيعات الأرباح | بركة' },
     order: 3,
-    status: 'active',
+    status: 'published',
     isNew: false,
     isFeatured: false,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: '4',
-    slug: 'tech-giants',
-    title_en: 'Tech Giants',
-    title_ar: 'عمالقة التكنولوجيا',
-    description_en: 'The largest technology companies by market cap',
-    description_ar: 'أكبر شركات التكنولوجيا من حيث القيمة السوقية',
-    tickers: ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX'],
+    slug: 'clean-energy',
+    title_en: 'Clean Energy',
+    title_ar: 'الطاقة النظيفة',
+    description_en: 'Companies driving the transition to sustainable energy',
+    description_ar: 'الشركات التي تقود التحول إلى الطاقة المستدامة',
+    longDescription_en: 'Invest in the future of energy with companies focused on renewable power, electric vehicles, and sustainable solutions. These stocks represent the growing clean energy sector.',
+    longDescription_ar: 'استثمر في مستقبل الطاقة مع الشركات التي تركز على الطاقة المتجددة والسيارات الكهربائية والحلول المستدامة.',
+    tickers: ['TSLA', 'NVDA', 'GEV', 'BE', 'CVX', 'ASTS'],
     heroImage: '',
-    icon: '💻',
+    icon: 'Leaf',
+    badges: ['ESG', 'Growth'],
+    highlights: [
+      { icon: 'Zap', title_en: 'Renewable Energy', title_ar: 'الطاقة المتجددة', description_en: 'Solar, wind, and clean power generation', description_ar: 'توليد الطاقة الشمسية والرياح والنظيفة' },
+      { icon: 'Car', title_en: 'Electric Vehicles', title_ar: 'السيارات الكهربائية', description_en: 'EV manufacturers and suppliers', description_ar: 'مصنعو وموردو السيارات الكهربائية' },
+      { icon: 'Globe', title_en: 'Sustainability', title_ar: 'الاستدامة', description_en: 'Companies with strong ESG focus', description_ar: 'شركات ذات تركيز قوي على ESG' },
+    ],
+    sortMode: 'manual',
+    relatedPostTags: ['clean-energy', 'esg', 'sustainability'],
+    seo: { metaTitle_en: 'Clean Energy Stocks - Sustainable Investing | Baraka', metaTitle_ar: 'أسهم الطاقة النظيفة | بركة' },
     order: 4,
-    status: 'active',
+    status: 'published',
     isNew: false,
     isFeatured: false,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: '5',
+    slug: 'us-mega-caps',
+    title_en: 'US Mega Caps',
+    title_ar: 'الشركات الأمريكية العملاقة',
+    description_en: 'The largest US companies by market capitalization',
+    description_ar: 'أكبر الشركات الأمريكية من حيث القيمة السوقية',
+    longDescription_en: 'Access the biggest names in American business. These mega-cap stocks represent the most valuable companies in the US market, offering liquidity and established business models.',
+    longDescription_ar: 'الوصول إلى أكبر الأسماء في الأعمال الأمريكية. تمثل هذه الأسهم العملاقة أكثر الشركات قيمة في السوق الأمريكي.',
+    tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'AVGO', 'LLY', 'JPM', 'UNH', 'V', 'MA', 'COST', 'WMT', 'JNJ'],
+    heroImage: '',
+    icon: 'Building2',
+    badges: ['Blue Chip', 'Liquid'],
+    highlights: [
+      { icon: 'TrendingUp', title_en: 'Market Leaders', title_ar: 'رواد السوق', description_en: 'Dominant positions in their industries', description_ar: 'مواقع مهيمنة في صناعاتهم' },
+      { icon: 'Shield', title_en: 'Stability', title_ar: 'الاستقرار', description_en: 'Established companies with proven track records', description_ar: 'شركات راسخة مع سجلات مثبتة' },
+      { icon: 'BarChart2', title_en: 'High Liquidity', title_ar: 'سيولة عالية', description_en: 'Easy to buy and sell with tight spreads', description_ar: 'سهل الشراء والبيع مع فروق ضيقة' },
+    ],
+    sortMode: 'marketCap',
+    relatedPostTags: ['mega-cap', 'blue-chip', 'investing'],
+    seo: { metaTitle_en: 'US Mega Cap Stocks - Blue Chip Investing | Baraka', metaTitle_ar: 'أسهم الشركات العملاقة الأمريكية | بركة' },
+    order: 5,
+    status: 'published',
+    isNew: false,
+    isFeatured: true,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '6',
     slug: 'fintech',
     title_en: 'Fintech & Payments',
     title_ar: 'التكنولوجيا المالية والمدفوعات',
     description_en: 'Companies transforming financial services',
     description_ar: 'الشركات التي تحول الخدمات المالية',
-    tickers: ['V', 'MA', 'PYPL', 'SQ', 'JPM', 'BAC'],
+    tickers: ['V', 'MA', 'JPM', 'GS', 'COIN', 'HOOD', 'SOFI'],
     heroImage: '',
-    icon: '💳',
-    order: 5,
-    status: 'active',
-    isNew: false,
-    isFeatured: false,
-  },
-  {
-    id: '6',
-    slug: 'dividend-stocks',
-    title_en: 'Dividend Champions',
-    title_ar: 'أبطال توزيعات الأرباح',
-    description_en: 'Reliable dividend-paying stocks',
-    description_ar: 'أسهم توزيعات الأرباح الموثوقة',
-    tickers: ['KO', 'PEP', 'JNJ', 'PG', 'XOM', 'CVX'],
-    heroImage: '',
-    icon: '💰',
+    icon: 'CreditCard',
+    badges: ['Innovation', 'Growth'],
+    highlights: [
+      { icon: 'Smartphone', title_en: 'Digital Payments', title_ar: 'المدفوعات الرقمية', description_en: 'Leaders in digital payment solutions', description_ar: 'رواد في حلول الدفع الرقمي' },
+      { icon: 'TrendingUp', title_en: 'Disruption', title_ar: 'التغيير الجذري', description_en: 'Disrupting traditional banking', description_ar: 'تغيير الخدمات المصرفية التقليدية' },
+    ],
+    sortMode: 'marketCap',
+    relatedPostTags: ['fintech', 'payments', 'banking'],
+    seo: { metaTitle_en: 'Fintech Stocks - Digital Finance | Baraka' },
     order: 6,
-    status: 'active',
+    status: 'published',
     isNew: false,
     isFeatured: false,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: '7',
-    slug: 'healthcare',
+    slug: 'healthcare-pharma',
     title_en: 'Healthcare & Pharma',
     title_ar: 'الرعاية الصحية والأدوية',
     description_en: 'Leading healthcare and pharmaceutical companies',
     description_ar: 'شركات الرعاية الصحية والأدوية الرائدة',
-    tickers: ['UNH', 'JNJ', 'PG', 'COST', 'WMT', 'HD'],
+    tickers: ['UNH', 'LLY', 'JNJ', 'MRK', 'TMO', 'PANW'],
     heroImage: '',
-    icon: '🏥',
+    icon: 'Heart',
+    badges: ['Defensive', 'Innovation'],
+    highlights: [
+      { icon: 'Pill', title_en: 'Pharma Giants', title_ar: 'عمالقة الأدوية', description_en: 'Major pharmaceutical companies', description_ar: 'شركات الأدوية الكبرى' },
+      { icon: 'Activity', title_en: 'Healthcare Services', title_ar: 'خدمات الرعاية الصحية', description_en: 'Insurance and healthcare providers', description_ar: 'مزودو التأمين والرعاية الصحية' },
+    ],
+    sortMode: 'marketCap',
+    relatedPostTags: ['healthcare', 'pharma', 'biotech'],
+    seo: { metaTitle_en: 'Healthcare Stocks - Medical & Pharma | Baraka' },
     order: 7,
-    status: 'active',
+    status: 'published',
     isNew: false,
     isFeatured: false,
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+// Seed Stock Collections
+const seedStockCollections: StockCollection[] = [
+  {
+    id: '1',
+    slug: 'top-by-volume',
+    title_en: 'Top by Volume',
+    title_ar: 'الأعلى حجماً',
+    description_en: 'Most actively traded US stocks by volume',
+    description_ar: 'أكثر الأسهم الأمريكية تداولاً من حيث الحجم',
+    sortRule: 'volume',
+    tickers: ['TSLA', 'NVDA', 'MU', 'MSFT', 'AMZN', 'AAPL', 'PLTR', 'META', 'AVGO', 'AMD', 'GOOGL', 'INTC', 'NFLX', 'APP', 'MSTR', 'HOOD', 'ORCL', 'LLY', 'JPM', 'GS', 'BA', 'CRM', 'RKLB', 'CRWV', 'UNH', 'LRCX', 'MA', 'COIN', 'AMAT', 'COST', 'ADBE', 'CVNA', 'V', 'GEV', 'WMT', 'ASTS', 'SOFI', 'CRWD', 'IBM', 'MRVL', 'JNJ', 'WDAY', 'PANW', 'TMO', 'CSCO', 'BE', 'CVX', 'MRK'],
+    limit: 50,
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
   },
   {
-    id: '8',
-    slug: 'adr-international',
-    title_en: 'ADRs & International',
-    title_ar: 'الإيداع الأمريكي والدولي',
-    description_en: 'Access global companies through US-listed ADRs',
-    description_ar: 'الوصول إلى الشركات العالمية عبر إيصالات الإيداع الأمريكية',
-    tickers: ['TSM', 'ASML', 'NIO', 'BABA', 'JD', 'PDD'],
-    heroImage: '',
-    icon: '🌍',
-    order: 8,
+    id: '2',
+    slug: 'trending',
+    title_en: 'Trending',
+    title_ar: 'الرائجة',
+    description_en: 'Stocks trending on Baraka',
+    description_ar: 'الأسهم الرائجة على بركة',
+    sortRule: 'mostWatched',
+    tickers: ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'META', 'AMD', 'PLTR', 'GOOGL'],
+    limit: 10,
     status: 'active',
-    isNew: true,
-    isFeatured: false,
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '3',
+    slug: 'biggest-movers',
+    title_en: 'Biggest Movers',
+    title_ar: 'أكبر التحركات',
+    description_en: 'Stocks with significant price movements today',
+    description_ar: 'الأسهم ذات التحركات السعرية الكبيرة اليوم',
+    sortRule: 'gainers',
+    tickers: ['NVDA', 'AMD', 'TSLA', 'META', 'PLTR', 'COIN'],
+    limit: 10,
+    status: 'active',
+    createdAt: now,
+    updatedAt: now,
   },
 ];
 
@@ -1513,6 +1634,16 @@ export interface IStorage {
   updateDiscoverSettings(settings: Partial<DiscoverSettings>): Promise<DiscoverSettings>;
   
   getStockThemes(): Promise<StockTheme[]>;
+  getStockTheme(id: string): Promise<StockTheme | undefined>;
+  getStockThemeBySlug(slug: string): Promise<StockTheme | undefined>;
+  createStockTheme(theme: InsertStockTheme): Promise<StockTheme>;
+  updateStockTheme(id: string, theme: Partial<StockTheme>): Promise<StockTheme | undefined>;
+  deleteStockTheme(id: string): Promise<boolean>;
+  
+  getStockCollections(): Promise<StockCollection[]>;
+  getStockCollection(id: string): Promise<StockCollection | undefined>;
+  getStockCollectionBySlug(slug: string): Promise<StockCollection | undefined>;
+  
   getOfferBanners(): Promise<OfferBanner[]>;
   
   // Landing Pages
@@ -1638,7 +1769,8 @@ export class MemStorage implements IStorage {
   private priceAlertSubscriptions: Map<string, PriceAlertSubscription>;
   private newsletterSignups: Map<string, NewsletterSignup>;
   private discoverSettings: DiscoverSettings;
-  private stockThemes: StockTheme[];
+  private stockThemes: Map<string, StockTheme>;
+  private stockCollections: Map<string, StockCollection>;
   private offerBanners: OfferBanner[];
   private landingPages: Map<string, LandingPage>;
   private landingPageVersions: Map<string, LandingPageVersion>;
@@ -1659,7 +1791,10 @@ export class MemStorage implements IStorage {
     this.priceAlertSubscriptions = new Map();
     this.newsletterSignups = new Map();
     this.discoverSettings = { ...seedDiscoverSettings };
-    this.stockThemes = [...seedStockThemes];
+    this.stockThemes = new Map();
+    seedStockThemes.forEach(theme => this.stockThemes.set(theme.id, theme));
+    this.stockCollections = new Map();
+    seedStockCollections.forEach(collection => this.stockCollections.set(collection.id, collection));
     this.offerBanners = [...seedOfferBanners];
     this.landingPages = new Map();
     this.landingPageVersions = new Map();
@@ -1756,7 +1891,47 @@ export class MemStorage implements IStorage {
   }
 
   async getStockThemes(): Promise<StockTheme[]> {
-    return this.stockThemes;
+    return Array.from(this.stockThemes.values());
+  }
+
+  async getStockTheme(id: string): Promise<StockTheme | undefined> {
+    return this.stockThemes.get(id);
+  }
+
+  async getStockThemeBySlug(slug: string): Promise<StockTheme | undefined> {
+    return Array.from(this.stockThemes.values()).find(t => t.slug === slug);
+  }
+
+  async createStockTheme(theme: InsertStockTheme): Promise<StockTheme> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newTheme: StockTheme = { ...theme, id, createdAt: now, updatedAt: now };
+    this.stockThemes.set(id, newTheme);
+    return newTheme;
+  }
+
+  async updateStockTheme(id: string, theme: Partial<StockTheme>): Promise<StockTheme | undefined> {
+    const existing = this.stockThemes.get(id);
+    if (!existing) return undefined;
+    const updated: StockTheme = { ...existing, ...theme, id, updatedAt: new Date().toISOString() };
+    this.stockThemes.set(id, updated);
+    return updated;
+  }
+
+  async deleteStockTheme(id: string): Promise<boolean> {
+    return this.stockThemes.delete(id);
+  }
+
+  async getStockCollections(): Promise<StockCollection[]> {
+    return Array.from(this.stockCollections.values());
+  }
+
+  async getStockCollection(id: string): Promise<StockCollection | undefined> {
+    return this.stockCollections.get(id);
+  }
+
+  async getStockCollectionBySlug(slug: string): Promise<StockCollection | undefined> {
+    return Array.from(this.stockCollections.values()).find(c => c.slug === slug);
   }
 
   async getOfferBanners(): Promise<OfferBanner[]> {
