@@ -154,11 +154,6 @@ export function TradeWidgetBlock({ stock, language, onWatchClick }: TradeWidgetB
           </Button>
         </div>
 
-        <div className={`bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-3 mt-2 ${isRTL ? 'text-right' : ''}`}>
-          <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
-            {t.disclaimer}
-          </p>
-        </div>
       </CardContent>
     </Card>
   );
