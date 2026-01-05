@@ -705,6 +705,25 @@ export interface PixelDispatchPayload {
   metadata?: Record<string, unknown>;
 }
 
+// App Download Configuration - for sign-up CTAs
+export interface AppDownloadConfig {
+  id: string;
+  iosAppStoreUrl: string;
+  androidPlayStoreUrl: string;
+  iosDeepLink: string; // Adjust/AppsFlyer deep link for iOS
+  androidDeepLink: string; // Adjust/AppsFlyer deep link for Android
+  qrCodeUrl: string; // URL encoded in QR code (typically a smart link)
+  ctaText_en: string;
+  ctaText_ar: string;
+  popupTitle_en: string;
+  popupTitle_ar: string;
+  popupSubtitle_en: string;
+  popupSubtitle_ar: string;
+  updatedAt: string;
+}
+
+export type InsertAppDownloadConfig = Omit<AppDownloadConfig, 'id' | 'updatedAt'>;
+
 // Default event mappings per platform
 export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<CmsEventName, string>>> = {
   meta: {

@@ -689,6 +689,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(Array.from(activePresences.values()));
   });
 
+  // ============================================
+  // App Download Config
+  // ============================================
+  
+  app.get("/api/app-download-config", async (_req, res) => {
+    const config = await storage.getAppDownloadConfig();
+    res.json(config);
+  });
+
+  app.put("/api/app-download-config", async (req, res) => {
+    try {
+      const config = await storage.updateAppDownloadConfig(req.body);
+      res.json({ success: true, config });
+    } catch (error) {
+      res.status(500).json({ success: false, error: "Failed to update app download config" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // ============================================

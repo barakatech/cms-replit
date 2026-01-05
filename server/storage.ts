@@ -30,7 +30,8 @@ import {
   type MarketingPixel,
   type InsertMarketingPixel,
   type PixelEventMap,
-  type InsertPixelEventMap
+  type InsertPixelEventMap,
+  type AppDownloadConfig
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -1589,6 +1590,10 @@ export interface IStorage {
   createPixelEventMap(mapping: InsertPixelEventMap): Promise<PixelEventMap>;
   updatePixelEventMap(id: string, mapping: Partial<PixelEventMap>): Promise<PixelEventMap | undefined>;
   deletePixelEventMap(id: string): Promise<boolean>;
+  
+  // App Download Config
+  getAppDownloadConfig(): Promise<AppDownloadConfig>;
+  updateAppDownloadConfig(config: Partial<AppDownloadConfig>): Promise<AppDownloadConfig>;
 }
 
 // Dashboard Summary Types
@@ -1612,6 +1617,22 @@ export interface DashboardSummary {
   };
 }
 
+const seedAppDownloadConfig: AppDownloadConfig = {
+  id: '1',
+  iosAppStoreUrl: 'https://apps.apple.com/app/baraka/id1234567890',
+  androidPlayStoreUrl: 'https://play.google.com/store/apps/details?id=com.baraka.app',
+  iosDeepLink: 'https://baraka.adj.st/app?adj_t=abc123',
+  androidDeepLink: 'https://baraka.adj.st/app?adj_t=abc123',
+  qrCodeUrl: 'https://baraka.onelink.me/download',
+  ctaText_en: 'Sign Up to Trade',
+  ctaText_ar: 'سجّل للتداول',
+  popupTitle_en: 'Get the Baraka App',
+  popupTitle_ar: 'حمّل تطبيق بركة',
+  popupSubtitle_en: 'Scan the QR code with your phone to download the app and start investing.',
+  popupSubtitle_ar: 'امسح رمز QR بهاتفك لتحميل التطبيق وابدأ الاستثمار.',
+  updatedAt: new Date().toISOString(),
+};
+
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private priceAlertSubscriptions: Map<string, PriceAlertSubscription>;
@@ -1631,6 +1652,7 @@ export class MemStorage implements IStorage {
   private stockPages: Map<string, StockPage>;
   private marketingPixels: Map<string, MarketingPixel>;
   private pixelEventMaps: Map<string, PixelEventMap>;
+  private appDownloadConfig: AppDownloadConfig;
 
   constructor() {
     this.users = new Map();
@@ -1651,6 +1673,7 @@ export class MemStorage implements IStorage {
     this.stockPages = new Map();
     this.marketingPixels = new Map();
     this.pixelEventMaps = new Map();
+    this.appDownloadConfig = { ...seedAppDownloadConfig };
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -2266,6 +2289,21 @@ export class MemStorage implements IStorage {
 
   async deletePixelEventMap(id: string): Promise<boolean> {
     return this.pixelEventMaps.delete(id);
+  }
+
+  // App Download Config
+  async getAppDownloadConfig(): Promise<AppDownloadConfig> {
+    return this.appDownloadConfig;
+  }
+
+  async updateAppDownloadConfig(config: Partial<AppDownloadConfig>): Promise<AppDownloadConfig> {
+    this.appDownloadConfig = {
+      ...this.appDownloadConfig,
+      ...config,
+      id: this.appDownloadConfig.id,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.appDownloadConfig;
   }
 }
 
