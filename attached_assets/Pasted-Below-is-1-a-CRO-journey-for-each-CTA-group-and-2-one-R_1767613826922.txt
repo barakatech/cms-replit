@@ -1,0 +1,328 @@
+Below is (1) **a CRO journey for each CTA group** and (2) **one Replit implementation prompt** that wires all of this into your CMS + stock pages (QR modal on desktop, OS redirect on mobile).
+
+---
+
+## CRO journeys per CTA set
+
+### 1) Offer Banners on Discover (`/discover`)
+
+**Goal:** turn “cold discovery” into the right next step (trade, refer, premium, learn) without choice paralysis.
+
+**A. Start Trading → `/signup`**
+
+* Trigger: user browsing stocks/themes or using search
+* Journey:
+
+  1. Click banner
+  2. Signup page with **“Start trading in minutes”** + 3-step flow (Create → Verify → Fund)
+  3. Post-signup: show “Pick your first stock/theme” deep links back to `/discover`
+* CRO notes: keep it “start” oriented; show one primary path; avoid heavy plan upsell here.
+
+**B. Invite Now → `/referral`**
+
+* Trigger: user already engaged (scroll depth, 2+ pageviews, or “watchlist” action)
+* Journey:
+
+  1. Click banner
+  2. Referral page explains “how it works” + proof (simple steps + FAQs)
+  3. CTA “Get My Link” prompts signup/login
+* CRO notes: gate the link behind auth; show value upfront but keep tone neutral/compliance-friendly.
+
+**C. Upgrade Now → `/premium`**
+
+* Trigger: user hits premium feature wall or sees premium badge
+* Journey:
+
+  1. Click banner
+  2. Premium landing with **benefits > pricing** + “Compare plans”
+  3. CTA “Start Free Trial” → signup with plan param
+* CRO notes: anchor benefits; then price; add “cancel anytime” if compliant.
+
+**D. Start Learning → `/blog`**
+
+* Trigger: user not ready to trade (high bounce intent)
+* Journey:
+
+  1. Click banner
+  2. Education hub with curated “Start here” pathway
+  3. Soft conversion: newsletter signup + “Install app” nudge
+* CRO notes: this is your “salvage” path for cold users.
+
+---
+
+### 2) Mobile Install Banner (`/stocks/*, /blog/*, /discover`)
+
+**Goal:** drive app installs from mobile web without annoying users.
+
+* Journey:
+
+  1. Banner impression after 3–5 seconds
+  2. Click “Download Now”
+  3. **Mobile web** → deep-link/redirect to **correct store by OS**
+  4. Track: banner_impression, banner_click, store_redirect (by OS, page)
+* CRO notes: frequency cap (e.g., 3 days); dismiss hides for N days; don’t show on desktop.
+
+---
+
+### 3) Main Sign Up CTAs (Reusable Component)
+
+#### A. “Sign Up to Trade” (Stock Detail, Theme, Trade Widget, Refer & Earn)
+
+**Goal:** convert high intent on a stock page.
+
+* Desktop journey:
+
+  1. Click “Sign Up to Trade”
+  2. **Popup modal**: QR code + “Scan to install Baraka app” + secondary link “Continue on web (signup)” (optional)
+  3. Track: signup_cta_click, qr_modal_view, qr_copy_link_click
+* Mobile web journey:
+
+  1. Click “Sign Up to Trade”
+  2. Detect OS:
+
+     * iOS → App Store
+     * Android → Play Store
+  3. Track: signup_cta_click, store_redirect (os)
+* CRO notes: This reduces friction for app-first product, while still giving a fallback path if needed.
+
+#### B. “Trade [TICKER]” (Stock Hero dynamic)
+
+**Goal:** tie intent to a specific stock.
+
+* Desktop:
+
+  1. Click “Trade TSLA”
+  2. QR modal includes stock context: “Open TSLA in Baraka app”
+  3. QR deep link includes ticker param
+* Mobile:
+
+  1. Click → store redirect with campaign params incl. ticker
+* CRO notes: personalizing CTA lifts conversion vs generic “Sign up.”
+
+---
+
+### 4) Landing Page CTAs (per page)
+
+#### A. Subscription `/p/subscription`
+
+* “Start Free Trial” → `/signup?plan=premium`
+
+  * Journey: CTA → signup preselect premium → confirmation → “Explore premium features”
+* “Compare Plans” → `#pricing`
+
+  * Journey: scroll to table → highlight recommended plan → “Start Free Trial”
+* “Get Started” → `/signup`
+
+  * Journey: signup baseline → upsell after onboarding
+* CRO note: only one primary CTA per viewport; others secondary.
+
+#### B. Zero Commission Promo `/p/zero-commission`
+
+* “Claim Offer” → `/signup?promo=zero-commission`
+
+  * Journey: CTA → signup with promo applied → confirmation screen shows promo terms
+* CRO note: show promo value + constraints clearly; avoid urgency-y language.
+
+#### C. Education Hub `/p/education-hub`
+
+* “Browse Courses” → `/blog?category=education`
+
+  * Journey: curated course list → article → newsletter signup → install banner
+* CRO note: add progress path “Beginner → Intermediate → Advanced”.
+
+#### D. Partners `/p/baraka-partners`
+
+* “Become a Partner” → `#signup`
+
+  * Journey: CTA → partner form → confirmation → expectation setting (“we’ll review…”)
+* “Learn More” → `#why-baraka`
+
+  * Journey: scroll to benefits → then partner form
+* CRO note: reduce form fields; add “who it’s for”.
+
+#### E. App Download Page
+
+* “Download for iOS / Android” → app stores
+
+  * Journey: CTA → store → app open
+* CRO note: detect OS and auto-highlight correct button.
+
+#### F. Refer & Earn `/p/refer-earn`
+
+* “Get My Link” → `/app/referral`
+
+  * Journey: requires auth; if not logged in → signup/login → returns to referral link
+* “Learn How It Works” → `#how-it-works`
+
+  * Journey: scroll to explanation + FAQs → then “Get My Link”
+* CRO note: show “steps + rules” before asking for signup.
+
+---
+
+# Replit implementation prompt (copy/paste)
+
+```text
+You are a senior full-stack engineer + CRO-focused product builder. Implement a unified CTA + journey system in our existing Next.js + Prisma CMS with EN/AR + RTL, Light/Dark (Baraka DS), Banners, Themes, Stocks, and Landing Pages.
+
+========================================================
+A) CENTRAL CTA REGISTRY (CMS-MANAGED)
+========================================================
+Create a CMS-managed registry so all CTAs are consistent across the site.
+
+Model: CallToAction
+- id
+- key (unique string) examples:
+  discover.start_trading
+  discover.invite_now
+  discover.upgrade_now
+  discover.start_learning
+  mobile_install.download_now
+  main.signup_to_trade
+  stock.trade_ticker
+  landing.subscription.start_free_trial
+  landing.subscription.compare_plans
+  landing.subscription.get_started
+  landing.zero_commission.claim_offer
+  landing.education_hub.browse_courses
+  landing.partners.become_partner
+  landing.partners.learn_more
+  landing.app_download.ios
+  landing.app_download.android
+  landing.refer_earn.get_my_link
+  landing.refer_earn.learn_how
+- text_en
+- text_ar
+- url (string) OR actionType (see below)
+- actionType: link | qr_modal | os_store_redirect | scroll_anchor
+- allowedPages (array patterns: /discover, /stocks/*, /blog/*, /p/*)
+- metaJson (JSON) for extra params: { tickerAware: true, plan: "premium", promo: "zero-commission", anchorId: "pricing" }
+- enabled (boolean)
+
+Seed CTAs exactly as provided by user (EN/AR text + URLs + page mapping).
+
+========================================================
+B) CTA RENDERING COMPONENT (REUSABLE)
+========================================================
+Build <CTAButton ctaKey="..." context={{ticker, pagePath}} /> that:
+- Loads CTA definition by key
+- Renders EN/AR text correctly
+- Executes one of:
+  1) link navigation (url)
+  2) scroll to anchor (url like #pricing)
+  3) QR modal (desktop only)
+  4) OS store redirect (mobile web only)
+
+Track every CTA click event.
+
+========================================================
+C) DESKTOP QR MODAL + MOBILE STORE REDIRECT (STOCK PAGES)
+========================================================
+On Stock pages and anywhere we use:
+- "Sign Up to Trade" (main.signup_to_trade)
+- "Trade [TICKER]" (stock.trade_ticker)
+
+Behavior:
+1) Detect device + OS:
+- Mobile web:
+  - iOS -> redirect to:
+    https://apps.apple.com/us/app/baraka-buy-us-stocks-etfs/id1532264769
+  - Android -> redirect to:
+    https://play.google.com/store/apps/details?id=com.baraka.app&hl=en
+- Desktop web:
+  - Show a popup modal with:
+    - QR code (generated client-side) pointing to a deep-link URL (for now, store link; later Adjust smart link)
+    - Title: "Get Baraka on your phone"
+    - Subtitle: "Scan to install and trade {TICKER} in the app"
+    - Secondary button: "Continue on web" -> /signup (optional toggle)
+
+2) QR code content:
+- Include UTM params and context:
+  ?utm_source=web&utm_medium=qr&utm_campaign=stock_trade&ticker=TSLA&page=/stocks/tsla
+
+3) Tracking:
+Fire internal events (POST /api/events) for:
+- cta_click (ctaKey, pagePath, locale, device, os, ticker)
+- qr_modal_view
+- qr_modal_close
+- store_redirect (os, destination)
+- (optional) continue_on_web_click
+
+========================================================
+D) DISCOVER PAGE OFFER BANNERS
+========================================================
+On /discover, render 4 offer banners with CTA keys:
+- discover.start_trading -> /signup
+- discover.invite_now -> /referral
+- discover.upgrade_now -> /premium
+- discover.start_learning -> /blog
+
+Banners must:
+- Match Baraka DS styling
+- Track impressions + clicks
+
+========================================================
+E) MOBILE INSTALL BANNER
+========================================================
+Create a mobile-only install banner that appears on:
+/stocks/*, /blog/*, /discover
+CTA uses ctaKey: mobile_install.download_now
+
+Rules:
+- show after 3–5 seconds
+- frequency cap: hide for 3 days after dismiss
+- track impression + click
+- on click: OS store redirect using the same store URLs above
+
+========================================================
+F) LANDING PAGE CTAS
+========================================================
+Ensure the CTA registry powers these pages:
+- /p/subscription:
+  start_free_trial -> /signup?plan=premium
+  compare_plans -> #pricing
+  get_started -> /signup
+- /p/zero-commission:
+  claim_offer -> /signup?promo=zero-commission
+- /p/education-hub:
+  browse_courses -> /blog?category=education
+- /p/baraka-partners:
+  become_partner -> #signup
+  learn_more -> #why-baraka
+- App download page:
+  ios -> https://apps.apple.com/us/app/baraka-buy-us-stocks-etfs/id1532264769
+  android -> https://play.google.com/store/apps/details?id=com.baraka.app&hl=en
+- /p/refer-earn:
+  get_my_link -> /app/referral (auth gated; if not authed, send to /signup then return)
+  learn_how -> #how-it-works
+
+========================================================
+G) ANALYTICS (CMS DASHBOARD READY)
+========================================================
+Event table (if not already):
+CmsWebEvent
+- eventType: cta_click | banner_impression | banner_click | qr_modal_view | store_redirect | dismiss_install_banner
+- ctaKey, bannerId, pagePath, locale, device, os, ticker
+- metaJson
+- createdAt
+
+Create admin view:
+- /admin/analytics/cta-performance
+Shows:
+- clicks by CTA key
+- CTR for banners (impressions vs clicks)
+- store redirects by OS
+- top CTAs by page
+- stock CTAs by ticker
+
+========================================================
+H) COMPLIANCE + UX
+========================================================
+- Add consistent disclaimer under “trade” CTAs: "Capital at risk. Not investment advice."
+- Avoid urgency language.
+- Ensure modal is accessible (keyboard, focus trap).
+- EN/AR + RTL supported everywhere.
+
+Implement end-to-end in the existing Replit CMS.
+```
+
+If you want to squeeze more conversion out of this, the next step is **event-based CTA switching** (e.g., show “Start Learning” after someone bounces from 2 stock pages without clicking trade; show “Invite Now” only after signup/login).
