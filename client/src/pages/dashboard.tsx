@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,14 +23,22 @@ import {
   Settings,
   ExternalLink,
   Activity,
-  Edit3
+  Edit3,
+  Copy,
+  Check,
+  LogOut,
+  Key
 } from 'lucide-react';
 import type { DashboardSummary } from '../../../server/storage';
 import type { UserPresence } from '@shared/schema';
+import { useAuth, DEMO_CREDENTIALS } from '@/lib/auth-context';
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [dateRange, setDateRange] = useState('7d');
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+  const { logout, userEmail } = useAuth();
 
   const { data: summary, isLoading } = useQuery<DashboardSummary>({
     queryKey: ['/api/admin/analytics/summary', dateRange],
@@ -40,6 +48,22 @@ export default function Dashboard() {
     queryKey: ['/api/presence'],
     refetchInterval: 5000,
   });
+
+  const copyToClipboard = (text: string, type: 'email' | 'password') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'email') {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } else {
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/login');
+  };
 
   const getContentTypeLabel = (type: string) => {
     switch (type) {
@@ -375,6 +399,59 @@ export default function Dashboard() {
               <p className="text-xs mt-1">When team members edit content, they'll appear here</p>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-dashed">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-muted-foreground" />
+              <CardTitle className="text-lg">Demo Credentials</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Logged in as: {userEmail}</span>
+              <Button variant="outline" size="sm" onClick={handleLogout} data-testid="button-logout">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+          <CardDescription>Use these credentials to access the admin panel</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-3 bg-muted/50 rounded-md px-4 py-3 min-w-[280px]">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Email</span>
+                <code className="text-sm font-mono" data-testid="dashboard-demo-email">{DEMO_CREDENTIALS.email}</code>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => copyToClipboard(DEMO_CREDENTIALS.email, 'email')}
+                data-testid="button-dashboard-copy-email"
+              >
+                {copiedEmail ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 bg-muted/50 rounded-md px-4 py-3 min-w-[200px]">
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Password</span>
+                <code className="text-sm font-mono" data-testid="dashboard-demo-password">{DEMO_CREDENTIALS.password}</code>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => copyToClipboard(DEMO_CREDENTIALS.password, 'password')}
+                data-testid="button-dashboard-copy-password"
+              >
+                {copiedPassword ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -6,8 +6,10 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/hooks/use-theme';
 import { UserProvider } from '@/lib/user-context';
+import { AuthProvider } from '@/lib/auth-context';
 import { AppSidebar } from '@/components/AppSidebar';
 import TopBar from '@/components/TopBar';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import Login from '@/pages/login';
 import Dashboard from '@/pages/dashboard';
 import StockEditor from '@/pages/stock-editor';
@@ -53,211 +55,239 @@ function Router() {
       <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
       <Route path="/admin/stocks">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminStocks />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminStocks />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/dashboard">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <Dashboard />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <Dashboard />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/editor/:ticker">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <TopBar />
-                <main className="flex-1 overflow-hidden">
-                  <StockEditor />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <TopBar />
+                  <main className="flex-1 overflow-hidden">
+                    <StockEditor />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/assets">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <Assets />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <Assets />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/blog">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <Blog />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <Blog />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/banners">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <Banners />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <Banners />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/discover">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminDiscover />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminDiscover />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/pages">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminPages />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminPages />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/pages/:id/edit">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <main className="flex-1 overflow-hidden">
-                  <PageBuilder />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <main className="flex-1 overflow-hidden">
+                    <PageBuilder />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/analytics">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminAnalytics />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminAnalytics />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/analytics/cta-performance">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminCTAPerformance />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminCTAPerformance />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/mobile-install">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminMobileInstall />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminMobileInstall />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/marketing-pixels">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1">
-                <TopBar />
-                <main className="flex-1 overflow-auto">
-                  <AdminMarketingPixels />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminMarketingPixels />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/admin/stocks/:id/edit">
         {() => (
-          <SidebarProvider>
-            <div className="flex h-screen w-full">
-              <AppSidebar />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <TopBar />
-                <main className="flex-1 overflow-hidden">
-                  <AdminStockEditor />
-                </main>
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <TopBar />
+                  <main className="flex-1 overflow-hidden">
+                    <AdminStockEditor />
+                  </main>
+                </div>
               </div>
-            </div>
-          </SidebarProvider>
+            </SidebarProvider>
+          </ProtectedRoute>
         )}
       </Route>
       <Route path="/p/:slug" component={LandingPagePublic} />
@@ -271,12 +301,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">
-        <UserProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </UserProvider>
+        <AuthProvider>
+          <UserProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </UserProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

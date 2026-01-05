@@ -2,10 +2,12 @@ import { Link, useLocation } from 'wouter';
 import { TrendingUp, BookOpen, RefreshCw, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
+import { useAuth } from '@/lib/auth-context';
 
 export default function BarakaHeader() {
   const [location] = useLocation();
   const { resolvedTheme, toggleTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
 
   const navItems = [
     { href: '/stocks', label: 'Stocks', icon: TrendingUp },
@@ -43,11 +45,13 @@ export default function BarakaHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link href="/admin">
-            <Button variant="ghost" size="sm" data-testid="nav-admin">
-              Admin
-            </Button>
-          </Link>
+          {isAuthenticated && (
+            <Link href="/admin">
+              <Button variant="ghost" size="sm" data-testid="nav-admin">
+                Admin
+              </Button>
+            </Link>
+          )}
           
           <Button
             variant="ghost"
