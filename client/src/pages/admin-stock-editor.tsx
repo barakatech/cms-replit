@@ -48,6 +48,14 @@ interface StockFormData {
   metaDescription_en: string;
   metaDescription_ar: string;
   relatedTickers: string;
+  ceo: string;
+  employees: string;
+  headquarters: string;
+  founded: string;
+  overview_en: string;
+  overview_ar: string;
+  thesis_en: string;
+  thesis_ar: string;
 }
 
 export default function AdminStockEditor() {
@@ -85,6 +93,14 @@ export default function AdminStockEditor() {
       metaDescription_en: '',
       metaDescription_ar: '',
       relatedTickers: '',
+      ceo: '',
+      employees: '',
+      headquarters: '',
+      founded: '',
+      overview_en: '',
+      overview_ar: '',
+      thesis_en: '',
+      thesis_ar: '',
     },
   });
 
@@ -107,11 +123,19 @@ export default function AdminStockEditor() {
         sector: stockPage.sector,
         exchange: stockPage.exchange,
         status: stockPage.status,
-        metaTitle_en: stockPage.seo?.metaTitle_en || '',
-        metaTitle_ar: stockPage.seo?.metaTitle_ar || '',
-        metaDescription_en: stockPage.seo?.metaDescription_en || '',
-        metaDescription_ar: stockPage.seo?.metaDescription_ar || '',
+        metaTitle_en: (stockPage as any).seo?.metaTitle_en || '',
+        metaTitle_ar: (stockPage as any).seo?.metaTitle_ar || '',
+        metaDescription_en: (stockPage as any).seo?.metaDescription_en || '',
+        metaDescription_ar: (stockPage as any).seo?.metaDescription_ar || '',
         relatedTickers: stockPage.relatedTickers?.join(', ') || '',
+        ceo: (stockPage as any).companyMeta?.ceo || '',
+        employees: (stockPage as any).companyMeta?.employees || '',
+        headquarters: (stockPage as any).companyMeta?.headquarters || '',
+        founded: (stockPage as any).companyMeta?.founded || '',
+        overview_en: (stockPage as any).overview_en || '',
+        overview_ar: (stockPage as any).overview_ar || '',
+        thesis_en: (stockPage as any).thesis_en || '',
+        thesis_ar: (stockPage as any).thesis_ar || '',
       });
     }
   }, [stockPage, form]);
@@ -137,6 +161,16 @@ export default function AdminStockEditor() {
           metaDescription_ar: data.metaDescription_ar,
         },
         relatedTickers: data.relatedTickers.split(',').map(t => t.trim()).filter(Boolean),
+        companyMeta: {
+          ceo: data.ceo,
+          employees: data.employees,
+          headquarters: data.headquarters,
+          founded: data.founded,
+        },
+        overview_en: data.overview_en,
+        overview_ar: data.overview_ar,
+        thesis_en: data.thesis_en,
+        thesis_ar: data.thesis_ar,
       };
 
       if (isNew) {
@@ -447,6 +481,182 @@ export default function AdminStockEditor() {
                                 onFocus={() => handleFieldFocus('description_ar')}
                                 onBlur={handleFieldBlur}
                                 data-testid="input-description-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>About Company</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="ceo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CEO</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Tim Cook"
+                                onFocus={() => handleFieldFocus('ceo')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-ceo"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="employees"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Employees</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="164,000"
+                                onFocus={() => handleFieldFocus('employees')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-employees"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="headquarters"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Headquarters</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Cupertino, CA"
+                                onFocus={() => handleFieldFocus('headquarters')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-headquarters"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="founded"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Founded</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="1976"
+                                onFocus={() => handleFieldFocus('founded')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-founded"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="overview_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Overview (English)</FormLabel>
+                              <FieldPresenceIndicator presences={othersOnSamePage} field="overview_en" />
+                            </div>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={4}
+                                placeholder="Company overview..."
+                                onFocus={() => handleFieldFocus('overview_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-overview-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="overview_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Overview (Arabic)</FormLabel>
+                              <FieldPresenceIndicator presences={othersOnSamePage} field="overview_ar" />
+                            </div>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={4}
+                                dir="rtl"
+                                placeholder="نظرة عامة على الشركة..."
+                                onFocus={() => handleFieldFocus('overview_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-overview-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="thesis_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Investment Thesis (English)</FormLabel>
+                              <FieldPresenceIndicator presences={othersOnSamePage} field="thesis_en" />
+                            </div>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={4}
+                                placeholder="Investment thesis..."
+                                onFocus={() => handleFieldFocus('thesis_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-thesis-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="thesis_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Investment Thesis (Arabic)</FormLabel>
+                              <FieldPresenceIndicator presences={othersOnSamePage} field="thesis_ar" />
+                            </div>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={4}
+                                dir="rtl"
+                                placeholder="أطروحة الاستثمار..."
+                                onFocus={() => handleFieldFocus('thesis_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-thesis-ar"
                               />
                             </FormControl>
                           </FormItem>
