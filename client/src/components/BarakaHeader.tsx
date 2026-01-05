@@ -2,7 +2,6 @@ import { Link, useLocation } from 'wouter';
 import { TrendingUp, BookOpen, RefreshCw, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
-import SignUpCTA from '@/components/SignUpCTA';
 
 export default function BarakaHeader() {
   const [location] = useLocation();
@@ -44,8 +43,6 @@ export default function BarakaHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <SignUpCTA size="sm" className="hidden sm:flex" />
-          
           <Link href="/admin">
             <Button variant="ghost" size="sm" data-testid="nav-admin">
               Admin
