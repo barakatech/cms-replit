@@ -48,7 +48,7 @@ export function TradeWidgetBlock({ stock, language, onWatchClick }: TradeWidgetB
       signUp: 'Sign up to Trade',
       watch: `Watch ${stock.ticker}`,
       options: 'Trade Options',
-      disclaimer: 'For informational purposes only. Capital at risk. Not investment advice.',
+      disclaimer: 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.',
     },
     ar: {
       investIn: 'استثمر في',
@@ -65,7 +65,7 @@ export function TradeWidgetBlock({ stock, language, onWatchClick }: TradeWidgetB
       signUp: 'سجل للتداول',
       watch: `راقب ${stock.ticker}`,
       options: 'خيارات التداول',
-      disclaimer: 'للأغراض المعلوماتية فقط. رأس المال في خطر. ليست نصيحة استثمارية.',
+      disclaimer: 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.',
     },
   };
   

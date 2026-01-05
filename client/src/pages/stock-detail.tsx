@@ -16,8 +16,7 @@ import { mockStocks, type StockPage } from '@/lib/mockData';
 import { 
   StockHero, 
   StockChartPanel, 
-  FAQAccordion, 
-  RisksPanel,
+  FAQAccordion,
   NewsList 
 } from '@/components/stock-preview';
 import {
@@ -86,7 +85,6 @@ export default function StockDetail() {
     { id: 'earnings', labelEn: 'Earnings', labelAr: 'الأرباح' },
     { id: 'news', labelEn: 'News', labelAr: 'الأخبار' },
     { id: 'faq', labelEn: 'FAQ', labelAr: 'الأسئلة' },
-    { id: 'risks', labelEn: 'Risks', labelAr: 'المخاطر' },
   ];
 
   const scrollToSection = (id: string) => {
@@ -212,8 +210,6 @@ export default function StockDetail() {
               <NewsList stock={stock} language={language} />
               
               <FAQAccordion stock={stock} language={language} />
-              
-              <RisksPanel stock={stock} language={language} />
 
               {stock.internalLinks && (
                 <section className="space-y-4">
@@ -248,8 +244,8 @@ export default function StockDetail() {
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">
                       {language === 'en' 
-                        ? 'Prices are delayed and for informational purposes only. Not investment advice. Your capital is at risk.' 
-                        : 'الأسعار مؤجلة ولأغراض إعلامية فقط. ليست نصيحة استثمارية. رأس مالك في خطر.'}
+                        ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
+                        : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
                     </p>
                   </CardContent>
                 </Card>
@@ -266,15 +262,10 @@ export default function StockDetail() {
       <footer className="border-t mt-12">
         <div className="container mx-auto px-4 py-8">
           <div className={`max-w-7xl mx-auto text-center text-sm text-muted-foreground ${isRTL ? 'text-right' : ''}`}>
-            <p className="mb-2">
-              {language === 'en' 
-                ? 'For informational purposes only. Not investment advice.' 
-                : 'للأغراض المعلوماتية فقط. ليست نصيحة استثمارية.'}
-            </p>
             <p>
               {language === 'en' 
-                ? 'Capital at risk. The value of investments can go down as well as up.' 
-                : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع.'}
+                ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
+                : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
             </p>
           </div>
         </div>
