@@ -408,7 +408,7 @@ const seedStockThemes: StockTheme[] = [
     description_ar: 'صناديق الاستثمار المتداولة للاستثمار المتنوع',
     longDescription_en: 'ETFs offer a simple way to invest in a basket of securities. Gain exposure to various markets, sectors, and asset classes through these diversified investment vehicles.',
     longDescription_ar: 'توفر صناديق الاستثمار المتداولة طريقة بسيطة للاستثمار في سلة من الأوراق المالية. احصل على تعرض لأسواق وقطاعات وفئات أصول مختلفة.',
-    tickers: ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META'],
+    tickers: ['VOO', 'SPUS', 'SPY', 'QQQ', 'IVV', 'VTI', 'HLAL', 'SPSK', 'UMMA', 'APTS'],
     heroImage: '',
     icon: 'BarChart3',
     badges: ['Diversified', 'Passive'],
