@@ -240,15 +240,13 @@ export default function StockDetail() {
                 
                 <TrendingStocksBlock language={language} currentTicker={stock.ticker} />
 
-                <Card className="hidden lg:block">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">
-                      {language === 'en' 
-                        ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
-                        : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="hidden lg:block bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-4">
+                  <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">
+                    {language === 'en' 
+                      ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
+                      : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
+                  </p>
+                </div>
               </div>
             </aside>
 
@@ -261,12 +259,14 @@ export default function StockDetail() {
 
       <footer className="border-t mt-12">
         <div className="container mx-auto px-4 py-8">
-          <div className={`max-w-7xl mx-auto text-center text-sm text-muted-foreground ${isRTL ? 'text-right' : ''}`}>
-            <p>
-              {language === 'en' 
-                ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
-                : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
-            </p>
+          <div className={`max-w-7xl mx-auto ${isRTL ? 'text-right' : ''}`}>
+            <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-4 text-center">
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                {language === 'en' 
+                  ? 'Capital at risk. The value of investments can go down as well as up. You may get back less than you invest. This is not investment advice, capital at risk.' 
+                  : 'رأس المال في خطر. يمكن أن تنخفض قيمة الاستثمارات وكذلك ترتفع. قد تحصل على أقل مما تستثمر. هذه ليست نصيحة استثمارية، رأس المال في خطر.'}
+              </p>
+            </div>
           </div>
         </div>
       </footer>
