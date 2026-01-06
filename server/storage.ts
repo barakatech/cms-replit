@@ -556,8 +556,8 @@ const seedOfferBanners: OfferBanner[] = [
   },
   {
     id: '2',
-    title_en: 'Refer & Earn $100',
-    title_ar: 'احل واكسب 100$',
+    title_en: 'Refer & Earn $30',
+    title_ar: 'احل واكسب 30$',
     subtitle_en: 'Invite friends and earn rewards for each signup',
     subtitle_ar: 'ادعُ أصدقاءك واكسب مكافآت لكل تسجيل',
     ctaText_en: 'Invite Now',
@@ -1877,7 +1877,7 @@ const seedLandingPages: LandingPage[] = [
             order: 0,
             data: {
               eyebrowText: { en: 'Referral Program', ar: 'برنامج الإحالة' },
-              headline: { en: 'Invite Friends. Earn Up to $100 Each.', ar: 'ادعُ أصدقاءك. اكسب حتى 100$ لكل منهم.' },
+              headline: { en: 'Invite Friends. Earn Up to $30 Each.', ar: 'ادعُ أصدقاءك. اكسب حتى 30$ لكل منهم.' },
               subheadline: { en: 'Share your referral link and earn cash rewards when your friends sign up and fund their account.', ar: 'شارك رابط الإحالة الخاص بك واكسب مكافآت نقدية عندما يسجل أصدقاؤك ويموّلون حساباتهم.' },
               primaryCTA: { text: { en: 'Get My Link', ar: 'احصل على رابطي' }, url: '/app/referral', variant: 'primary' },
               secondaryCTA: { text: { en: 'Learn How It Works', ar: 'تعرف على طريقة العمل' }, url: '#how-it-works', variant: 'outline' },
@@ -1891,7 +1891,7 @@ const seedLandingPages: LandingPage[] = [
             data: {
               title: { en: 'Why Refer Friends?', ar: 'لماذا تحيل أصدقاءك؟' },
               cards: [
-                { icon: 'Gift', title: { en: 'Earn Cash Rewards', ar: 'اكسب مكافآت نقدية' }, description: { en: 'Get up to $100 for each friend who joins.', ar: 'احصل على ما يصل إلى 100$ لكل صديق ينضم.' } },
+                { icon: 'Gift', title: { en: 'Earn Cash Rewards', ar: 'اكسب مكافآت نقدية' }, description: { en: 'Get up to $30 for each friend who joins.', ar: 'احصل على ما يصل إلى 30$ لكل صديق ينضم.' } },
                 { icon: 'Users', title: { en: 'Unlimited Referrals', ar: 'إحالات غير محدودة' }, description: { en: 'No limit on how many friends you can invite.', ar: 'لا حدود لعدد الأصدقاء الذين يمكنك دعوتهم.' } },
                 { icon: 'Zap', title: { en: 'Fast Payouts', ar: 'دفعات سريعة' }, description: { en: 'Rewards credited within 48 hours of qualification.', ar: 'تُضاف المكافآت خلال 48 ساعة من التأهل.' } },
               ],
@@ -1918,7 +1918,7 @@ const seedLandingPages: LandingPage[] = [
             data: {
               title: { en: 'Frequently Asked Questions', ar: 'الأسئلة الشائعة' },
               items: [
-                { question: { en: 'How much can I earn per referral?', ar: 'كم يمكنني أن أكسب لكل إحالة؟' }, answer: { en: 'You can earn up to $100 per successful referral, depending on your friend\'s account activity.', ar: 'يمكنك كسب ما يصل إلى 100$ لكل إحالة ناجحة، حسب نشاط حساب صديقك.' } },
+                { question: { en: 'How much can I earn per referral?', ar: 'كم يمكنني أن أكسب لكل إحالة؟' }, answer: { en: 'You can earn up to $30 per successful referral, depending on your friend\'s account activity.', ar: 'يمكنك كسب ما يصل إلى 30$ لكل إحالة ناجحة، حسب نشاط حساب صديقك.' } },
                 { question: { en: 'Is there a limit to referrals?', ar: 'هل هناك حد للإحالات؟' }, answer: { en: 'No! You can refer as many friends as you want.', ar: 'لا! يمكنك إحالة عدد غير محدود من الأصدقاء.' } },
                 { question: { en: 'When do I receive my reward?', ar: 'متى أتلقى مكافأتي؟' }, answer: { en: 'Rewards are credited within 48 hours after your friend qualifies.', ar: 'تُضاف المكافآت خلال 48 ساعة بعد تأهل صديقك.' } },
               ],
@@ -1937,8 +1937,8 @@ const seedLandingPages: LandingPage[] = [
           },
         ],
         seo: {
-          metaTitle: 'Refer Friends & Earn $100 | Baraka',
-          metaDescription: 'Invite friends to Baraka and earn up to $100 for each successful referral. Unlimited referrals, fast payouts.',
+          metaTitle: 'Refer Friends & Earn $30 | Baraka',
+          metaDescription: 'Invite friends to Baraka and earn up to $30 for each successful referral. Unlimited referrals, fast payouts.',
           robotsIndex: true,
           robotsFollow: true,
         },
@@ -1954,7 +1954,7 @@ const seedLandingPages: LandingPage[] = [
             order: 0,
             data: {
               eyebrowText: { en: 'Referral Program', ar: 'برنامج الإحالة' },
-              headline: { en: 'Invite Friends. Earn Up to $100 Each.', ar: 'ادعُ أصدقاءك. اكسب حتى 100$ لكل منهم.' },
+              headline: { en: 'Invite Friends. Earn Up to $30 Each.', ar: 'ادعُ أصدقاءك. اكسب حتى 30$ لكل منهم.' },
               subheadline: { en: 'Share your referral link and earn cash rewards when your friends sign up and fund their account.', ar: 'شارك رابط الإحالة الخاص بك واكسب مكافآت نقدية عندما يسجل أصدقاؤك ويموّلون حساباتهم.' },
               primaryCTA: { text: { en: 'Get My Link', ar: 'احصل على رابطي' }, url: '/app/referral', variant: 'primary' },
               secondaryCTA: { text: { en: 'Learn How It Works', ar: 'تعرف على طريقة العمل' }, url: '#how-it-works', variant: 'outline' },
@@ -1968,7 +1968,7 @@ const seedLandingPages: LandingPage[] = [
             data: {
               title: { en: 'Why Refer Friends?', ar: 'لماذا تحيل أصدقاءك؟' },
               cards: [
-                { icon: 'Gift', title: { en: 'Earn Cash Rewards', ar: 'اكسب مكافآت نقدية' }, description: { en: 'Get up to $100 for each friend who joins.', ar: 'احصل على ما يصل إلى 100$ لكل صديق ينضم.' } },
+                { icon: 'Gift', title: { en: 'Earn Cash Rewards', ar: 'اكسب مكافآت نقدية' }, description: { en: 'Get up to $30 for each friend who joins.', ar: 'احصل على ما يصل إلى 30$ لكل صديق ينضم.' } },
                 { icon: 'Users', title: { en: 'Unlimited Referrals', ar: 'إحالات غير محدودة' }, description: { en: 'No limit on how many friends you can invite.', ar: 'لا حدود لعدد الأصدقاء الذين يمكنك دعوتهم.' } },
                 { icon: 'Zap', title: { en: 'Fast Payouts', ar: 'دفعات سريعة' }, description: { en: 'Rewards credited within 48 hours of qualification.', ar: 'تُضاف المكافآت خلال 48 ساعة من التأهل.' } },
               ],
@@ -1995,7 +1995,7 @@ const seedLandingPages: LandingPage[] = [
             data: {
               title: { en: 'Frequently Asked Questions', ar: 'الأسئلة الشائعة' },
               items: [
-                { question: { en: 'How much can I earn per referral?', ar: 'كم يمكنني أن أكسب لكل إحالة؟' }, answer: { en: 'You can earn up to $100 per successful referral, depending on your friend\'s account activity.', ar: 'يمكنك كسب ما يصل إلى 100$ لكل إحالة ناجحة، حسب نشاط حساب صديقك.' } },
+                { question: { en: 'How much can I earn per referral?', ar: 'كم يمكنني أن أكسب لكل إحالة؟' }, answer: { en: 'You can earn up to $30 per successful referral, depending on your friend\'s account activity.', ar: 'يمكنك كسب ما يصل إلى 30$ لكل إحالة ناجحة، حسب نشاط حساب صديقك.' } },
                 { question: { en: 'Is there a limit to referrals?', ar: 'هل هناك حد للإحالات؟' }, answer: { en: 'No! You can refer as many friends as you want.', ar: 'لا! يمكنك إحالة عدد غير محدود من الأصدقاء.' } },
                 { question: { en: 'When do I receive my reward?', ar: 'متى أتلقى مكافأتي؟' }, answer: { en: 'Rewards are credited within 48 hours after your friend qualifies.', ar: 'تُضاف المكافآت خلال 48 ساعة بعد تأهل صديقك.' } },
               ],
@@ -2014,8 +2014,8 @@ const seedLandingPages: LandingPage[] = [
           },
         ],
         seo: {
-          metaTitle: 'احل أصدقاءك واكسب 100$ | بركة',
-          metaDescription: 'ادعُ أصدقاءك إلى بركة واكسب ما يصل إلى 100$ لكل إحالة ناجحة. إحالات غير محدودة ودفعات سريعة.',
+          metaTitle: 'احل أصدقاءك واكسب 30$ | بركة',
+          metaDescription: 'ادعُ أصدقاءك إلى بركة واكسب ما يصل إلى 30$ لكل إحالة ناجحة. إحالات غير محدودة ودفعات سريعة.',
           robotsIndex: true,
           robotsFollow: true,
         },
