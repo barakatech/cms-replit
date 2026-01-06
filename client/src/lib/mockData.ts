@@ -2163,8 +2163,8 @@ export const mockBanners: Banner[] = [
       ar: 'أحل أصدقاءك واكسب مكافآت',
     },
     subtitle: {
-      en: 'Earn up to $100 for each friend who joins baraka',
-      ar: 'اربح حتى 100 دولار عن كل صديق ينضم إلى بركة',
+      en: 'Earn up to $30 for each friend who joins baraka',
+      ar: 'اربح حتى 30 دولار عن كل صديق ينضم إلى بركة',
     },
     ctaText: {
       en: 'Invite Now',
