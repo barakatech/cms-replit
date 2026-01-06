@@ -35,6 +35,7 @@ import StockThemePage from '@/pages/stock-theme';
 import ThemesPage from '@/pages/themes';
 import BrowseStocksPage from '@/pages/browse-stocks';
 import ReferEarnPage from '@/pages/refer-earn';
+import SignupPage from '@/pages/signup';
 import NotFound from '@/pages/not-found';
 
 function Router() {
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/blog" component={BlogHome} />
       <Route path="/refer" component={ReferEarnPage} />
       <Route path="/referral" component={ReferEarnPage} />
+      <Route path="/signup" component={SignupPage} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
       <Route path="/admin/stocks">
