@@ -141,15 +141,15 @@ export function TradeWidgetBlock({ stock, language, onWatchClick }: TradeWidgetB
 
         <div className="grid grid-cols-2 gap-2">
           <Button 
-            variant="outline" 
-            className="w-full" 
+            variant="secondary" 
+            className="w-full gap-2" 
             onClick={onWatchClick}
             data-testid="button-watch"
           >
-            <Star className="h-4 w-4 mr-1" />
+            <Star className="h-4 w-4" />
             {t.watch}
           </Button>
-          <Button variant="ghost" className="w-full" data-testid="button-options">
+          <Button variant="secondary" className="w-full" data-testid="button-options">
             {t.options}
           </Button>
         </div>
