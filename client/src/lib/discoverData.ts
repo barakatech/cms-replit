@@ -241,7 +241,7 @@ export const mockOfferBanners: OfferBanner[] = [
     subtitle_ar: 'احصل على بيانات فورية ورسوم بيانية متقدمة ودعم أولوي',
     ctaText_en: 'Upgrade Now',
     ctaText_ar: 'ترقية الآن',
-    ctaUrl: '/premium',
+    ctaUrl: 'https://getbaraka.com/subscription',
     backgroundImage: '',
     backgroundColor: '#6366F1',
     placement: 'discover_offers_rail',
