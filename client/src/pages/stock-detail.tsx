@@ -164,11 +164,13 @@ export default function StockDetail() {
                 <Globe className="h-4 w-4 mr-1" />
                 {language === 'en' ? 'AR' : 'EN'}
               </Button>
-              <SignUpCTA 
-                language={language}
-                className="hidden sm:flex"
-                customText={language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
-              />
+              {isScrolled && (
+                <SignUpCTA 
+                  language={language}
+                  className="hidden sm:flex"
+                  customText={language === 'en' ? `Trade ${stock.ticker}` : `تداول ${stock.ticker}`}
+                />
+              )}
             </div>
           </div>
         </div>

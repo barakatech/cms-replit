@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
 
-export default function BarakaHeader() {
+interface BarakaHeaderProps {
+  showTradeCTA?: boolean;
+  tradeTicker?: string;
+  tradeLabel?: string;
+}
+
+export default function BarakaHeader({ showTradeCTA, tradeTicker, tradeLabel }: BarakaHeaderProps = {}) {
   const [location] = useLocation();
   const { resolvedTheme, toggleTheme } = useTheme();
   const { isAuthenticated } = useAuth();
@@ -45,6 +51,20 @@ export default function BarakaHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          {showTradeCTA && tradeTicker && (
+            <Link href="/signup">
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="font-medium gap-1"
+                data-testid="header-trade-cta"
+              >
+                <TrendingUp className="h-4 w-4" />
+                {tradeLabel || `Trade ${tradeTicker}`}
+              </Button>
+            </Link>
+          )}
+          
           {isAuthenticated && (
             <Link href="/admin">
               <Button variant="ghost" size="sm" data-testid="nav-admin">
