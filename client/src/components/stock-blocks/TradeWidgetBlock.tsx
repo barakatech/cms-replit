@@ -72,7 +72,7 @@ export function TradeWidgetBlock({ stock, language, onWatchClick }: TradeWidgetB
   const t = labels[language];
 
   return (
-    <Card className="sticky top-24" data-testid="trade-widget-block">
+    <Card data-testid="trade-widget-block">
       <CardHeader className="pb-4">
         <CardTitle className={`text-lg flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <TrendingUp className="h-5 w-5 text-primary" />
