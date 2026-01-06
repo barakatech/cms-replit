@@ -505,30 +505,37 @@ export default function Discover() {
               </div>
             </div>
             <div className="flex gap-4 overflow-hidden">
-              {offerBanners.filter((b: OfferBanner) => b.status === 'active').slice(offersScrollIndex, offersScrollIndex + 3).map((banner: OfferBanner) => (
-                <Link key={banner.id} href={banner.ctaUrl} className="flex-1 min-w-[280px]">
-                  <Card 
-                    className="overflow-hidden hover-elevate cursor-pointer h-full"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${banner.backgroundColor}dd, ${banner.backgroundColor}99)`,
-                    }}
-                    data-testid={`offer-${banner.id}`}
-                  >
-                    <CardContent className="p-6 text-white">
-                      <h3 className={`text-xl font-bold mb-2 ${isRTL ? 'text-right' : ''}`}>
-                        {language === 'en' ? banner.title_en : banner.title_ar}
-                      </h3>
-                      <p className={`text-sm opacity-90 mb-4 ${isRTL ? 'text-right' : ''}`}>
-                        {language === 'en' ? banner.subtitle_en : banner.subtitle_ar}
-                      </p>
-                      <Button variant="secondary" size="sm" data-testid={`offer-cta-${banner.id}`}>
-                        {language === 'en' ? banner.ctaText_en : banner.ctaText_ar}
-                        <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-1 rotate-180' : 'ml-1'}`} />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+              {offerBanners.filter((b: OfferBanner) => b.status === 'active').slice(offersScrollIndex, offersScrollIndex + 3).map((banner: OfferBanner) => {
+                const isExternal = banner.ctaUrl.startsWith('http');
+                const linkProps = isExternal 
+                  ? { href: banner.ctaUrl, target: '_blank', rel: 'noopener noreferrer' }
+                  : { href: banner.ctaUrl };
+                const Wrapper = isExternal ? 'a' : Link;
+                return (
+                  <Wrapper key={banner.id} {...linkProps} className="flex-1 min-w-[280px]">
+                    <Card 
+                      className="overflow-hidden hover-elevate cursor-pointer h-full"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${banner.backgroundColor}dd, ${banner.backgroundColor}99)`,
+                      }}
+                      data-testid={`offer-${banner.id}`}
+                    >
+                      <CardContent className="p-6 text-white">
+                        <h3 className={`text-xl font-bold mb-2 ${isRTL ? 'text-right' : ''}`}>
+                          {language === 'en' ? banner.title_en : banner.title_ar}
+                        </h3>
+                        <p className={`text-sm opacity-90 mb-4 ${isRTL ? 'text-right' : ''}`}>
+                          {language === 'en' ? banner.subtitle_en : banner.subtitle_ar}
+                        </p>
+                        <Button variant="secondary" size="sm" data-testid={`offer-cta-${banner.id}`}>
+                          {language === 'en' ? banner.ctaText_en : banner.ctaText_ar}
+                          <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-1 rotate-180' : 'ml-1'}`} />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Wrapper>
+                );
+              })}
             </div>
           </section>
         )}
