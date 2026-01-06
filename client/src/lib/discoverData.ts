@@ -218,8 +218,8 @@ export const mockOfferBanners: OfferBanner[] = [
   },
   {
     id: '2',
-    title_en: 'Refer & Earn $100',
-    title_ar: 'احل واكسب 100$',
+    title_en: 'Refer & Earn $30',
+    title_ar: 'احل واكسب 30$',
     subtitle_en: 'Invite friends and earn rewards for each signup',
     subtitle_ar: 'ادعُ أصدقاءك واكسب مكافآت لكل تسجيل',
     ctaText_en: 'Invite Now',
