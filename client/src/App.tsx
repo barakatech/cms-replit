@@ -51,6 +51,7 @@ function Router() {
       <Route path="/stocks/:slug" component={StockDetail} />
       <Route path="/blog" component={BlogHome} />
       <Route path="/refer" component={ReferEarnPage} />
+      <Route path="/referral" component={ReferEarnPage} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={() => <Redirect to="/dashboard" />} />
       <Route path="/admin/stocks">
