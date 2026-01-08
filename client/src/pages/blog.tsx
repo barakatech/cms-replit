@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { mockBlogs, type BlogPost, type BlogStatus } from '@/lib/mockData';
-import { Plus, Search, Edit, Trash2, Eye, Calendar, Clock, User, Tag, ArrowLeft, Globe, Image } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Calendar, Clock, User, Tag, ArrowLeft, Globe, Image, Sparkles, Mail, Send, ExternalLink, Check } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
+import type { SpotlightBanner, Newsletter } from '@shared/schema';
 
 export default function Blog() {
   const [blogs, setBlogs] = useState<BlogPost[]>(mockBlogs);
@@ -20,6 +26,108 @@ export default function Blog() {
   const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editLanguage, setEditLanguage] = useState<'en' | 'ar'>('en');
+  const { toast } = useToast();
+
+  const { data: spotlights = [] } = useQuery<SpotlightBanner[]>({
+    queryKey: ['/api/spotlights'],
+  });
+
+  const { data: newsletters = [] } = useQuery<Newsletter[]>({
+    queryKey: ['/api/newsletters'],
+  });
+
+  const spotlightsByBlogId = useMemo(() => {
+    const map: Record<string, SpotlightBanner> = {};
+    spotlights.forEach(s => {
+      if (s.blogPostId) map[s.blogPostId] = s;
+    });
+    return map;
+  }, [spotlights]);
+
+  const newslettersByBlogId = useMemo(() => {
+    const map: Record<string, Newsletter> = {};
+    newsletters.forEach(n => {
+      if (n.sourceBlogPostId) map[n.sourceBlogPostId] = n;
+    });
+    return map;
+  }, [newsletters]);
+
+  const createSpotlightMutation = useMutation({
+    mutationFn: async (blog: BlogPost) => {
+      const response = await apiRequest('POST', '/api/spotlights', {
+        title: blog.title.en,
+        subtitle: blog.excerpt.en.slice(0, 90),
+        imageUrl: blog.featuredImage || '',
+        ctaText: 'Read more',
+        ctaUrl: `/blog/${blog.slug}`,
+        placements: ['blog', 'home'],
+        status: 'draft',
+        sourceType: 'from_blog',
+        blogPostId: blog.id,
+        locale: 'en',
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/spotlights'] });
+    },
+  });
+
+  const createNewsletterMutation = useMutation({
+    mutationFn: async (blog: BlogPost) => {
+      const response = await apiRequest('POST', '/api/newsletters', {
+        subject: blog.title.en,
+        preheader: blog.excerpt.en.slice(0, 120),
+        templateId: '1',
+        contentBlocks: [
+          { type: 'hero' as const, title: blog.title.en, imageUrl: blog.featuredImage || '', ctaText: 'Read Article', ctaUrl: `/blog/${blog.slug}` },
+          { type: 'intro' as const, content: blog.excerpt.en },
+          { type: 'footer' as const, content: 'baraka - Zero commission trading' },
+        ],
+        status: 'draft',
+        sourceBlogPostId: blog.id,
+        locale: 'en',
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/newsletters'] });
+    },
+  });
+
+  const handlePublishBlog = async (blog: BlogPost) => {
+    const existingSpotlight = spotlightsByBlogId[blog.id];
+    const existingNewsletter = newslettersByBlogId[blog.id];
+    
+    setBlogs(blogs.map(b => b.id === blog.id ? { ...b, status: 'published' as BlogStatus, publishDate: new Date().toISOString().split('T')[0] } : b));
+    
+    const createdItems: string[] = [];
+    
+    if (!existingSpotlight) {
+      try {
+        await createSpotlightMutation.mutateAsync(blog);
+        createdItems.push('Spotlight banner');
+      } catch (e) {
+        console.error('Failed to create spotlight:', e);
+      }
+    }
+    
+    if (!existingNewsletter) {
+      try {
+        await createNewsletterMutation.mutateAsync(blog);
+        createdItems.push('Newsletter draft');
+      } catch (e) {
+        console.error('Failed to create newsletter:', e);
+      }
+    }
+    
+    toast({
+      title: 'Blog Published!',
+      description: createdItems.length > 0 
+        ? `Auto-created: ${createdItems.join(', ')}`
+        : 'No new content was auto-created (already exists)',
+    });
+  };
 
   const filteredBlogs = blogs.filter((blog) => {
     const matchesSearch =
@@ -429,6 +537,7 @@ export default function Blog() {
                 <TableHead>Author</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Linked Content</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -457,6 +566,48 @@ export default function Blog() {
                   <TableCell data-testid={`text-blog-status-${blog.id}`}>
                     <Badge className={getStatusColor(blog.status)}>{blog.status}</Badge>
                   </TableCell>
+                  <TableCell data-testid={`text-blog-linked-${blog.id}`}>
+                    <div className="flex items-center gap-1">
+                      {spotlightsByBlogId[blog.id] ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href="/admin/spotlights">
+                              <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
+                                <Sparkles className="h-3 w-3" />
+                                Spotlight
+                              </Badge>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            View linked spotlight: {spotlightsByBlogId[blog.id].status}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground gap-1">
+                          <Sparkles className="h-3 w-3 opacity-50" />
+                        </Badge>
+                      )}
+                      {newslettersByBlogId[blog.id] ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href="/admin/newsletters">
+                              <Badge variant="outline" className="cursor-pointer gap-1 text-blue-500 border-blue-500/50">
+                                <Mail className="h-3 w-3" />
+                                Newsletter
+                              </Badge>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            View linked newsletter: {newslettersByBlogId[blog.id].status}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground gap-1">
+                          <Mail className="h-3 w-3 opacity-50" />
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell data-testid={`text-blog-date-${blog.id}`}>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
@@ -465,6 +616,32 @@ export default function Blog() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      {blog.status !== 'published' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handlePublishBlog(blog)}
+                              disabled={createSpotlightMutation.isPending || createNewsletterMutation.isPending}
+                              data-testid={`button-publish-blog-${blog.id}`}
+                            >
+                              <Send className="h-4 w-4 text-brand" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Publish & auto-create spotlight + newsletter</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {blog.status === 'published' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="h-9 w-9 flex items-center justify-center">
+                              <Check className="h-4 w-4 text-green-500" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>Published</TooltipContent>
+                        </Tooltip>
+                      )}
                       <Button variant="ghost" size="icon" data-testid={`button-view-blog-${blog.id}`}>
                         <Eye className="h-4 w-4" />
                       </Button>

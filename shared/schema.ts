@@ -1242,6 +1242,51 @@ export const insertSubscriberSchema = z.object({
   tags: z.array(z.string()),
 });
 
+export const insertAuditLogSchema = z.object({
+  actorUserId: z.string(),
+  actorName: z.string(),
+  actionType: z.enum([
+    'blog_created', 'blog_updated', 'blog_published', 'blog_deleted',
+    'spotlight_auto_created', 'spotlight_created', 'spotlight_updated', 'spotlight_deleted',
+    'newsletter_auto_draft_created', 'newsletter_created', 'newsletter_updated', 
+    'newsletter_sent', 'newsletter_test_sent', 'newsletter_deleted',
+    'template_created', 'template_updated', 'template_deleted',
+    'subscriber_created', 'subscriber_updated', 'subscriber_unsubscribed'
+  ]),
+  entityType: z.enum(['blog_post', 'spotlight', 'newsletter', 'template', 'subscriber']),
+  entityId: z.string(),
+  metaJson: z.record(z.unknown()).optional(),
+});
+
+export const insertNewsletterSettingsSchema = z.object({
+  defaultTemplateId_en: z.string(),
+  defaultTemplateId_ar: z.string(),
+  websiteBaseUrl: z.string(),
+  appDeepLinkBase: z.string(),
+  autoActivateSpotlightOnPublish: z.boolean(),
+  defaultSpotlightPlacements: z.array(z.enum(['home', 'discover', 'blog', 'stock', 'custom'])),
+  defaultCtaText_en: z.string(),
+  defaultCtaText_ar: z.string(),
+  brandLogoUrl: z.string(),
+  emailSenderName: z.string(),
+  emailSenderEmail: z.string(),
+});
+
+export const insertNewsletterTemplateSchema = z.object({
+  name: z.string().min(1),
+  description: z.string(),
+  locale: z.enum(['en', 'ar', 'global']),
+  schemaJson: z.object({
+    blocks: z.array(z.object({
+      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer']),
+      label: z.string(),
+      required: z.boolean(),
+    })),
+  }),
+  htmlWrapper: z.string(),
+  defaultValuesJson: z.record(z.unknown()),
+});
+
 // Default event mappings per platform
 export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<CmsEventName, string>>> = {
   meta: {

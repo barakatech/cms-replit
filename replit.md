@@ -10,6 +10,13 @@ The CMS provides:
 - Internal linking between related stocks
 - Asset library for images, videos, and documents
 - Blog and banner management modules
+- **Newsletter + Spotlight + Blog Sync Module**: Content marketing automation with:
+  - Newsletter management with templates and block-based content editing
+  - Spotlight banners with scheduling and multi-placement targeting
+  - Automatic spotlight/newsletter creation when blog posts are published
+  - Subscriber management with CSV import
+  - Public API endpoints for content consumption
+  - Audit logging for all content operations
 
 ## User Preferences
 
