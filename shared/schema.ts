@@ -992,6 +992,256 @@ export const BARAKA_STORE_URLS = {
   android: 'https://play.google.com/store/apps/details?id=com.baraka.app&hl=en',
 };
 
+// ============================================
+// NEWSLETTER + SPOTLIGHT + BLOG SYNC MODULE
+// ============================================
+
+// Blog Post Status
+export type BlogPostStatus = 'draft' | 'scheduled' | 'published';
+
+// Enhanced Blog Post for CMS
+export interface CMSBlogPost {
+  id: string;
+  title_en: string;
+  title_ar: string;
+  slug_en: string;
+  slug_ar: string;
+  excerpt_en: string;
+  excerpt_ar: string;
+  content_html_en: string;
+  content_html_ar: string;
+  content_json_en?: object;
+  content_json_ar?: object;
+  coverImageUrl: string;
+  tags: string[];
+  authorId: string;
+  authorName: string;
+  status: BlogPostStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  seoTitle_en: string;
+  seoTitle_ar: string;
+  seoDescription_en: string;
+  seoDescription_ar: string;
+  canonicalUrl?: string;
+  linkedSpotlightId?: string;
+  linkedNewsletterId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertCMSBlogPost = Omit<CMSBlogPost, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
+
+// Newsletter Template
+export interface NewsletterTemplate {
+  id: string;
+  name: string;
+  description: string;
+  locale: 'en' | 'ar' | 'global';
+  schemaJson: {
+    blocks: Array<{
+      type: 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer';
+      label: string;
+      required: boolean;
+    }>;
+  };
+  htmlWrapper: string;
+  defaultValuesJson: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertNewsletterTemplate = Omit<NewsletterTemplate, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Newsletter Status
+export type NewsletterStatus = 'draft' | 'ready' | 'scheduled' | 'sent';
+
+// Newsletter Content Block
+export interface NewsletterContentBlock {
+  type: 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer';
+  title?: string;
+  content?: string;
+  imageUrl?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  articles?: Array<{ title: string; excerpt: string; url: string; imageUrl?: string }>;
+}
+
+// Newsletter
+export interface Newsletter {
+  id: string;
+  subject: string;
+  preheader: string;
+  templateId: string;
+  contentBlocks: NewsletterContentBlock[];
+  htmlOutput: string;
+  status: NewsletterStatus;
+  scheduledAt?: string;
+  sentAt?: string;
+  sourceBlogPostId?: string;
+  locale: 'en' | 'ar';
+  lastTestSentAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertNewsletter = Omit<Newsletter, 'id' | 'createdAt' | 'updatedAt' | 'htmlOutput' | 'sentAt' | 'lastTestSentAt'>;
+
+// Spotlight Banner Placement
+export type SpotlightPlacement = 'home' | 'discover' | 'blog' | 'stock' | 'custom';
+
+// Spotlight Banner Status
+export type SpotlightStatus = 'draft' | 'active' | 'inactive';
+
+// Spotlight Banner Source Type
+export type SpotlightSourceType = 'manual' | 'from_blog' | 'from_newsletter';
+
+// Spotlight Banner
+export interface SpotlightBanner {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  ctaText: string;
+  ctaUrl: string;
+  placements: SpotlightPlacement[];
+  startAt?: string;
+  endAt?: string;
+  status: SpotlightStatus;
+  sourceType: SpotlightSourceType;
+  blogPostId?: string;
+  newsletterId?: string;
+  locale: 'en' | 'ar';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertSpotlightBanner = Omit<SpotlightBanner, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Subscriber Status
+export type SubscriberStatus = 'active' | 'unsubscribed';
+
+// Subscriber
+export interface Subscriber {
+  id: string;
+  email: string;
+  locale: 'en' | 'ar';
+  status: SubscriberStatus;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  unsubscribedAt?: string;
+}
+
+export type InsertSubscriber = Omit<Subscriber, 'id' | 'createdAt' | 'updatedAt' | 'unsubscribedAt'>;
+
+// Audit Log Action Types
+export type AuditActionType = 
+  | 'blog_created'
+  | 'blog_updated'
+  | 'blog_published'
+  | 'blog_deleted'
+  | 'spotlight_auto_created'
+  | 'spotlight_created'
+  | 'spotlight_updated'
+  | 'spotlight_deleted'
+  | 'newsletter_auto_draft_created'
+  | 'newsletter_created'
+  | 'newsletter_updated'
+  | 'newsletter_sent'
+  | 'newsletter_test_sent'
+  | 'newsletter_deleted'
+  | 'template_created'
+  | 'template_updated'
+  | 'template_deleted'
+  | 'subscriber_created'
+  | 'subscriber_updated'
+  | 'subscriber_unsubscribed';
+
+// Audit Log Entity Types
+export type AuditEntityType = 'blog_post' | 'spotlight' | 'newsletter' | 'template' | 'subscriber';
+
+// Audit Log
+export interface AuditLog {
+  id: string;
+  actorUserId: string;
+  actorName: string;
+  actionType: AuditActionType;
+  entityType: AuditEntityType;
+  entityId: string;
+  metaJson?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type InsertAuditLog = Omit<AuditLog, 'id' | 'createdAt'>;
+
+// Newsletter Settings
+export interface NewsletterSettings {
+  id: string;
+  defaultTemplateId_en: string;
+  defaultTemplateId_ar: string;
+  websiteBaseUrl: string;
+  appDeepLinkBase: string;
+  autoActivateSpotlightOnPublish: boolean;
+  defaultSpotlightPlacements: SpotlightPlacement[];
+  defaultCtaText_en: string;
+  defaultCtaText_ar: string;
+  brandLogoUrl: string;
+  emailSenderName: string;
+  emailSenderEmail: string;
+  updatedAt: string;
+}
+
+export type InsertNewsletterSettings = Omit<NewsletterSettings, 'id' | 'updatedAt'>;
+
+// Zod schemas for validation
+export const insertNewsletterSchema = z.object({
+  subject: z.string().min(1),
+  preheader: z.string().max(120),
+  templateId: z.string(),
+  contentBlocks: z.array(z.object({
+    type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer']),
+    title: z.string().optional(),
+    content: z.string().optional(),
+    imageUrl: z.string().optional(),
+    ctaText: z.string().optional(),
+    ctaUrl: z.string().optional(),
+    articles: z.array(z.object({
+      title: z.string(),
+      excerpt: z.string(),
+      url: z.string(),
+      imageUrl: z.string().optional(),
+    })).optional(),
+  })),
+  status: z.enum(['draft', 'ready', 'scheduled', 'sent']),
+  scheduledAt: z.string().optional(),
+  sourceBlogPostId: z.string().optional(),
+  locale: z.enum(['en', 'ar']),
+});
+
+export const insertSpotlightBannerSchema = z.object({
+  title: z.string().min(1),
+  subtitle: z.string().max(120),
+  imageUrl: z.string(),
+  ctaText: z.string().min(1),
+  ctaUrl: z.string().min(1),
+  placements: z.array(z.enum(['home', 'discover', 'blog', 'stock', 'custom'])),
+  startAt: z.string().optional(),
+  endAt: z.string().optional(),
+  status: z.enum(['draft', 'active', 'inactive']),
+  sourceType: z.enum(['manual', 'from_blog', 'from_newsletter']),
+  blogPostId: z.string().optional(),
+  newsletterId: z.string().optional(),
+  locale: z.enum(['en', 'ar']),
+});
+
+export const insertSubscriberSchema = z.object({
+  email: z.string().email(),
+  locale: z.enum(['en', 'ar']),
+  status: z.enum(['active', 'unsubscribed']),
+  tags: z.array(z.string()),
+});
+
 // Default event mappings per platform
 export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<CmsEventName, string>>> = {
   meta: {

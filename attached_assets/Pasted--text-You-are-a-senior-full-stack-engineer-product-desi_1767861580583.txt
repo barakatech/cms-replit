@@ -1,0 +1,288 @@
+```text
+You are a senior full-stack engineer + product designer. Extend our EXISTING Baraka CMS (Next.js + Prisma + Postgres + Tailwind + Auth/RBAC + EN/AR + RTL + Light/Dark) by ADDING a production-ready module called:
+
+"Newsletter + Spotlight + Blog Sync"
+
+This must be MERGED into the existing Learn/Blog section of the CMS (do not create a separate disconnected CMS). Reuse existing navigation patterns, design tokens, roles, audit logging, assets manager, and settings architecture.
+
+========================================================
+0) INFORMATION ARCHITECTURE (MERGE WITH EXISTING CMS)
+========================================================
+- Keep the existing left nav structure.
+- Under the existing "Blog" module (aka Learn/Blog), add sub-navigation:
+  - Blog Posts
+  - Newsletters
+  - Spotlight Banners
+  - Templates
+  - Subscribers (optional)
+  - (If you already have Analytics elsewhere, link to it; don’t duplicate)
+- Settings remains UNIVERSAL ONLY; it should contain global defaults for templates/URLs/toggles, but not day-to-day content editing.
+
+RBAC:
+- ADMIN: full access
+- EDITOR: manage blog/newsletters/spotlights/templates/subscribers
+- VIEWER: read-only
+
+========================================================
+1) DATABASE MODELS (PRISMA + MIGRATIONS)
+========================================================
+Add or merge these models into the existing Prisma schema.
+If a similar model already exists (e.g., BlogPost), extend it rather than duplicating.
+
+User
+- id, name, email, password_hash, role (ADMIN, EDITOR, VIEWER), created_at
+
+BlogPost
+- id
+- title
+- slug (unique per locale)
+- excerpt
+- content_html
+- content_json (optional for editor)
+- cover_image_url
+- tags (string[])
+- locale (EN/AR)
+- author_id (FK User)
+- status (DRAFT, SCHEDULED, PUBLISHED)
+- published_at
+- scheduled_at
+- seo_title
+- seo_description
+- canonical_url
+- created_at, updated_at
+
+NewsletterTemplate
+- id
+- name
+- description
+- locale (EN/AR or GLOBAL)
+- schema_json (defines blocks: hero, intro, featured, articles, CTA, footer)
+- html_wrapper (base layout)
+- default_values_json
+- created_at, updated_at
+
+Newsletter
+- id
+- subject
+- preheader
+- template_id (FK NewsletterTemplate)
+- content_blocks (JSON)
+- html_output
+- status (DRAFT, READY, SENT, SCHEDULED)
+- scheduled_at
+- sent_at
+- source_blog_post_id (nullable FK BlogPost)
+- locale (EN/AR)
+- created_at, updated_at
+
+SpotlightBanner
+- id
+- title
+- subtitle
+- image_url
+- cta_text
+- cta_url
+- placement (HOME, DISCOVER, BLOG, CUSTOM)
+- placements (string[] optional)  // allow multi-placement like BLOG+HOME
+- start_at
+- end_at
+- status (DRAFT, ACTIVE, INACTIVE)
+- source_type (MANUAL, FROM_BLOG, FROM_NEWSLETTER)
+- blog_post_id (nullable FK BlogPost)
+- newsletter_id (nullable FK Newsletter)
+- locale (EN/AR)
+- created_at, updated_at
+
+Subscriber (recommended)
+- id
+- email
+- locale (EN/AR)
+- status (ACTIVE, UNSUBSCRIBED)
+- tags (string[])
+- created_at, updated_at, unsubscribed_at
+
+AuditLog (if not present, add; if present, reuse)
+- id, actor_user_id, action_type, entity_type, entity_id, meta_json, created_at
+
+IMPORTANT CONSTRAINTS:
+- unique slug per locale (BlogPost)
+- idempotency to prevent duplicate Spotlight/Newsletter creation per blog + locale:
+  - unique index on SpotlightBanner(blog_post_id, locale) WHERE source_type=FROM_BLOG (or enforce in code)
+  - unique index on Newsletter(source_blog_post_id, locale)
+
+========================================================
+2) AUTOMATION RULES (MUST IMPLEMENT + IDEMPOTENT)
+========================================================
+
+Trigger: When BlogPost status transitions to PUBLISHED (from any other state)
+
+A) Blog → Spotlight auto-create
+- If no SpotlightBanner exists for (blog_post_id, locale) source_type=FROM_BLOG:
+  Create SpotlightBanner:
+    title = BlogPost.title
+    subtitle = truncate(BlogPost.excerpt, 90 chars)
+    image_url = BlogPost.cover_image_url
+    cta_text default:
+      EN: "Read more"
+      AR: "اقرأ المزيد"
+    cta_url = "{WEBSITE_BASE_URL}/blog/{slug}" OR "/blog/{slug}" depending on config
+    placements default = ["BLOG","HOME"]
+    status = DRAFT unless AUTO_ACTIVATE_SPOTLIGHT_ON_PUBLISH setting is ON
+    source_type = FROM_BLOG
+    blog_post_id = BlogPost.id
+
+- Log Audit: BLOG_PUBLISHED + SPOTLIGHT_AUTO_CREATED
+
+B) Blog → Newsletter auto-draft
+- If no Newsletter exists for (source_blog_post_id, locale):
+  Create Newsletter:
+    template_id = DEFAULT_TEMPLATE_FOR_LOCALE (from Settings)
+    subject = BlogPost.title
+    preheader = truncate(BlogPost.excerpt, 120 chars)
+    content_blocks populated from template schema:
+      HERO: title, image, CTA to blog post
+      INTRO: excerpt
+      FEATURED: “Read more” section
+      FOOTER: standard disclaimers + unsubscribe placeholder
+    status = DRAFT
+    source_blog_post_id = BlogPost.id
+- Render html_output using template html_wrapper + content_blocks
+- Log Audit: NEWSLETTER_AUTO_DRAFT_CREATED
+
+C) Newsletter → Spotlight (optional 1-click)
+From Newsletter editor:
+- “Create Spotlight from Newsletter”
+- If none exists for (newsletter_id, locale) source_type=FROM_NEWSLETTER:
+  Create SpotlightBanner:
+    title = Newsletter.subject
+    subtitle = Newsletter.preheader (truncate 90)
+    image_url = newsletter hero image (from content_blocks)
+    cta_text = default read CTA per locale
+    cta_url = "{WEBSITE_BASE_URL}/newsletter/{id-or-slug}" (create public view route)
+    placements default = ["HOME","DISCOVER"]
+    status = DRAFT
+    source_type = FROM_NEWSLETTER
+    newsletter_id = Newsletter.id
+- Log Audit
+
+FAILSAFE:
+- Automations must be idempotent and safe if publish is clicked multiple times.
+- Show clear UI feedback with links to created artifacts.
+
+========================================================
+3) ADMIN UI (MERGED UNDER EXISTING BLOG/LEARN MODULE)
+========================================================
+
+A) Blog Posts List
+- filters: search, status, locale, author, tag
+- columns show:
+  title, locale, status, published/scheduled date
+  badges: linked Spotlight status + linked Newsletter status
+- quick actions: publish, schedule, duplicate
+- publish action runs automations and shows a toast with:
+  “Spotlight created” + link
+  “Newsletter draft created” + link
+
+B) Blog Editor
+- title, slug auto-generate, locale switch, tags, excerpt, cover image upload
+- SEO fields
+- rich text editor (store content_json + render to html_output)
+- publish flow: Draft → Scheduled → Published
+- after publish: show linked Spotlight + Newsletter panels
+
+C) Spotlight Manager
+- list with placement(s), schedule, locale, status, source type
+- editor: image, title, subtitle, CTA text/url, placements, start/end, status
+- mobile preview component (simple phone frame)
+
+D) Newsletter Manager
+- list with status, locale, scheduled_at, source blog link
+- editor:
+  - choose template
+  - edit subject + preheader
+  - block editor UI (reorder blocks, edit text/images/CTA)
+  - live HTML preview
+  - “Export HTML”
+  - “Send test email” (mock: logs event + stores last_test_sent_at)
+  - schedule send (store scheduled_at; actual sending mocked)
+  - “Create Spotlight from this Newsletter” button
+
+E) Template Builder
+- CRUD templates
+- schema_json editor + html_wrapper editor
+- preview with dummy data + selected locale
+
+F) Subscribers (optional but recommended)
+- list + import CSV
+- status management (unsubscribe)
+- tag management
+
+========================================================
+4) SETTINGS (UNIVERSAL ONLY)
+========================================================
+Add a Settings subpage (universal defaults only; no content editing):
+/admin/settings/newsletters
+- Default NewsletterTemplate per locale (EN/AR)
+- WEBSITE_BASE_URL
+- APP_DEEP_LINK_BASE (placeholder)
+- AUTO_ACTIVATE_SPOTLIGHT_ON_PUBLISH toggle
+- Default Spotlight placements (array)
+- Default CTA text per locale (Read more / اقرأ المزيد)
+- Brand assets: logo URL for email wrapper
+- Email sender placeholders (no real secrets required)
+
+========================================================
+5) ASSETS + UPLOADS
+========================================================
+Reuse the existing Assets module if present.
+If not present, implement local upload:
+- /api/upload -> stores in /public/uploads
+- store URLs in cover_image_url/image_url
+- abstract storage provider for future S3
+
+========================================================
+6) PUBLIC ENDPOINTS (FOR APP/WEBSITE CONSUMPTION)
+========================================================
+Implement read-only endpoints (no auth required) for app/website:
+
+- GET /api/public/blog?locale=EN&tag=...&page=...
+  returns published blog posts list
+- GET /api/public/blog/{slug}?locale=EN
+  returns published blog post detail
+
+- GET /api/public/spotlights?locale=EN&placement=HOME
+  returns ACTIVE spotlights within date range
+
+- GET /api/public/newsletters?locale=EN
+  returns published/sent newsletters list (optional)
+- GET /api/public/newsletters/{id}
+  returns newsletter html_output + metadata
+
+Security:
+- Only return PUBLISHED blog posts
+- Only return ACTIVE spotlights in valid schedule window
+
+========================================================
+7) ANALYTICS HOOKS (OPTIONAL BUT CLEAN)
+========================================================
+Add basic tracking events hooks (do not build full analytics if already exists):
+- blog_published
+- spotlight_auto_created
+- newsletter_auto_created
+Store in AuditLog or Event table.
+
+========================================================
+8) ACCEPTANCE CRITERIA
+========================================================
+- Publishing a blog post automatically creates:
+  - one linked SpotlightBanner (FROM_BLOG) (draft/active based on setting)
+  - one linked Newsletter (draft)
+- No duplicates created on repeated publish clicks
+- Blog list shows linked badges + quick links
+- Newsletter editor can generate spotlight from newsletter
+- Public APIs return correct filtered content
+- EN/AR + RTL supported
+- Uses existing Baraka DS styling and navigation patterns
+
+Now implement this as an additional requirement inside the current CMS and merge it with the existing Learn/Blog section.
+```

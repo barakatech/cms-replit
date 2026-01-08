@@ -44,6 +44,17 @@ import {
   type InsertCallToAction,
   type CTAEvent,
   type InsertCTAEvent,
+  type Newsletter,
+  type InsertNewsletter,
+  type NewsletterTemplate,
+  type InsertNewsletterTemplate,
+  type SpotlightBanner,
+  type InsertSpotlightBanner,
+  type Subscriber,
+  type InsertSubscriber,
+  type AuditLog,
+  type InsertAuditLog,
+  type NewsletterSettings,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2031,6 +2042,237 @@ const seedLandingPages: LandingPage[] = [
   },
 ];
 
+// ============================================
+// NEWSLETTER + SPOTLIGHT + BLOG SYNC SEED DATA
+// ============================================
+
+const seedNewsletterTemplates: NewsletterTemplate[] = [
+  {
+    id: '1',
+    name: 'Default English Newsletter',
+    description: 'Standard newsletter template for English audience',
+    locale: 'en',
+    schemaJson: {
+      blocks: [
+        { type: 'hero', label: 'Hero Banner', required: true },
+        { type: 'intro', label: 'Introduction', required: true },
+        { type: 'featured', label: 'Featured Content', required: false },
+        { type: 'articles', label: 'Article List', required: true },
+        { type: 'cta', label: 'Call to Action', required: true },
+        { type: 'footer', label: 'Footer', required: true },
+      ],
+    },
+    htmlWrapper: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family: Arial, sans-serif;">{{content}}</body></html>`,
+    defaultValuesJson: {
+      heroTitle: 'Weekly Market Update',
+      ctaText: 'Start Investing',
+      ctaUrl: 'https://baraka.com/signup',
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '2',
+    name: 'Default Arabic Newsletter',
+    description: 'Standard newsletter template for Arabic audience',
+    locale: 'ar',
+    schemaJson: {
+      blocks: [
+        { type: 'hero', label: 'بانر رئيسي', required: true },
+        { type: 'intro', label: 'المقدمة', required: true },
+        { type: 'featured', label: 'المحتوى المميز', required: false },
+        { type: 'articles', label: 'قائمة المقالات', required: true },
+        { type: 'cta', label: 'دعوة للعمل', required: true },
+        { type: 'footer', label: 'التذييل', required: true },
+      ],
+    },
+    htmlWrapper: `<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"></head><body style="font-family: 'Segoe UI', Tahoma, sans-serif;">{{content}}</body></html>`,
+    defaultValuesJson: {
+      heroTitle: 'تحديث السوق الأسبوعي',
+      ctaText: 'ابدأ الاستثمار',
+      ctaUrl: 'https://baraka.com/signup',
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '3',
+    name: 'Global Promotional Template',
+    description: 'Promotional template for special offers in both languages',
+    locale: 'global',
+    schemaJson: {
+      blocks: [
+        { type: 'hero', label: 'Promo Hero', required: true },
+        { type: 'featured', label: 'Offer Details', required: true },
+        { type: 'cta', label: 'Claim Offer CTA', required: true },
+        { type: 'footer', label: 'Legal Footer', required: true },
+      ],
+    },
+    htmlWrapper: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family: Arial, sans-serif; background: #f5f5f5;">{{content}}</body></html>`,
+    defaultValuesJson: {
+      heroTitle: 'Special Offer',
+      ctaText: 'Claim Now',
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+const seedNewsletters: Newsletter[] = [
+  {
+    id: '1',
+    subject: 'Weekly Market Insights: Top Movers This Week',
+    preheader: 'See which stocks are trending and learn from our experts',
+    templateId: '1',
+    contentBlocks: [
+      { type: 'hero', title: 'Weekly Market Insights', imageUrl: '/images/newsletter-hero.jpg' },
+      { type: 'intro', content: 'Welcome to this week\'s market update. Here\'s what you need to know about the latest trends in US stocks.' },
+      { type: 'articles', articles: [
+        { title: 'AI Stocks Surge Amid Earnings Season', excerpt: 'Tech giants report strong AI revenue growth...', url: '/blog/ai-stocks-surge' },
+        { title: 'What the Fed Decision Means for Investors', excerpt: 'Rate pause signals continued growth...', url: '/blog/fed-decision' },
+      ]},
+      { type: 'cta', ctaText: 'Start Investing Today', ctaUrl: 'https://baraka.com/signup' },
+      { type: 'footer', content: 'You received this email because you subscribed to Baraka newsletters.' },
+    ],
+    htmlOutput: '<html><!-- Generated HTML --></html>',
+    status: 'sent',
+    sentAt: '2024-01-15T10:00:00Z',
+    locale: 'en',
+    createdAt: '2024-01-14T08:00:00Z',
+    updatedAt: '2024-01-15T10:00:00Z',
+  },
+  {
+    id: '2',
+    subject: 'تحديث السوق الأسبوعي: أبرز التحركات',
+    preheader: 'اكتشف الأسهم الرائجة وتعلم من خبرائنا',
+    templateId: '2',
+    contentBlocks: [
+      { type: 'hero', title: 'تحديث السوق الأسبوعي', imageUrl: '/images/newsletter-hero-ar.jpg' },
+      { type: 'intro', content: 'مرحباً بك في تحديث السوق لهذا الأسبوع. إليك ما تحتاج معرفته عن أحدث الاتجاهات في الأسهم الأمريكية.' },
+      { type: 'cta', ctaText: 'ابدأ الاستثمار اليوم', ctaUrl: 'https://baraka.com/signup' },
+    ],
+    htmlOutput: '<html dir="rtl"><!-- Generated HTML --></html>',
+    status: 'sent',
+    sentAt: '2024-01-15T10:30:00Z',
+    locale: 'ar',
+    createdAt: '2024-01-14T08:30:00Z',
+    updatedAt: '2024-01-15T10:30:00Z',
+  },
+  {
+    id: '3',
+    subject: 'New Blog Post: Understanding Halal Investing',
+    preheader: 'Learn the fundamentals of Shariah-compliant investing',
+    templateId: '1',
+    contentBlocks: [
+      { type: 'hero', title: 'New on the Blog', imageUrl: '/images/halal-investing.jpg' },
+      { type: 'featured', title: 'Understanding Halal Investing', content: 'A comprehensive guide to Shariah-compliant stock selection...', imageUrl: '/images/halal-guide.jpg' },
+      { type: 'cta', ctaText: 'Read Full Article', ctaUrl: '/blog/understanding-halal-investing' },
+    ],
+    htmlOutput: '',
+    status: 'draft',
+    sourceBlogPostId: '1',
+    locale: 'en',
+    createdAt: '2024-01-20T09:00:00Z',
+    updatedAt: '2024-01-20T09:00:00Z',
+  },
+];
+
+const seedSpotlightBanners: SpotlightBanner[] = [
+  {
+    id: '1',
+    title: 'New: AI Stocks Theme',
+    subtitle: 'Discover top AI companies trending on the market',
+    imageUrl: '/images/ai-stocks-spotlight.jpg',
+    ctaText: 'Explore Theme',
+    ctaUrl: '/stocks/themes/ai-leaders',
+    placements: ['home', 'discover'],
+    status: 'active',
+    sourceType: 'manual',
+    locale: 'en',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '2',
+    title: 'جديد: موضوع الذكاء الاصطناعي',
+    subtitle: 'اكتشف أفضل شركات الذكاء الاصطناعي الرائجة',
+    imageUrl: '/images/ai-stocks-spotlight-ar.jpg',
+    ctaText: 'استكشف الموضوع',
+    ctaUrl: '/stocks/themes/ai-leaders',
+    placements: ['home', 'discover'],
+    status: 'active',
+    sourceType: 'manual',
+    locale: 'ar',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '3',
+    title: 'Weekly Market Update',
+    subtitle: 'Check out our latest analysis and insights',
+    imageUrl: '/images/blog-spotlight.jpg',
+    ctaText: 'Read Now',
+    ctaUrl: '/blog/weekly-market-update',
+    placements: ['blog', 'discover'],
+    startAt: '2024-01-01T00:00:00Z',
+    endAt: '2024-12-31T23:59:59Z',
+    status: 'active',
+    sourceType: 'from_blog',
+    blogPostId: '1',
+    locale: 'en',
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '4',
+    title: 'Zero Commission Offer',
+    subtitle: 'Trade commission-free for 30 days',
+    imageUrl: '/images/promo-spotlight.jpg',
+    ctaText: 'Claim Offer',
+    ctaUrl: '/p/stocks-offer',
+    placements: ['home', 'stock'],
+    status: 'active',
+    sourceType: 'manual',
+    locale: 'en',
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
+const seedNewsletterSettings: NewsletterSettings = {
+  id: '1',
+  defaultTemplateId_en: '1',
+  defaultTemplateId_ar: '2',
+  websiteBaseUrl: 'https://baraka.com',
+  appDeepLinkBase: 'baraka://app',
+  autoActivateSpotlightOnPublish: true,
+  defaultSpotlightPlacements: ['home', 'discover'],
+  defaultCtaText_en: 'Read More',
+  defaultCtaText_ar: 'اقرأ المزيد',
+  brandLogoUrl: '/images/baraka-logo.png',
+  emailSenderName: 'Baraka',
+  emailSenderEmail: 'newsletter@baraka.com',
+  updatedAt: now,
+};
+
+const seedSubscribers: Subscriber[] = [
+  { id: '1', email: 'john.doe@example.com', locale: 'en', status: 'active', tags: ['early-adopter', 'premium'], createdAt: '2024-01-01T10:00:00Z', updatedAt: '2024-01-01T10:00:00Z' },
+  { id: '2', email: 'jane.smith@example.com', locale: 'en', status: 'active', tags: ['investor', 'halal'], createdAt: '2024-01-02T11:00:00Z', updatedAt: '2024-01-02T11:00:00Z' },
+  { id: '3', email: 'ahmed.ali@example.com', locale: 'ar', status: 'active', tags: ['mena', 'tech-stocks'], createdAt: '2024-01-03T12:00:00Z', updatedAt: '2024-01-03T12:00:00Z' },
+  { id: '4', email: 'fatima.hassan@example.com', locale: 'ar', status: 'active', tags: ['halal', 'beginner'], createdAt: '2024-01-04T09:00:00Z', updatedAt: '2024-01-04T09:00:00Z' },
+  { id: '5', email: 'michael.brown@example.com', locale: 'en', status: 'active', tags: ['dividend-investor'], createdAt: '2024-01-05T08:00:00Z', updatedAt: '2024-01-05T08:00:00Z' },
+  { id: '6', email: 'sarah.wilson@example.com', locale: 'en', status: 'unsubscribed', tags: ['trial-user'], createdAt: '2024-01-06T14:00:00Z', updatedAt: '2024-01-10T14:00:00Z', unsubscribedAt: '2024-01-10T14:00:00Z' },
+  { id: '7', email: 'omar.khalil@example.com', locale: 'ar', status: 'active', tags: ['premium', 'active-trader'], createdAt: '2024-01-07T15:00:00Z', updatedAt: '2024-01-07T15:00:00Z' },
+  { id: '8', email: 'lisa.chen@example.com', locale: 'en', status: 'active', tags: ['tech-stocks', 'ai-investor'], createdAt: '2024-01-08T16:00:00Z', updatedAt: '2024-01-08T16:00:00Z' },
+  { id: '9', email: 'khalid.rahman@example.com', locale: 'ar', status: 'active', tags: ['halal', 'long-term'], createdAt: '2024-01-09T10:30:00Z', updatedAt: '2024-01-09T10:30:00Z' },
+  { id: '10', email: 'emma.johnson@example.com', locale: 'en', status: 'active', tags: ['beginner', 'etf-investor'], createdAt: '2024-01-10T11:30:00Z', updatedAt: '2024-01-10T11:30:00Z' },
+  { id: '11', email: 'yusuf.mohammed@example.com', locale: 'ar', status: 'active', tags: ['premium', 'halal'], createdAt: '2024-01-11T09:45:00Z', updatedAt: '2024-01-11T09:45:00Z' },
+  { id: '12', email: 'david.miller@example.com', locale: 'en', status: 'active', tags: ['dividend-investor', 'value'], createdAt: '2024-01-12T13:00:00Z', updatedAt: '2024-01-12T13:00:00Z' },
+  { id: '13', email: 'aisha.mahmoud@example.com', locale: 'ar', status: 'active', tags: ['mena', 'growth'], createdAt: '2024-01-13T14:30:00Z', updatedAt: '2024-01-13T14:30:00Z' },
+  { id: '14', email: 'robert.taylor@example.com', locale: 'en', status: 'unsubscribed', tags: ['inactive'], createdAt: '2024-01-14T08:15:00Z', updatedAt: '2024-01-18T08:15:00Z', unsubscribedAt: '2024-01-18T08:15:00Z' },
+  { id: '15', email: 'noor.abdullah@example.com', locale: 'ar', status: 'active', tags: ['halal', 'premium', 'active-trader'], createdAt: '2024-01-15T17:00:00Z', updatedAt: '2024-01-15T17:00:00Z' },
+];
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -2154,6 +2396,46 @@ export interface IStorage {
   createCTAEvent(event: InsertCTAEvent): Promise<CTAEvent>;
   getCTAEvents(filters?: { ctaKey?: string; eventType?: string; startDate?: string; endDate?: string }): Promise<CTAEvent[]>;
   getCTAPerformance(): Promise<{ ctaKey: string; clicks: number; qrViews: number; storeRedirects: number }[]>;
+  
+  // Newsletter + Spotlight + Blog Sync Module
+  // Newsletters
+  getNewsletters(): Promise<Newsletter[]>;
+  getNewsletter(id: string): Promise<Newsletter | undefined>;
+  createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter>;
+  updateNewsletter(id: string, newsletter: Partial<Newsletter>): Promise<Newsletter | undefined>;
+  deleteNewsletter(id: string): Promise<boolean>;
+  getNewsletterByBlogPostId(blogPostId: string): Promise<Newsletter | undefined>;
+  
+  // Newsletter Templates
+  getNewsletterTemplates(): Promise<NewsletterTemplate[]>;
+  getNewsletterTemplate(id: string): Promise<NewsletterTemplate | undefined>;
+  createNewsletterTemplate(template: InsertNewsletterTemplate): Promise<NewsletterTemplate>;
+  updateNewsletterTemplate(id: string, template: Partial<NewsletterTemplate>): Promise<NewsletterTemplate | undefined>;
+  deleteNewsletterTemplate(id: string): Promise<boolean>;
+  
+  // Spotlight Banners
+  getSpotlightBanners(): Promise<SpotlightBanner[]>;
+  getSpotlightBanner(id: string): Promise<SpotlightBanner | undefined>;
+  createSpotlightBanner(banner: InsertSpotlightBanner): Promise<SpotlightBanner>;
+  updateSpotlightBanner(id: string, banner: Partial<SpotlightBanner>): Promise<SpotlightBanner | undefined>;
+  deleteSpotlightBanner(id: string): Promise<boolean>;
+  getSpotlightByBlogPostId(blogPostId: string): Promise<SpotlightBanner | undefined>;
+  getActiveSpotlights(placement?: string): Promise<SpotlightBanner[]>;
+  
+  // Subscribers
+  getSubscribers(): Promise<Subscriber[]>;
+  getSubscriber(id: string): Promise<Subscriber | undefined>;
+  createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
+  updateSubscriber(id: string, subscriber: Partial<Subscriber>): Promise<Subscriber | undefined>;
+  deleteSubscriber(id: string): Promise<boolean>;
+  
+  // Audit Logs
+  getAuditLogs(filters?: { entityType?: string; entityId?: string; actionType?: string }): Promise<AuditLog[]>;
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  
+  // Newsletter Settings
+  getNewsletterSettings(): Promise<NewsletterSettings>;
+  updateNewsletterSettings(settings: Partial<NewsletterSettings>): Promise<NewsletterSettings>;
 }
 
 // Dashboard Summary Types
@@ -2220,6 +2502,12 @@ export class MemStorage implements IStorage {
   private cmsWebEvents: Map<string, CmsWebEvent>;
   private bannerEvents: Map<string, BannerEvent>;
   private mobileInstallBanners: Map<string, MobileInstallBanner>;
+  private newsletters: Map<string, Newsletter>;
+  private newsletterTemplates: Map<string, NewsletterTemplate>;
+  private spotlightBanners: Map<string, SpotlightBanner>;
+  private subscribers: Map<string, Subscriber>;
+  private auditLogs: Map<string, AuditLog>;
+  private newsletterSettings: NewsletterSettings;
   private analyticsSettings: AnalyticsSettings;
   private blogPosts: Map<string, BlogPost>;
   private stockPages: Map<string, StockPage>;
@@ -2255,6 +2543,12 @@ export class MemStorage implements IStorage {
     this.appDownloadConfig = { ...seedAppDownloadConfig };
     this.callToActions = new Map();
     this.ctaEvents = new Map();
+    this.newsletters = new Map();
+    this.newsletterTemplates = new Map();
+    this.spotlightBanners = new Map();
+    this.subscribers = new Map();
+    this.auditLogs = new Map();
+    this.newsletterSettings = { ...seedNewsletterSettings };
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -2276,6 +2570,12 @@ export class MemStorage implements IStorage {
     
     // Seed CTAs
     seedCallToActions.forEach(cta => this.callToActions.set(cta.id, cta));
+    
+    // Seed Newsletter + Spotlight + Blog Sync module data
+    seedNewsletterTemplates.forEach(template => this.newsletterTemplates.set(template.id, template));
+    seedNewsletters.forEach(newsletter => this.newsletters.set(newsletter.id, newsletter));
+    seedSpotlightBanners.forEach(banner => this.spotlightBanners.set(banner.id, banner));
+    seedSubscribers.forEach(subscriber => this.subscribers.set(subscriber.id, subscriber));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -3111,6 +3411,246 @@ export class MemStorage implements IStorage {
       ctaKey,
       ...stats,
     }));
+  }
+
+  // ============================================
+  // NEWSLETTER + SPOTLIGHT + BLOG SYNC MODULE METHODS
+  // ============================================
+
+  // Newsletter Methods
+  async getNewsletters(): Promise<Newsletter[]> {
+    return Array.from(this.newsletters.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getNewsletter(id: string): Promise<Newsletter | undefined> {
+    return this.newsletters.get(id);
+  }
+
+  async createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newNewsletter: Newsletter = {
+      ...newsletter,
+      id,
+      htmlOutput: '',
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.newsletters.set(id, newNewsletter);
+    return newNewsletter;
+  }
+
+  async updateNewsletter(id: string, newsletter: Partial<Newsletter>): Promise<Newsletter | undefined> {
+    const existing = this.newsletters.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Newsletter = {
+      ...existing,
+      ...newsletter,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.newsletters.set(id, updated);
+    return updated;
+  }
+
+  async deleteNewsletter(id: string): Promise<boolean> {
+    return this.newsletters.delete(id);
+  }
+
+  async getNewsletterByBlogPostId(blogPostId: string): Promise<Newsletter | undefined> {
+    return Array.from(this.newsletters.values()).find(n => n.sourceBlogPostId === blogPostId);
+  }
+
+  // Newsletter Template Methods
+  async getNewsletterTemplates(): Promise<NewsletterTemplate[]> {
+    return Array.from(this.newsletterTemplates.values());
+  }
+
+  async getNewsletterTemplate(id: string): Promise<NewsletterTemplate | undefined> {
+    return this.newsletterTemplates.get(id);
+  }
+
+  async createNewsletterTemplate(template: InsertNewsletterTemplate): Promise<NewsletterTemplate> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newTemplate: NewsletterTemplate = {
+      ...template,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.newsletterTemplates.set(id, newTemplate);
+    return newTemplate;
+  }
+
+  async updateNewsletterTemplate(id: string, template: Partial<NewsletterTemplate>): Promise<NewsletterTemplate | undefined> {
+    const existing = this.newsletterTemplates.get(id);
+    if (!existing) return undefined;
+    
+    const updated: NewsletterTemplate = {
+      ...existing,
+      ...template,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.newsletterTemplates.set(id, updated);
+    return updated;
+  }
+
+  async deleteNewsletterTemplate(id: string): Promise<boolean> {
+    return this.newsletterTemplates.delete(id);
+  }
+
+  // Spotlight Banner Methods
+  async getSpotlightBanners(): Promise<SpotlightBanner[]> {
+    return Array.from(this.spotlightBanners.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getSpotlightBanner(id: string): Promise<SpotlightBanner | undefined> {
+    return this.spotlightBanners.get(id);
+  }
+
+  async createSpotlightBanner(banner: InsertSpotlightBanner): Promise<SpotlightBanner> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newBanner: SpotlightBanner = {
+      ...banner,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.spotlightBanners.set(id, newBanner);
+    return newBanner;
+  }
+
+  async updateSpotlightBanner(id: string, banner: Partial<SpotlightBanner>): Promise<SpotlightBanner | undefined> {
+    const existing = this.spotlightBanners.get(id);
+    if (!existing) return undefined;
+    
+    const updated: SpotlightBanner = {
+      ...existing,
+      ...banner,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.spotlightBanners.set(id, updated);
+    return updated;
+  }
+
+  async deleteSpotlightBanner(id: string): Promise<boolean> {
+    return this.spotlightBanners.delete(id);
+  }
+
+  async getSpotlightByBlogPostId(blogPostId: string): Promise<SpotlightBanner | undefined> {
+    return Array.from(this.spotlightBanners.values()).find(b => b.blogPostId === blogPostId);
+  }
+
+  async getActiveSpotlights(placement?: string): Promise<SpotlightBanner[]> {
+    const now = new Date().toISOString();
+    let banners = Array.from(this.spotlightBanners.values())
+      .filter(b => b.status === 'active')
+      .filter(b => !b.startAt || b.startAt <= now)
+      .filter(b => !b.endAt || b.endAt >= now);
+    
+    if (placement) {
+      banners = banners.filter(b => b.placements.includes(placement as any));
+    }
+    
+    return banners;
+  }
+
+  // Subscriber Methods
+  async getSubscribers(): Promise<Subscriber[]> {
+    return Array.from(this.subscribers.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getSubscriber(id: string): Promise<Subscriber | undefined> {
+    return this.subscribers.get(id);
+  }
+
+  async createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newSubscriber: Subscriber = {
+      ...subscriber,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.subscribers.set(id, newSubscriber);
+    return newSubscriber;
+  }
+
+  async updateSubscriber(id: string, subscriber: Partial<Subscriber>): Promise<Subscriber | undefined> {
+    const existing = this.subscribers.get(id);
+    if (!existing) return undefined;
+    
+    const updated: Subscriber = {
+      ...existing,
+      ...subscriber,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.subscribers.set(id, updated);
+    return updated;
+  }
+
+  async deleteSubscriber(id: string): Promise<boolean> {
+    return this.subscribers.delete(id);
+  }
+
+  // Audit Log Methods
+  async getAuditLogs(filters?: { entityType?: string; entityId?: string; actionType?: string }): Promise<AuditLog[]> {
+    let logs = Array.from(this.auditLogs.values());
+    
+    if (filters?.entityType) {
+      logs = logs.filter(l => l.entityType === filters.entityType);
+    }
+    if (filters?.entityId) {
+      logs = logs.filter(l => l.entityId === filters.entityId);
+    }
+    if (filters?.actionType) {
+      logs = logs.filter(l => l.actionType === filters.actionType);
+    }
+    
+    return logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const id = randomUUID();
+    const newLog: AuditLog = {
+      ...log,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.auditLogs.set(id, newLog);
+    return newLog;
+  }
+
+  // Newsletter Settings Methods
+  async getNewsletterSettings(): Promise<NewsletterSettings> {
+    return this.newsletterSettings;
+  }
+
+  async updateNewsletterSettings(settings: Partial<NewsletterSettings>): Promise<NewsletterSettings> {
+    this.newsletterSettings = {
+      ...this.newsletterSettings,
+      ...settings,
+      id: this.newsletterSettings.id,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.newsletterSettings;
   }
 }
 
