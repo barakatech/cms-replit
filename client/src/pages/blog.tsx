@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { mockBlogs, type BlogPost, type BlogStatus } from '@/lib/mockData';
@@ -501,135 +500,101 @@ export default function Blog() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search blog posts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                  data-testid="input-search-blog"
-                />
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search blog posts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-blog"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[150px]" data-testid="select-filter-status">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="scheduled">Scheduled</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-4">
+        {filteredBlogs.map((blog) => (
+          <Card key={blog.id} className="overflow-hidden border-border/50 hover-elevate" data-testid={`card-blog-${blog.id}`}>
+            <div className="flex">
+              <div className="w-48 h-36 flex-shrink-0 relative">
+                {blog.featuredImage ? (
+                  <img 
+                    src={blog.featuredImage} 
+                    alt={blog.title.en}
+                    className="w-full h-full object-cover"
+                    data-testid={`img-blog-${blog.id}`}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    <Image className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]" data-testid="select-filter-status">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">Image</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Author</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Linked Content</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBlogs.map((blog) => (
-                <TableRow key={blog.id} data-testid={`row-blog-${blog.id}`}>
-                  <TableCell data-testid={`img-blog-${blog.id}`}>
-                    {blog.featuredImage ? (
-                      <img 
-                        src={blog.featuredImage} 
-                        alt={blog.title.en}
-                        className="w-16 h-10 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="w-16 h-10 bg-muted rounded flex items-center justify-center">
-                        <Image className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={getStatusColor(blog.status)} data-testid={`badge-status-${blog.id}`}>
+                        {blog.status}
+                      </Badge>
+                      <Badge variant="outline">EN</Badge>
+                      <Badge variant="outline">{blog.category}</Badge>
+                      {blog.tags.slice(0, 2).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground leading-tight" data-testid={`text-blog-title-${blog.id}`}>
+                      {blog.title.en}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {blog.excerpt.en}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {blog.publishDate || blog.lastUpdated}
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell data-testid={`text-blog-title-${blog.id}`}>
-                    <div className="space-y-1">
-                      <div className="font-medium">{blog.title.en}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        {blog.readTime} min read
+                      <div className="flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        by {blog.author}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell data-testid={`text-blog-author-${blog.id}`}>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      {blog.author}
-                    </div>
-                  </TableCell>
-                  <TableCell data-testid={`text-blog-category-${blog.id}`}>
-                    <Badge variant="outline">{blog.category}</Badge>
-                  </TableCell>
-                  <TableCell data-testid={`text-blog-status-${blog.id}`}>
-                    <Badge className={getStatusColor(blog.status)}>{blog.status}</Badge>
-                  </TableCell>
-                  <TableCell data-testid={`text-blog-linked-${blog.id}`}>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
                     <div className="flex items-center gap-1">
                       {spotlightsByBlogId[blog.id] ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link href="/admin/spotlights">
-                              <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
-                                <Sparkles className="h-3 w-3" />
-                                Spotlight
-                              </Badge>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            View linked spotlight: {spotlightsByBlogId[blog.id].status}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground gap-1">
-                          <Sparkles className="h-3 w-3 opacity-50" />
-                        </Badge>
-                      )}
+                        <Link href="/admin/spotlights">
+                          <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
+                            <Sparkles className="h-3 w-3" />
+                            Spotlight
+                          </Badge>
+                        </Link>
+                      ) : null}
                       {newslettersByBlogId[blog.id] ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link href="/admin/newsletters">
-                              <Badge variant="outline" className="cursor-pointer gap-1 text-blue-500 border-blue-500/50">
-                                <Mail className="h-3 w-3" />
-                                Newsletter
-                              </Badge>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            View linked newsletter: {newslettersByBlogId[blog.id].status}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground gap-1">
-                          <Mail className="h-3 w-3 opacity-50" />
-                        </Badge>
-                      )}
+                        <Link href="/admin/newsletters">
+                          <Badge variant="outline" className="cursor-pointer gap-1 text-blue-500 border-blue-500/50">
+                            <Mail className="h-3 w-3" />
+                            Newsletter
+                          </Badge>
+                        </Link>
+                      ) : null}
                     </div>
-                  </TableCell>
-                  <TableCell data-testid={`text-blog-date-${blog.id}`}>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      {blog.publishDate || blog.lastUpdated}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center gap-1">
                       {blog.status !== 'published' && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -640,27 +605,17 @@ export default function Blog() {
                               disabled={createSpotlightMutation.isPending || createNewsletterMutation.isPending}
                               data-testid={`button-publish-blog-${blog.id}`}
                             >
-                              <Send className="h-4 w-4 text-brand" />
+                              <Send className="h-4 w-4 text-green-500" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Publish & auto-create spotlight + newsletter</TooltipContent>
                         </Tooltip>
                       )}
-                      {blog.status === 'published' && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="h-9 w-9 flex items-center justify-center">
-                              <Check className="h-4 w-4 text-green-500" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>Published</TooltipContent>
-                        </Tooltip>
-                      )}
-                      <Button variant="ghost" size="icon" data-testid={`button-view-blog-${blog.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleEditBlog(blog)} data-testid={`button-edit-blog-${blog.id}`}>
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" data-testid={`button-view-blog-${blog.id}`}>
+                        <Eye className="h-4 w-4" />
                       </Button>
                       <Dialog>
                         <DialogTrigger asChild>
@@ -682,18 +637,18 @@ export default function Blog() {
                         </DialogContent>
                       </Dialog>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {filteredBlogs.length === 0 && (
-            <div className="text-center py-10 text-muted-foreground">
-              No blog posts found
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </Card>
+        ))}
+        {filteredBlogs.length === 0 && (
+          <div className="text-center py-10 text-muted-foreground">
+            No blog posts found
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         <Card>
