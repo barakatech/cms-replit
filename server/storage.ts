@@ -102,8 +102,8 @@ const seedDiscoverSettings: DiscoverSettings = {
     { key: 'most_watched', label_en: 'Most Watched', label_ar: 'الأكثر متابعة', tickers: ['TSLA', 'AAPL', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META'] },
   ],
   featuredTickers: ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'AMD', 'NFLX', 'DIS', 'V', 'JPM'],
-  learnFeaturedPostId: '1',
-  learnSecondaryPostIds: ['2', '3'],
+  learnFeaturedPostId: '101',
+  learnSecondaryPostIds: ['102', '103'],
   learnCategorySlugs: ['education', 'analysis', 'strategy', 'beginners'],
   sectionVisibility: {
     offers: true,
