@@ -533,6 +533,7 @@ export default function Blog() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Author</TableHead>
                 <TableHead>Category</TableHead>
@@ -545,6 +546,19 @@ export default function Blog() {
             <TableBody>
               {filteredBlogs.map((blog) => (
                 <TableRow key={blog.id} data-testid={`row-blog-${blog.id}`}>
+                  <TableCell data-testid={`img-blog-${blog.id}`}>
+                    {blog.featuredImage ? (
+                      <img 
+                        src={blog.featuredImage} 
+                        alt={blog.title.en}
+                        className="w-16 h-10 object-cover rounded"
+                      />
+                    ) : (
+                      <div className="w-16 h-10 bg-muted rounded flex items-center justify-center">
+                        <Image className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell data-testid={`text-blog-title-${blog.id}`}>
                     <div className="space-y-1">
                       <div className="font-medium">{blog.title.en}</div>
