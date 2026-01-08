@@ -1104,6 +1104,7 @@ export interface SpotlightBanner {
   imageUrl: string;
   ctaText: string;
   ctaUrl: string;
+  appDeepLink?: string;
   placements: SpotlightPlacement[];
   startAt?: string;
   endAt?: string;
@@ -1225,6 +1226,7 @@ export const insertSpotlightBannerSchema = z.object({
   imageUrl: z.string(),
   ctaText: z.string().min(1),
   ctaUrl: z.string().min(1),
+  appDeepLink: z.string().optional(),
   placements: z.array(z.enum(['home', 'discover', 'blog', 'stock', 'custom'])),
   startAt: z.string().optional(),
   endAt: z.string().optional(),

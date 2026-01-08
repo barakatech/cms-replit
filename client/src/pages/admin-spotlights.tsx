@@ -132,6 +132,7 @@ export default function AdminSpotlights() {
       imageUrl: '',
       ctaText: '',
       ctaUrl: '',
+      appDeepLink: '',
       placements: ['home'],
       status: 'draft',
       sourceType: 'manual',
@@ -155,6 +156,7 @@ export default function AdminSpotlights() {
       imageUrl: spotlight.imageUrl,
       ctaText: spotlight.ctaText,
       ctaUrl: spotlight.ctaUrl,
+      appDeepLink: spotlight.appDeepLink,
       placements: [...spotlight.placements],
       status: 'draft',
       sourceType: 'manual',
@@ -316,6 +318,22 @@ export default function AdminSpotlights() {
                       placeholder="https://..."
                       data-testid="input-cta-url"
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="appDeepLink" className="flex items-center gap-2">
+                      <Smartphone className="h-4 w-4" />
+                      App Deep Link
+                    </Label>
+                    <Input
+                      id="appDeepLink"
+                      value={editingSpotlight.appDeepLink || ''}
+                      onChange={(e) => setEditingSpotlight({ ...editingSpotlight, appDeepLink: e.target.value })}
+                      placeholder="baraka://blog/article-slug"
+                      data-testid="input-app-deep-link"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Deep link to open content directly in the baraka app
+                    </p>
                   </div>
                 </div>
               </CardContent>
