@@ -1,0 +1,259 @@
+```text
+You are a senior full-stack engineer + content ops specialist. In our existing Baraka CMS (Next.js + Prisma + Postgres + Tailwind, Baraka DS light/dark, EN/AR + RTL, Blog ↔ Spotlight ↔ Newsletter automations, Auto Image Generator), seed the CMS with 30 production-ready articles for a GCC-based wealth-tech (getbaraka.com) and prefill ALL CMS fields so the content immediately appears across:
+
+- Blog (Learn)
+- Spotlight Banners (auto-created on publish)
+- Newsletters (auto-drafted on publish using default template)
+- Discover “Learn” modules (if present)
+
+IMPORTANT:
+- Content must be original, compliance-friendly, and not investment advice.
+- Use neutral wording (no FOMO, no guarantees).
+- Include “Capital at risk. Not investment advice.” in the footer/disclaimer blocks.
+- EN is mandatory for all 30. AR is optional for seed; if AR not provided, set locale=EN only. (If you prefer both locales, create EN+AR for top 10.)
+- Use the Auto Image Generator (no external scraping). Provide hero image generation guidelines in metadata and store them in the generator prompt field.
+- Ensure slug uniqueness, canonical_url, SEO fields, tags, and schedule/publish states are correctly set.
+
+========================================================
+A) SEED PACK: 30 ARTICLES (STRUCTURED DATA)
+========================================================
+Create a seed file (e.g., /seed/content/articles_seed.json) with 30 items.
+Each item must include fields that map 1:1 to our BlogPost model:
+
+For each article:
+- title
+- slug (kebab-case, unique)
+- excerpt (max 160 chars)
+- content_json (preferred) OR content_html
+- cover_image_guidelines (string prompt for our Auto Image Generator)
+- tags (array)
+- locale ("EN")
+- status:
+  - Set 20 to PUBLISHED (so automations fire and we get spotlights/newsletters)
+  - Set 10 to DRAFT (for editorial pipeline demo)
+- published_at (for published ones; spread across last 60 days)
+- scheduled_at (optional for drafts; spread across next 30 days)
+- seo_title (<= 60 chars)
+- seo_description (<= 160 chars)
+- canonical_url = "{WEBSITE_BASE_URL}/blog/{slug}"
+
+CONTENT REQUIREMENTS PER ARTICLE:
+- Use a consistent template in content_json blocks:
+  1) HeroTitle (title + short dek)
+  2) KeyTakeaways (3 bullets)
+  3) BodySections (3–5 sections with headings)
+  4) “GCC Context” callout (localized relevance: UAE/KSA/Bahrain/Qatar/Kuwait/Oman)
+  5) “How Baraka can help” (neutral, non-promissory)
+  6) FAQ (3–5 Qs)
+  7) Disclaimer block (mandatory): “Capital at risk. Not investment advice.”
+
+CATEGORIES / TAG TAXONOMY (use these):
+- Basics, Markets, ETFs, Stocks, Halal, Crypto, Risk, Portfolio, Personal Finance, Taxes, UAE, KSA, GCC, Beginner, Intermediate
+
+ARTICLE TOPICS (CREATE THESE 30 TITLES + SLUGS)
+(Write original copy; do not copy external sources.)
+
+1) “Investing Basics for GCC Beginners: A Practical Start”
+   slug: investing-basics-gcc-beginners
+   tags: [Basics, GCC, Beginner]
+
+2) “Stocks vs ETFs: Which Fits Your Goal?”
+   slug: stocks-vs-etfs-goals
+   tags: [ETFs, Stocks, Basics, Beginner]
+
+3) “What Does ‘Capital at Risk’ Actually Mean?”
+   slug: what-capital-at-risk-means
+   tags: [Risk, Basics, Beginner]
+
+4) “How to Build a Simple Long-Term Portfolio (3 Buckets)”
+   slug: simple-long-term-portfolio-3-buckets
+   tags: [Portfolio, Basics, Beginner]
+
+5) “Dollar-Cost Averaging Explained (and When It Helps)”
+   slug: dollar-cost-averaging-explained
+   tags: [Portfolio, Basics, Intermediate]
+
+6) “Understanding Market Volatility Without Panic”
+   slug: understanding-market-volatility
+   tags: [Markets, Risk, Beginner]
+
+7) “A GCC Guide to S&P 500 ETFs: What You’re Really Buying”
+   slug: gcc-guide-sp500-etfs
+   tags: [ETFs, Markets, GCC, Intermediate]
+
+8) “Nasdaq-100 ETFs in Plain English”
+   slug: nasdaq-100-etfs-plain-english
+   tags: [ETFs, Markets, Intermediate]
+
+9) “How Dividend Stocks Work (and What to Watch For)”
+   slug: dividend-stocks-how-they-work
+   tags: [Stocks, Portfolio, Intermediate]
+
+10) “Halal Investing: Key Concepts, Screening & Tradeoffs”
+    slug: halal-investing-screening-tradeoffs
+    tags: [Halal, Basics, GCC, Intermediate]
+
+11) “What Are Sukuk and How Are They Different?”
+    slug: sukuk-explained-gcc
+    tags: [Basics, GCC, Intermediate]
+
+12) “Risk Management 101: Diversification, Position Size, Time”
+    slug: risk-management-101
+    tags: [Risk, Portfolio, Intermediate]
+
+13) “How to Read a Stock Page: Price, Charts, and Key Stats”
+    slug: how-to-read-a-stock-page
+    tags: [Stocks, Basics, Beginner]
+
+14) “P/E Ratio and Valuation: A Beginner-Friendly View”
+    slug: pe-ratio-beginner-view
+    tags: [Stocks, Basics, Beginner]
+
+15) “Market Sentiment: What It Is (and What It Isn’t)”
+    slug: market-sentiment-what-it-is
+    tags: [Markets, Basics, Intermediate]
+
+16) “What’s a Brokerage Account? The Simple GCC Checklist”
+    slug: brokerage-account-gcc-checklist
+    tags: [Basics, GCC, Beginner]
+
+17) “Common Investing Mistakes New Investors Make”
+    slug: common-investing-mistakes
+    tags: [Basics, Risk, Beginner]
+
+18) “How Fees Impact Returns Over Time (With Examples)”
+    slug: fees-impact-returns-over-time
+    tags: [Basics, Portfolio, Intermediate]
+
+19) “Choosing Between Growth and Value Styles”
+    slug: growth-vs-value-styles
+    tags: [Markets, Portfolio, Intermediate]
+
+20) “ETF Basics: Holdings, Tracking, and Rebalancing”
+    slug: etf-basics-holdings-tracking-rebalancing
+    tags: [ETFs, Basics, Beginner]
+
+21) “Crypto Exposure: What ‘Proxy Stocks’ Mean”
+    slug: crypto-exposure-proxy-stocks
+    tags: [Crypto, Stocks, Risk, Intermediate]
+
+22) “Building a Watchlist That Helps Decisions”
+    slug: building-a-useful-watchlist
+    tags: [Basics, Stocks, Beginner]
+
+23) “How to Use Themes & Trackers to Explore Stocks”
+    slug: using-themes-and-trackers
+    tags: [Basics, Stocks, Intermediate]
+
+24) “Beginner’s Guide to Rebalancing (When and Why)”
+    slug: rebalancing-when-and-why
+    tags: [Portfolio, Basics, Intermediate]
+
+25) “Emergency Fund vs Investing: A Practical GCC Approach”
+    slug: emergency-fund-vs-investing-gcc
+    tags: [Personal Finance, GCC, Beginner]
+
+26) “UAE and GCC Taxes: What Most Investors Should Know”
+    slug: uae-gcc-taxes-investors
+    tags: [GCC, Basics, Intermediate]
+
+27) “How to Evaluate News Headlines Without Overreacting”
+    slug: evaluating-market-news-headlines
+    tags: [Markets, Risk, Beginner]
+
+28) “Setting Realistic Financial Goals: A Simple Framework”
+    slug: setting-realistic-financial-goals
+    tags: [Personal Finance, Basics, Beginner]
+
+29) “Investing vs Trading: Clear Differences, Clear Expectations”
+    slug: investing-vs-trading-differences
+    tags: [Basics, Risk, Beginner]
+
+30) “Your First 30 Days: A Calm Onboarding Plan”
+    slug: first-30-days-onboarding-plan
+    tags: [Basics, GCC, Beginner]
+
+========================================================
+B) HERO IMAGE GENERATION GUIDELINES (PER ARTICLE)
+========================================================
+For each article, set cover_image_guidelines as a generator prompt:
+- Style: modern Baraka DS, minimal, premium
+- Background: dark mode friendly, subtle gradients, Baraka green accent glow
+- Elements: abstract finance shapes (no logos), simple icons, 1 headline line, 1 subtitle line
+- Locale: EN
+- Size: 1600x900
+- Must be readable, high contrast, no clipped text
+
+Example prompt template (use per-article variables):
+“Create a Baraka-style hero image for a GCC wealth-tech article.
+Theme: {title}. Mood: calm, premium, modern.
+Background: dark charcoal with subtle gradient + soft Baraka green glow accent.
+Add minimal abstract finance shapes (lines, charts, dots) + small icon relevant to {tags}.
+Overlay text (safe margins): Headline ‘{shortHeadline}’ and subline ‘Learn the basics—no hype.’.
+No company logos. No faces. 1600x900.”
+
+Store this in:
+- Asset.generated_prompt (if generated)
+- BlogPost.cover_image_guidelines (if you have a field) OR meta_json
+
+========================================================
+C) AUTOMATIONS MUST FIRE + LINKAGES MUST APPEAR
+========================================================
+After seeding:
+- For the 20 PUBLISHED BlogPosts:
+  - Run Blog → Spotlight auto-create (status DRAFT unless auto-activate is ON)
+  - Run Blog → Newsletter auto-draft using default template per locale
+- Ensure each Blog list row shows badges:
+  - Spotlight: Draft/Active + link
+  - Newsletter: Draft/Ready + link
+
+For each created SpotlightBanner:
+- title = BlogPost.title
+- subtitle = excerpt truncated 90
+- image_url = blog cover image (reuse same asset)
+- cta_text EN = “Read more”
+- cta_url = /blog/{slug}
+- placements default = BLOG + HOME
+- source_type = FROM_BLOG
+
+For each Newsletter:
+- subject = BlogPost.title
+- preheader = excerpt truncated 120
+- hero image = blog cover image
+- blocks populated from template schema
+- status DRAFT
+
+========================================================
+D) IMPLEMENTATION DETAILS
+========================================================
+1) Create a seeding script:
+- /scripts/seed_articles.ts
+- Run via `npm run seed:content`
+- Must be idempotent:
+  - Upsert by slug+locale for BlogPost
+  - Do not duplicate spotlights/newsletters (use unique constraints)
+
+2) Auto Image Generator integration:
+- For each post missing a cover image:
+  - queue generation job
+  - wait for completion OR mark job queued and continue
+  - link resulting Asset to BlogPost.cover_asset_id
+  - reuse cover_asset_id for spotlight/newsletter hero
+
+3) Default Author:
+- Create an “Baraka Editorial” user (role EDITOR) if none exists.
+- Assign as author_id for seeded posts.
+
+========================================================
+E) DELIVERABLES / ACCEPTANCE
+========================================================
+- 30 BlogPosts exist with all CMS fields prefilled (title, slug, excerpt, tags, SEO, content, canonical, status).
+- At least 20 are PUBLISHED and appear publicly.
+- Each published post has:
+  - a linked SpotlightBanner (draft/active)
+  - a linked Newsletter draft
+- Every item has a real image generated via our Auto Image Generator (no empty states).
+- Blog, Spotlights, and Newsletters lists show correct link badges and preview thumbnails.
+
+Now implement the seed pack + scripts + image generation + automation linkage in our existing Baraka CMS.
+```

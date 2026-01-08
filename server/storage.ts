@@ -58,6 +58,11 @@ import {
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { 
+  seedBlogPosts as seedArticles, 
+  generateSpotlightsFromBlogPosts, 
+  generateNewslettersFromBlogPosts 
+} from "./seedData/articles";
 
 // Helper function to generate default page builder blocks for stock pages
 function generateDefaultPageBlocks(): StockPageBlock[] {
@@ -618,87 +623,7 @@ const seedOfferBanners: OfferBanner[] = [
   },
 ];
 
-// Seed Blog Posts
-const seedBlogPosts: BlogPost[] = [
-  {
-    id: '1',
-    slug: 'beginner-guide-stock-investing',
-    title_en: 'Beginner\'s Guide to Stock Investing',
-    title_ar: 'دليل المبتدئين للاستثمار في الأسهم',
-    excerpt_en: 'Learn the basics of stock investing and start your journey to financial freedom.',
-    excerpt_ar: 'تعلم أساسيات الاستثمار في الأسهم وابدأ رحلتك نحو الحرية المالية.',
-    content_en: '<p>Investing in stocks can seem intimidating at first...</p>',
-    content_ar: '<p>قد يبدو الاستثمار في الأسهم مخيفاً في البداية...</p>',
-    featuredImage: '/attached_assets/generated_images/beginner_stock_investing_guide.png',
-    category: 'education',
-    tags: ['beginner', 'stocks', 'investing'],
-    author: 'Baraka Team',
-    status: 'published',
-    seo: {
-      metaTitle_en: 'Beginner\'s Guide to Stock Investing | Baraka',
-      metaTitle_ar: 'دليل المبتدئين للاستثمار في الأسهم | بركة',
-    },
-    publishedAt: '2024-01-15T00:00:00Z',
-    createdAt: '2024-01-10T00:00:00Z',
-    updatedAt: '2024-01-15T00:00:00Z',
-  },
-  {
-    id: '2',
-    slug: 'understanding-halal-investing',
-    title_en: 'Understanding Halal Investing',
-    title_ar: 'فهم الاستثمار الحلال',
-    excerpt_en: 'A comprehensive guide to Shariah-compliant investing principles.',
-    excerpt_ar: 'دليل شامل لمبادئ الاستثمار المتوافق مع الشريعة الإسلامية.',
-    content_en: '<p>Halal investing follows Islamic finance principles...</p>',
-    content_ar: '<p>يتبع الاستثمار الحلال مبادئ التمويل الإسلامي...</p>',
-    featuredImage: '/attached_assets/generated_images/halal_investing_principles_image.png',
-    category: 'education',
-    tags: ['halal', 'shariah', 'islamic-finance'],
-    author: 'Baraka Team',
-    status: 'published',
-    seo: {},
-    publishedAt: '2024-02-01T00:00:00Z',
-    createdAt: '2024-01-25T00:00:00Z',
-    updatedAt: '2024-02-01T00:00:00Z',
-  },
-  {
-    id: '3',
-    slug: 'market-analysis-tech-sector',
-    title_en: 'Market Analysis: Tech Sector Q1 2024',
-    title_ar: 'تحليل السوق: قطاع التكنولوجيا الربع الأول 2024',
-    excerpt_en: 'An in-depth look at the tech sector performance and outlook.',
-    excerpt_ar: 'نظرة معمقة على أداء قطاع التكنولوجيا وتوقعاته.',
-    content_en: '<p>The technology sector continues to drive market growth...</p>',
-    content_ar: '<p>يواصل قطاع التكنولوجيا دفع نمو السوق...</p>',
-    featuredImage: '/attached_assets/generated_images/tech_sector_market_analysis.png',
-    category: 'analysis',
-    tags: ['tech', 'analysis', 'market'],
-    author: 'Baraka Research',
-    status: 'published',
-    seo: {},
-    publishedAt: '2024-03-01T00:00:00Z',
-    createdAt: '2024-02-28T00:00:00Z',
-    updatedAt: '2024-03-01T00:00:00Z',
-  },
-  {
-    id: '4',
-    slug: 'draft-post-dividends',
-    title_en: 'Understanding Dividend Investing',
-    title_ar: 'فهم الاستثمار في توزيعات الأرباح',
-    excerpt_en: 'Learn how dividends can generate passive income.',
-    excerpt_ar: 'تعلم كيف يمكن لتوزيعات الأرباح توليد دخل سلبي.',
-    content_en: '<p>Draft content here...</p>',
-    content_ar: '<p>محتوى المسودة هنا...</p>',
-    featuredImage: '/attached_assets/generated_images/dividend_investing_passive_income.png',
-    category: 'strategy',
-    tags: ['dividends', 'income'],
-    author: 'Baraka Team',
-    status: 'draft',
-    seo: {},
-    createdAt: '2024-03-10T00:00:00Z',
-    updatedAt: '2024-03-10T00:00:00Z',
-  },
-];
+// Note: Blog posts now seeded from server/seedData/articles.ts (30 articles with auto-generated spotlights/newsletters)
 
 // Helper to create stock page with defaults
 function createStockPage(data: {
@@ -2556,8 +2481,16 @@ export class MemStorage implements IStorage {
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
     
-    // Seed blog posts
-    seedBlogPosts.forEach(post => this.blogPosts.set(post.id, post));
+    // Seed blog posts (30 articles)
+    seedArticles.forEach(post => this.blogPosts.set(post.id, post));
+    
+    // Auto-generate spotlights from published blog posts
+    const autoSpotlights = generateSpotlightsFromBlogPosts(seedArticles);
+    autoSpotlights.forEach(spotlight => this.spotlightBanners.set(spotlight.id, spotlight));
+    
+    // Auto-generate newsletter drafts from published blog posts
+    const autoNewsletters = generateNewslettersFromBlogPosts(seedArticles);
+    autoNewsletters.forEach(newsletter => this.newsletters.set(newsletter.id, newsletter));
     
     // Seed stock pages
     seedStockPages.forEach(page => this.stockPages.set(page.id, page));
