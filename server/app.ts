@@ -1,4 +1,5 @@
 import { type Server } from "node:http";
+import nodePath from "node:path";
 
 import express, {
   type Express,
@@ -33,6 +34,8 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+
+app.use('/attached_assets', express.static(nodePath.join(process.cwd(), 'attached_assets')));
 
 app.use((req, res, next) => {
   const start = Date.now();
