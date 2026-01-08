@@ -9,23 +9,112 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { mockBlogs, type BlogPost, type BlogStatus } from '@/lib/mockData';
-import { Plus, Search, Edit, Trash2, Eye, Calendar, Clock, User, Tag, ArrowLeft, Globe, Image, Sparkles, Mail, Send, ExternalLink, Check } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Plus, Search, Edit, Trash2, Eye, Calendar, User, ArrowLeft, Globe, Image, Sparkles, Mail, Send } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import type { SpotlightBanner, Newsletter } from '@shared/schema';
+import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost } from '@shared/schema';
+
+type BlogStatus = 'draft' | 'published' | 'archived';
+
+interface EditableBlogPost {
+  id: string;
+  slug: string;
+  title: { en: string; ar: string };
+  excerpt: { en: string; ar: string };
+  content: { en: string; ar: string };
+  featuredImage: string;
+  category: string;
+  tags: string[];
+  author: string;
+  status: BlogStatus;
+  seoTitle: { en: string; ar: string };
+  seoDescription: { en: string; ar: string };
+  publishedAt?: string;
+}
+
+function toEditablePost(post: BlogPost): EditableBlogPost {
+  return {
+    id: post.id,
+    slug: post.slug,
+    title: { en: post.title_en, ar: post.title_ar },
+    excerpt: { en: post.excerpt_en, ar: post.excerpt_ar },
+    content: { en: post.content_en, ar: post.content_ar },
+    featuredImage: post.featuredImage || '',
+    category: post.category,
+    tags: post.tags,
+    author: post.author,
+    status: post.status,
+    seoTitle: { en: post.seo?.metaTitle_en || '', ar: post.seo?.metaTitle_ar || '' },
+    seoDescription: { en: post.seo?.metaDescription_en || '', ar: post.seo?.metaDescription_ar || '' },
+    publishedAt: post.publishedAt,
+  };
+}
+
+function toApiPost(post: EditableBlogPost, forcePublishNow?: boolean): InsertBlogPost {
+  let publishedAt = post.publishedAt;
+  if (forcePublishNow && post.status === 'published' && !publishedAt) {
+    publishedAt = new Date().toISOString();
+  }
+  
+  return {
+    slug: post.slug,
+    title_en: post.title.en,
+    title_ar: post.title.ar,
+    excerpt_en: post.excerpt.en,
+    excerpt_ar: post.excerpt.ar,
+    content_en: post.content.en,
+    content_ar: post.content.ar,
+    featuredImage: post.featuredImage || undefined,
+    category: post.category,
+    tags: post.tags,
+    author: post.author,
+    status: post.status,
+    seo: {
+      metaTitle_en: post.seoTitle.en,
+      metaTitle_ar: post.seoTitle.ar,
+      metaDescription_en: post.seoDescription.en,
+      metaDescription_ar: post.seoDescription.ar,
+    },
+    publishedAt,
+  };
+}
+
+function BlogCardSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex">
+        <Skeleton className="w-48 h-36 flex-shrink-0" />
+        <div className="flex-1 p-4 space-y-3">
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-5 w-10" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function Blog() {
-  const [blogs, setBlogs] = useState<BlogPost[]>(mockBlogs);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedBlog, setSelectedBlog] = useState<BlogPost | null>(null);
+  const [selectedBlog, setSelectedBlog] = useState<EditableBlogPost | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [editLanguage, setEditLanguage] = useState<'en' | 'ar'>('en');
   const { toast } = useToast();
+
+  const { data: blogPosts = [], isLoading } = useQuery<BlogPost[]>({
+    queryKey: ['/api/blog-posts'],
+  });
 
   const { data: spotlights = [] } = useQuery<SpotlightBanner[]>({
     queryKey: ['/api/spotlights'],
@@ -51,11 +140,58 @@ export default function Blog() {
     return map;
   }, [newsletters]);
 
+  const createBlogMutation = useMutation({
+    mutationFn: async (data: InsertBlogPost) => {
+      const response = await apiRequest('POST', '/api/blog-posts', data);
+      return response.json() as Promise<BlogPost>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/blog-posts'] });
+      toast({ title: 'Blog created', description: 'Blog post has been created successfully.' });
+      setIsEditing(false);
+      setIsCreatingNew(false);
+      setSelectedBlog(null);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to create blog post.', variant: 'destructive' });
+    },
+  });
+
+  const updateBlogMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: InsertBlogPost }) => {
+      const response = await apiRequest('PUT', `/api/blog-posts/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/blog-posts'] });
+      toast({ title: 'Blog updated', description: 'Blog post has been updated successfully.' });
+      setIsEditing(false);
+      setIsCreatingNew(false);
+      setSelectedBlog(null);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update blog post.', variant: 'destructive' });
+    },
+  });
+
+  const deleteBlogMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest('DELETE', `/api/blog-posts/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/blog-posts'] });
+      toast({ title: 'Blog deleted', description: 'Blog post has been deleted.' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to delete blog post.', variant: 'destructive' });
+    },
+  });
+
   const createSpotlightMutation = useMutation({
     mutationFn: async (blog: BlogPost) => {
       const response = await apiRequest('POST', '/api/spotlights', {
-        title: blog.title.en,
-        subtitle: blog.excerpt.en.slice(0, 90),
+        title: blog.title_en,
+        subtitle: blog.excerpt_en.slice(0, 90),
         imageUrl: blog.featuredImage || '',
         ctaText: 'Read Article',
         ctaUrl: `/blog/${blog.slug}`,
@@ -76,12 +212,12 @@ export default function Blog() {
   const createNewsletterMutation = useMutation({
     mutationFn: async (blog: BlogPost) => {
       const response = await apiRequest('POST', '/api/newsletters', {
-        subject: blog.title.en,
-        preheader: blog.excerpt.en.slice(0, 120),
+        subject: blog.title_en,
+        preheader: blog.excerpt_en.slice(0, 120),
         templateId: '1',
         contentBlocks: [
-          { type: 'hero' as const, title: blog.title.en, imageUrl: blog.featuredImage || '', ctaText: 'Read Article', ctaUrl: `/blog/${blog.slug}` },
-          { type: 'intro' as const, content: blog.excerpt.en },
+          { type: 'hero' as const, title: blog.title_en, imageUrl: blog.featuredImage || '', ctaText: 'Read Article', ctaUrl: `/blog/${blog.slug}` },
+          { type: 'intro' as const, content: blog.excerpt_en },
           { type: 'footer' as const, content: 'baraka - Zero commission trading' },
         ],
         status: 'draft',
@@ -99,7 +235,19 @@ export default function Blog() {
     const existingSpotlight = spotlightsByBlogId[blog.id];
     const existingNewsletter = newslettersByBlogId[blog.id];
     
-    setBlogs(blogs.map(b => b.id === blog.id ? { ...b, status: 'published' as BlogStatus, publishDate: new Date().toISOString().split('T')[0] } : b));
+    try {
+      const editablePost = toEditablePost(blog);
+      editablePost.status = 'published';
+      if (!editablePost.publishedAt) {
+        editablePost.publishedAt = new Date().toISOString();
+      }
+      
+      await apiRequest('PUT', `/api/blog-posts/${blog.id}`, toApiPost(editablePost));
+      queryClient.invalidateQueries({ queryKey: ['/api/blog-posts'] });
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to publish blog post.', variant: 'destructive' });
+      return;
+    }
     
     const createdItems: string[] = [];
     
@@ -129,11 +277,12 @@ export default function Blog() {
     });
   };
 
-  const filteredBlogs = blogs.filter((blog) => {
+  const filteredBlogs = blogPosts.filter((blog) => {
+    const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
-      blog.title.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      blog.title.ar.includes(searchQuery) ||
-      blog.author.toLowerCase().includes(searchQuery.toLowerCase());
+      blog.title_en.toLowerCase().includes(searchLower) ||
+      blog.title_ar.toLowerCase().includes(searchLower) ||
+      blog.author.toLowerCase().includes(searchLower);
     const matchesStatus = statusFilter === 'all' || blog.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -152,25 +301,35 @@ export default function Blog() {
   };
 
   const handleEditBlog = (blog: BlogPost) => {
-    setSelectedBlog({ ...blog });
+    setSelectedBlog(toEditablePost(blog));
+    setIsCreatingNew(false);
     setIsEditing(true);
   };
 
   const handleSaveBlog = () => {
-    if (selectedBlog) {
-      setBlogs(blogs.map((b) => (b.id === selectedBlog.id ? selectedBlog : b)));
-      setIsEditing(false);
-      setSelectedBlog(null);
+    if (!selectedBlog) return;
+    
+    const updatedPost = { ...selectedBlog };
+    if (updatedPost.status === 'published' && !updatedPost.publishedAt) {
+      updatedPost.publishedAt = new Date().toISOString();
+    }
+    
+    const apiData = toApiPost(updatedPost);
+    
+    if (isCreatingNew) {
+      createBlogMutation.mutate(apiData);
+    } else {
+      updateBlogMutation.mutate({ id: selectedBlog.id, data: apiData });
     }
   };
 
   const handleDeleteBlog = (id: string) => {
-    setBlogs(blogs.filter((b) => b.id !== id));
+    deleteBlogMutation.mutate(id);
   };
 
   const handleCreateNew = () => {
-    const newBlog: BlogPost = {
-      id: `new-${Date.now()}`,
+    const newBlog: EditableBlogPost = {
+      id: '',
       slug: '',
       title: { en: '', ar: '' },
       excerpt: { en: '', ar: '' },
@@ -180,28 +339,26 @@ export default function Blog() {
       tags: [],
       featuredImage: '',
       status: 'draft',
-      publishDate: '',
-      lastUpdated: new Date().toISOString().split('T')[0],
-      readTime: 0,
       seoTitle: { en: '', ar: '' },
       seoDescription: { en: '', ar: '' },
     };
     setSelectedBlog(newBlog);
+    setIsCreatingNew(true);
     setIsEditing(true);
   };
 
-  const isNewPost = selectedBlog?.id.startsWith('new-');
+  const isSaving = createBlogMutation.isPending || updateBlogMutation.isPending;
 
   if (isEditing && selectedBlog) {
     return (
       <div className="p-6 space-y-6" dir={editLanguage === 'ar' ? 'rtl' : 'ltr'}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => { setIsEditing(false); setSelectedBlog(null); }} data-testid="button-back">
+            <Button variant="ghost" size="icon" onClick={() => { setIsEditing(false); setIsCreatingNew(false); setSelectedBlog(null); }} data-testid="button-back">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{isNewPost ? 'New Blog Post' : 'Edit Blog Post'}</h1>
+              <h1 className="text-2xl font-bold">{isCreatingNew ? 'New Blog Post' : 'Edit Blog Post'}</h1>
               <p className="text-muted-foreground">Manage blog post content and settings</p>
             </div>
           </div>
@@ -226,7 +383,9 @@ export default function Blog() {
                 AR
               </Button>
             </div>
-            <Button onClick={handleSaveBlog} data-testid="button-save-blog">Save Changes</Button>
+            <Button onClick={handleSaveBlog} disabled={isSaving} data-testid="button-save-blog">
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
           </div>
         </div>
 
@@ -377,28 +536,6 @@ export default function Blog() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="readTime">Read Time (minutes)</Label>
-                    <Input
-                      id="readTime"
-                      type="number"
-                      value={selectedBlog.readTime}
-                      onChange={(e) => setSelectedBlog({ ...selectedBlog, readTime: parseInt(e.target.value) || 0 })}
-                      data-testid="input-readtime"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="publishDate">Publish Date</Label>
-                    <Input
-                      id="publishDate"
-                      type="date"
-                      value={selectedBlog.publishDate}
-                      onChange={(e) => setSelectedBlog({ ...selectedBlog, publishDate: e.target.value })}
-                      data-testid="input-publishdate"
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="featuredImage">Featured Image URL</Label>
                     <Input
                       id="featuredImage"
@@ -520,153 +657,159 @@ export default function Blog() {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="published">Published</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="scheduled">Scheduled</SelectItem>
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-4">
-        {filteredBlogs.map((blog) => (
-          <Card key={blog.id} className="overflow-hidden border-border/50 hover-elevate" data-testid={`card-blog-${blog.id}`}>
-            <div className="flex">
-              <div className="w-48 h-36 flex-shrink-0 relative">
-                {blog.featuredImage ? (
-                  <img 
-                    src={blog.featuredImage} 
-                    alt={blog.title.en}
-                    className="w-full h-full object-cover"
-                    data-testid={`img-blog-${blog.id}`}
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <Image className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={getStatusColor(blog.status)} data-testid={`badge-status-${blog.id}`}>
-                        {blog.status}
-                      </Badge>
-                      <Badge variant="outline">EN</Badge>
-                      <Badge variant="outline">{blog.category}</Badge>
-                      {blog.tags.slice(0, 2).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
+        {isLoading ? (
+          <>
+            <BlogCardSkeleton />
+            <BlogCardSkeleton />
+            <BlogCardSkeleton />
+          </>
+        ) : filteredBlogs.length === 0 ? (
+          <div className="text-center py-10 text-muted-foreground">
+            No blog posts found. Click "New Post" to create one.
+          </div>
+        ) : (
+          filteredBlogs.map((blog) => (
+            <Card key={blog.id} className="overflow-hidden border-border/50 hover-elevate" data-testid={`card-blog-${blog.id}`}>
+              <div className="flex">
+                <div className="w-48 h-36 flex-shrink-0 relative">
+                  {blog.featuredImage ? (
+                    <img 
+                      src={blog.featuredImage} 
+                      alt={blog.title_en}
+                      className="w-full h-full object-cover"
+                      data-testid={`img-blog-${blog.id}`}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <Image className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={getStatusColor(blog.status)} data-testid={`badge-status-${blog.id}`}>
+                          {blog.status}
                         </Badge>
-                      ))}
+                        <Badge variant="outline">EN</Badge>
+                        <Badge variant="outline">{blog.category}</Badge>
+                        {blog.tags.slice(0, 2).map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground leading-tight" data-testid={`text-blog-title-${blog.id}`}>
+                        {blog.title_en}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {blog.excerpt_en}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {blog.publishedAt || blog.updatedAt}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          by {blog.author}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground leading-tight" data-testid={`text-blog-title-${blog.id}`}>
-                      {blog.title.en}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {blog.excerpt.en}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                    <div className="flex flex-col items-end gap-2">
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {blog.publishDate || blog.lastUpdated}
+                        {spotlightsByBlogId[blog.id] ? (
+                          <Link href="/admin/spotlights">
+                            <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
+                              <Sparkles className="h-3 w-3" />
+                              Spotlight
+                            </Badge>
+                          </Link>
+                        ) : null}
+                        {newslettersByBlogId[blog.id] ? (
+                          <Link href="/admin/newsletters">
+                            <Badge variant="outline" className="cursor-pointer gap-1 text-blue-500 border-blue-500/50">
+                              <Mail className="h-3 w-3" />
+                              Newsletter
+                            </Badge>
+                          </Link>
+                        ) : null}
                       </div>
                       <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        by {blog.author}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="flex items-center gap-1">
-                      {spotlightsByBlogId[blog.id] ? (
-                        <Link href="/admin/spotlights">
-                          <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
-                            <Sparkles className="h-3 w-3" />
-                            Spotlight
-                          </Badge>
-                        </Link>
-                      ) : null}
-                      {newslettersByBlogId[blog.id] ? (
-                        <Link href="/admin/newsletters">
-                          <Badge variant="outline" className="cursor-pointer gap-1 text-blue-500 border-blue-500/50">
-                            <Mail className="h-3 w-3" />
-                            Newsletter
-                          </Badge>
-                        </Link>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {blog.status !== 'published' && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => handlePublishBlog(blog)}
-                              disabled={createSpotlightMutation.isPending || createNewsletterMutation.isPending}
-                              data-testid={`button-publish-blog-${blog.id}`}
-                            >
-                              <Send className="h-4 w-4 text-green-500" />
+                        {blog.status !== 'published' && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handlePublishBlog(blog)}
+                                disabled={createSpotlightMutation.isPending || createNewsletterMutation.isPending || updateBlogMutation.isPending}
+                                data-testid={`button-publish-blog-${blog.id}`}
+                              >
+                                <Send className="h-4 w-4 text-green-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Publish & auto-create spotlight + newsletter</TooltipContent>
+                          </Tooltip>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => handleEditBlog(blog)} data-testid={`button-edit-blog-${blog.id}`}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" data-testid={`button-view-blog-${blog.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" data-testid={`button-delete-blog-${blog.id}`}>
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Publish & auto-create spotlight + newsletter</TooltipContent>
-                        </Tooltip>
-                      )}
-                      <Button variant="ghost" size="icon" onClick={() => handleEditBlog(blog)} data-testid={`button-edit-blog-${blog.id}`}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" data-testid={`button-view-blog-${blog.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon" data-testid={`button-delete-blog-${blog.id}`}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Delete Blog Post</DialogTitle>
-                            <DialogDescription>
-                              Are you sure you want to delete "{blog.title.en}"? This action cannot be undone.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex justify-end gap-2 mt-4">
-                            <Button variant="outline" data-testid="button-cancel-delete">Cancel</Button>
-                            <Button variant="destructive" onClick={() => handleDeleteBlog(blog.id)} data-testid="button-confirm-delete">Delete</Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Delete Blog Post</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to delete "{blog.title_en}"? This action cannot be undone.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end gap-2 mt-4">
+                              <Button variant="outline" data-testid="button-cancel-delete">Cancel</Button>
+                              <Button variant="destructive" onClick={() => handleDeleteBlog(blog.id)} data-testid="button-confirm-delete">Delete</Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
-        ))}
-        {filteredBlogs.length === 0 && (
-          <div className="text-center py-10 text-muted-foreground">
-            No blog posts found
-          </div>
+            </Card>
+          ))
         )}
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{blogs.filter((b) => b.status === 'published').length}</div>
+            <div className="text-2xl font-bold">{blogPosts.filter((b) => b.status === 'published').length}</div>
             <div className="text-sm text-muted-foreground">Published Posts</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{blogs.filter((b) => b.status === 'draft').length}</div>
+            <div className="text-2xl font-bold">{blogPosts.filter((b) => b.status === 'draft').length}</div>
             <div className="text-sm text-muted-foreground">Drafts</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{blogs.length}</div>
+            <div className="text-2xl font-bold">{blogPosts.length}</div>
             <div className="text-sm text-muted-foreground">Total Posts</div>
           </CardContent>
         </Card>
