@@ -55,6 +55,9 @@ import {
   type AuditLog,
   type InsertAuditLog,
   type NewsletterSettings,
+  type CmsTeamMember,
+  type InsertCmsTeamMember,
+  type CmsSettings,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2364,6 +2367,18 @@ export interface IStorage {
   // Newsletter Settings
   getNewsletterSettings(): Promise<NewsletterSettings>;
   updateNewsletterSettings(settings: Partial<NewsletterSettings>): Promise<NewsletterSettings>;
+
+  // CMS Team Members
+  getTeamMembers(): Promise<CmsTeamMember[]>;
+  getTeamMember(id: string): Promise<CmsTeamMember | undefined>;
+  getTeamMemberByEmail(email: string): Promise<CmsTeamMember | undefined>;
+  createTeamMember(member: InsertCmsTeamMember): Promise<CmsTeamMember>;
+  updateTeamMember(id: string, member: Partial<CmsTeamMember>): Promise<CmsTeamMember | undefined>;
+  deleteTeamMember(id: string): Promise<boolean>;
+  
+  // CMS Settings
+  getCmsSettings(): Promise<CmsSettings>;
+  updateCmsSettings(settings: Partial<CmsSettings>): Promise<CmsSettings>;
 }
 
 // Dashboard Summary Types
@@ -2397,6 +2412,84 @@ export interface TrafficTimeSeries {
   totalViews: number;
   changePercent: number;
 }
+
+const seedTeamMembers: CmsTeamMember[] = [
+  {
+    id: '1',
+    name: 'Sarah Chen',
+    email: 'sarah@getbaraka.com',
+    role: 'admin',
+    status: 'active',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+    joinedAt: '2024-01-15T00:00:00Z',
+    lastActiveAt: new Date().toISOString(),
+    createdAt: '2024-01-15T00:00:00Z',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Alex Morgan',
+    email: 'alex@getbaraka.com',
+    role: 'editor',
+    status: 'active',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
+    joinedAt: '2024-02-01T00:00:00Z',
+    lastActiveAt: new Date().toISOString(),
+    createdAt: '2024-02-01T00:00:00Z',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    name: 'Jordan Lee',
+    email: 'jordan@getbaraka.com',
+    role: 'viewer',
+    status: 'active',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan',
+    joinedAt: '2024-03-10T00:00:00Z',
+    createdAt: '2024-03-10T00:00:00Z',
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+const seedCmsSettings: CmsSettings = {
+  id: '1',
+  general: {
+    siteName_en: 'Baraka CMS',
+    siteName_ar: 'بركة CMS',
+    defaultLanguage: 'en',
+    timezone: 'Asia/Dubai',
+    dateFormat: 'DD/MM/YYYY',
+    contactEmail: 'support@getbaraka.com',
+  },
+  branding: {
+    logoUrl: '/images/baraka-logo.png',
+    primaryColor: '#8B5CF6',
+    secondaryColor: '#6366F1',
+    accentColor: '#22C55E',
+  },
+  seoDefaults: {
+    defaultMetaTitle_en: 'Baraka - Invest in US Stocks & ETFs',
+    defaultMetaTitle_ar: 'بركة - استثمر في الأسهم وصناديق المؤشرات الأمريكية',
+    defaultMetaDescription_en: 'Commission-free investing in US stocks and ETFs for GCC residents.',
+    defaultMetaDescription_ar: 'استثمار بدون عمولة في الأسهم وصناديق المؤشرات الأمريكية لسكان دول الخليج.',
+    robotsIndex: true,
+    robotsFollow: true,
+  },
+  content: {
+    defaultAuthor: 'Baraka Editorial',
+    requireFeaturedImage: true,
+    enableContentApproval: false,
+    autoSaveInterval: 30,
+    maxUploadSizeMb: 10,
+  },
+  security: {
+    sessionTimeoutMinutes: 60,
+    requireTwoFactor: false,
+    allowedIpRanges: [],
+    passwordMinLength: 8,
+  },
+  updatedAt: new Date().toISOString(),
+};
 
 const seedAppDownloadConfig: AppDownloadConfig = {
   id: '1',
@@ -2444,6 +2537,8 @@ export class MemStorage implements IStorage {
   private appDownloadConfig: AppDownloadConfig;
   private callToActions: Map<string, CallToAction>;
   private ctaEvents: Map<string, CTAEvent>;
+  private teamMembers: Map<string, CmsTeamMember>;
+  private cmsSettings: CmsSettings;
 
   constructor() {
     this.users = new Map();
@@ -2471,6 +2566,9 @@ export class MemStorage implements IStorage {
     this.appDownloadConfig = { ...seedAppDownloadConfig };
     this.callToActions = new Map();
     this.ctaEvents = new Map();
+    this.teamMembers = new Map();
+    seedTeamMembers.forEach(m => this.teamMembers.set(m.id, m));
+    this.cmsSettings = { ...seedCmsSettings };
     this.newsletters = new Map();
     this.newsletterTemplates = new Map();
     this.spotlightBanners = new Map();
@@ -3587,6 +3685,60 @@ export class MemStorage implements IStorage {
       updatedAt: new Date().toISOString(),
     };
     return this.newsletterSettings;
+  }
+
+  // CMS Team Members
+  async getTeamMembers(): Promise<CmsTeamMember[]> {
+    return Array.from(this.teamMembers.values());
+  }
+
+  async getTeamMember(id: string): Promise<CmsTeamMember | undefined> {
+    return this.teamMembers.get(id);
+  }
+
+  async getTeamMemberByEmail(email: string): Promise<CmsTeamMember | undefined> {
+    return Array.from(this.teamMembers.values()).find(m => m.email === email);
+  }
+
+  async createTeamMember(insertMember: InsertCmsTeamMember): Promise<CmsTeamMember> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const member: CmsTeamMember = {
+      ...insertMember,
+      id,
+      status: 'invited',
+      joinedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.teamMembers.set(id, member);
+    return member;
+  }
+
+  async updateTeamMember(id: string, updates: Partial<CmsTeamMember>): Promise<CmsTeamMember | undefined> {
+    const member = this.teamMembers.get(id);
+    if (!member) return undefined;
+    const updated = { ...member, ...updates, updatedAt: new Date().toISOString() };
+    this.teamMembers.set(id, updated);
+    return updated;
+  }
+
+  async deleteTeamMember(id: string): Promise<boolean> {
+    return this.teamMembers.delete(id);
+  }
+
+  // CMS Settings
+  async getCmsSettings(): Promise<CmsSettings> {
+    return this.cmsSettings;
+  }
+
+  async updateCmsSettings(updates: Partial<CmsSettings>): Promise<CmsSettings> {
+    this.cmsSettings = {
+      ...this.cmsSettings,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.cmsSettings;
   }
 }
 

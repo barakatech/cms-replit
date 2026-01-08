@@ -1282,6 +1282,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // TEAM MEMBERS API
+  // ============================================
+
+  app.get("/api/team-members", async (_req, res) => {
+    const members = await storage.getTeamMembers();
+    res.json(members);
+  });
+
+  app.get("/api/team-members/:id", async (req, res) => {
+    const member = await storage.getTeamMember(req.params.id);
+    if (!member) {
+      return res.status(404).json({ error: "Team member not found" });
+    }
+    res.json(member);
+  });
+
+  app.post("/api/team-members", async (req, res) => {
+    try {
+      const member = await storage.createTeamMember(req.body);
+      res.status(201).json(member);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create team member" });
+    }
+  });
+
+  app.patch("/api/team-members/:id", async (req, res) => {
+    const member = await storage.updateTeamMember(req.params.id, req.body);
+    if (!member) {
+      return res.status(404).json({ error: "Team member not found" });
+    }
+    res.json(member);
+  });
+
+  app.delete("/api/team-members/:id", async (req, res) => {
+    const deleted = await storage.deleteTeamMember(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Team member not found" });
+    }
+    res.status(204).send();
+  });
+
+  // ============================================
+  // CMS SETTINGS API
+  // ============================================
+
+  app.get("/api/cms-settings", async (_req, res) => {
+    const settings = await storage.getCmsSettings();
+    res.json(settings);
+  });
+
+  app.put("/api/cms-settings", async (req, res) => {
+    try {
+      const settings = await storage.updateCmsSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update CMS settings" });
+    }
+  });
+
+  // ============================================
   // PUBLIC ENDPOINTS (No Auth Required)
   // ============================================
 

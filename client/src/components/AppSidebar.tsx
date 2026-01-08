@@ -38,6 +38,7 @@ const bottomMenuItems = [
   { title: 'Mobile Install', url: '/admin/mobile-install', icon: Smartphone, testId: 'link-mobile-install' },
   { title: 'Marketing Pixels', url: '/admin/marketing-pixels', icon: Radio, testId: 'link-marketing-pixels' },
   { title: 'Assets', url: '/assets', icon: Image, testId: 'link-assets' },
+  { title: 'Users', url: '/admin/users', icon: Users, testId: 'link-users' },
   { title: 'Settings', url: '/admin/settings', icon: Settings, testId: 'link-settings' },
 ];
 

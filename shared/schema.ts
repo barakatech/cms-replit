@@ -17,6 +17,85 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// CMS Team Member - for user management with roles
+export type CmsTeamMemberRole = 'admin' | 'editor' | 'viewer';
+export type CmsTeamMemberStatus = 'active' | 'invited' | 'deactivated';
+
+export interface CmsTeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: CmsTeamMemberRole;
+  status: CmsTeamMemberStatus;
+  avatarUrl?: string;
+  joinedAt: string;
+  lastActiveAt?: string;
+  invitedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InsertCmsTeamMember {
+  name: string;
+  email: string;
+  role: CmsTeamMemberRole;
+  avatarUrl?: string;
+}
+
+// CMS Settings - global configuration
+export interface CmsGeneralSettings {
+  siteName_en: string;
+  siteName_ar: string;
+  defaultLanguage: 'en' | 'ar';
+  timezone: string;
+  dateFormat: string;
+  contactEmail: string;
+}
+
+export interface CmsBrandingSettings {
+  logoUrl?: string;
+  faviconUrl?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+}
+
+export interface CmsSeoDefaults {
+  defaultMetaTitle_en: string;
+  defaultMetaTitle_ar: string;
+  defaultMetaDescription_en: string;
+  defaultMetaDescription_ar: string;
+  robotsIndex: boolean;
+  robotsFollow: boolean;
+  googleAnalyticsId?: string;
+}
+
+export interface CmsContentSettings {
+  defaultAuthor: string;
+  requireFeaturedImage: boolean;
+  enableContentApproval: boolean;
+  autoSaveInterval: number; // in seconds
+  maxUploadSizeMb: number;
+}
+
+export interface CmsSecuritySettings {
+  sessionTimeoutMinutes: number;
+  requireTwoFactor: boolean;
+  allowedIpRanges: string[];
+  passwordMinLength: number;
+}
+
+export interface CmsSettings {
+  id: string;
+  general: CmsGeneralSettings;
+  branding: CmsBrandingSettings;
+  seoDefaults: CmsSeoDefaults;
+  content: CmsContentSettings;
+  security: CmsSecuritySettings;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
 // Price Alert Subscription - for stock price alerts
 export const priceAlertSubscriptions = pgTable("price_alert_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
