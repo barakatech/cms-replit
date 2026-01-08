@@ -15,7 +15,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, LayoutTemplate, Users } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, LayoutTemplate, Users, ClipboardList, Shield } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
@@ -38,14 +38,20 @@ const bottomMenuItems = [
   { title: 'Mobile Install', url: '/admin/mobile-install', icon: Smartphone, testId: 'link-mobile-install' },
   { title: 'Marketing Pixels', url: '/admin/marketing-pixels', icon: Radio, testId: 'link-marketing-pixels' },
   { title: 'Assets', url: '/assets', icon: Image, testId: 'link-assets' },
-  { title: 'Users', url: '/admin/users', icon: Users, testId: 'link-users' },
+];
+
+const adminSubItems = [
+  { title: 'Users', url: '/admin/users', icon: Shield, testId: 'link-users' },
+  { title: 'Audit Log', url: '/admin/audit-log', icon: ClipboardList, testId: 'link-audit-log' },
   { title: 'Settings', url: '/admin/settings', icon: Settings, testId: 'link-settings' },
 ];
 
 export function AppSidebar() {
   const [location] = useLocation();
   const isBlogSectionActive = blogSubItems.some(item => location.startsWith(item.url));
+  const isAdminSectionActive = adminSubItems.some(item => location.startsWith(item.url));
   const [blogOpen, setBlogOpen] = useState(isBlogSectionActive);
+  const [adminOpen, setAdminOpen] = useState(isAdminSectionActive);
 
   return (
     <Sidebar>
@@ -103,6 +109,32 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              <Collapsible open={adminOpen} onOpenChange={setAdminOpen}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton data-testid="link-admin-section" className={isAdminSectionActive ? 'bg-sidebar-accent' : ''}>
+                      <Settings className="h-4 w-4" />
+                      <span>Administration</span>
+                      <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {adminSubItems.map((item) => (
+                        <SidebarMenuSubItem key={item.title}>
+                          <SidebarMenuSubButton asChild isActive={location === item.url || location.startsWith(item.url)}>
+                            <Link href={item.url} data-testid={item.testId}>
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

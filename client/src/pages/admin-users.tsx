@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Plus, MoreHorizontal, Shield, Edit3, Eye, UserX, Trash2, Mail } from 'lucide-react';
+import { Plus, MoreHorizontal, Shield, Edit3, Eye, Trash2, Mail, UserPlus, PenLine, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useForm } from 'react-hook-form';
@@ -28,13 +27,43 @@ const inviteFormSchema = z.object({
 
 type InviteFormData = z.infer<typeof inviteFormSchema>;
 
-const roleConfig: Record<CmsTeamMemberRole, { label: string; icon: typeof Shield; variant: 'default' | 'secondary' | 'outline' }> = {
-  admin: { label: 'admin', icon: Shield, variant: 'default' },
-  editor: { label: 'editor', icon: Edit3, variant: 'secondary' },
-  viewer: { label: 'viewer', icon: Eye, variant: 'outline' },
+const roleConfig: Record<CmsTeamMemberRole, { label: string; icon: typeof Shield; variant: 'default' | 'secondary' | 'outline'; color: string }> = {
+  admin: { label: 'ADMIN', icon: Shield, variant: 'default', color: 'bg-primary text-primary-foreground' },
+  editor: { label: 'EDITOR', icon: Edit3, variant: 'secondary', color: 'bg-blue-500/20 text-blue-500' },
+  viewer: { label: 'VIEWER', icon: Eye, variant: 'outline', color: 'bg-muted text-muted-foreground' },
 };
 
-function UserCard({ member, onEdit, onDelete }: { member: CmsTeamMember; onEdit: () => void; onDelete: () => void }) {
+const rolePermissions = [
+  {
+    role: 'ADMIN',
+    icon: Shield,
+    color: 'text-primary',
+    description: 'Full access including user management and settings',
+    permissions: ['Manage all content', 'User management', 'System settings', 'View analytics', 'Publish content'],
+  },
+  {
+    role: 'EDITOR',
+    icon: Edit3,
+    color: 'text-blue-500',
+    description: 'Can manage content (blogs, newsletters, spotlights)',
+    permissions: ['Create & edit content', 'Publish blogs', 'Manage newsletters', 'Create spotlights', 'View analytics'],
+  },
+  {
+    role: 'VIEWER',
+    icon: Eye,
+    color: 'text-muted-foreground',
+    description: 'Read-only access',
+    permissions: ['View all content', 'View analytics', 'Download reports'],
+  },
+];
+
+function UserCard({ member, onEdit, onChangeRole, onSendEmail, onDelete }: { 
+  member: CmsTeamMember; 
+  onEdit: () => void; 
+  onChangeRole: () => void;
+  onSendEmail: () => void;
+  onDelete: () => void;
+}) {
   const roleInfo = roleConfig[member.role];
   const RoleIcon = roleInfo.icon;
   const initials = member.name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -52,8 +81,16 @@ function UserCard({ member, onEdit, onDelete }: { member: CmsTeamMember; onEdit:
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit} data-testid={`menu-edit-${member.id}`}>
-                <Edit3 className="h-4 w-4 mr-2" />
-                Edit Role
+                <PenLine className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onChangeRole} data-testid={`menu-change-role-${member.id}`}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Change Role
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onSendEmail} data-testid={`menu-send-email-${member.id}`}>
+                <Mail className="h-4 w-4 mr-2" />
+                Send Email
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
@@ -62,7 +99,7 @@ function UserCard({ member, onEdit, onDelete }: { member: CmsTeamMember; onEdit:
                 data-testid={`menu-delete-${member.id}`}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Remove User
+                Remove
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -81,8 +118,7 @@ function UserCard({ member, onEdit, onDelete }: { member: CmsTeamMember; onEdit:
 
           <div className="flex items-center justify-between w-full mt-2">
             <Badge 
-              variant={roleInfo.variant}
-              className="flex items-center gap-1"
+              className={`flex items-center gap-1 ${roleInfo.color}`}
               data-testid={`badge-role-${member.id}`}
             >
               <RoleIcon className="h-3 w-3" />
@@ -136,10 +172,46 @@ function UserCardSkeleton() {
   );
 }
 
+function RolePermissionsCard() {
+  return (
+    <Card data-testid="card-role-permissions">
+      <CardHeader>
+        <CardTitle className="text-lg">Role Permissions</CardTitle>
+        <CardDescription>What each role can do in the CMS</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {rolePermissions.map((role) => {
+            const Icon = role.icon;
+            return (
+              <div key={role.role} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-5 w-5 ${role.color}`} />
+                  <span className="font-semibold">{role.role}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{role.description}</p>
+                <ul className="space-y-1">
+                  {role.permissions.map((perm) => (
+                    <li key={perm} className="text-sm flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      {perm}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function AdminUsers() {
   const { toast } = useToast();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [editMember, setEditMember] = useState<CmsTeamMember | null>(null);
+  const [changeRoleMember, setChangeRoleMember] = useState<CmsTeamMember | null>(null);
   const [deleteConfirmMember, setDeleteConfirmMember] = useState<CmsTeamMember | null>(null);
 
   const form = useForm<InviteFormData>({
@@ -175,6 +247,7 @@ export default function AdminUsers() {
       queryClient.invalidateQueries({ queryKey: ['/api/team-members'] });
       toast({ title: 'User updated', description: 'Team member has been updated.' });
       setEditMember(null);
+      setChangeRoleMember(null);
     },
     onError: () => {
       toast({ title: 'Error', description: 'Failed to update team member.', variant: 'destructive' });
@@ -201,6 +274,11 @@ export default function AdminUsers() {
     updateMutation.mutate({ id: memberId, data: { role: newRole } });
   };
 
+  const handleSendEmail = (member: CmsTeamMember) => {
+    window.location.href = `mailto:${member.email}`;
+    toast({ title: 'Opening email client', description: `Composing email to ${member.name}` });
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -209,7 +287,7 @@ export default function AdminUsers() {
           <p className="text-muted-foreground mt-1">Manage team members and their permissions</p>
         </div>
         <Button onClick={() => setInviteDialogOpen(true)} data-testid="button-invite-user">
-          <Plus className="h-4 w-4 mr-2" />
+          <UserPlus className="h-4 w-4 mr-2" />
           Invite User
         </Button>
       </div>
@@ -228,6 +306,8 @@ export default function AdminUsers() {
                 key={member.id}
                 member={member}
                 onEdit={() => setEditMember(member)}
+                onChangeRole={() => setChangeRoleMember(member)}
+                onSendEmail={() => handleSendEmail(member)}
                 onDelete={() => setDeleteConfirmMember(member)}
               />
             ))}
@@ -235,6 +315,8 @@ export default function AdminUsers() {
           </>
         )}
       </div>
+
+      <RolePermissionsCard />
 
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
         <DialogContent data-testid="dialog-invite-user">
@@ -323,46 +405,74 @@ export default function AdminUsers() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editMember} onOpenChange={() => setEditMember(null)}>
-        <DialogContent data-testid="dialog-edit-role">
+      <Dialog open={!!changeRoleMember} onOpenChange={() => setChangeRoleMember(null)}>
+        <DialogContent data-testid="dialog-change-role">
           <DialogHeader>
-            <DialogTitle>Edit Role</DialogTitle>
+            <DialogTitle>Change Role</DialogTitle>
             <DialogDescription>
-              Change the role for {editMember?.name}
+              Select a new role for {changeRoleMember?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Select New Role</Label>
-              <Select 
-                value={editMember?.role} 
-                onValueChange={(value) => editMember && handleRoleChange(editMember.id, value as CmsTeamMemberRole)}
-              >
-                <SelectTrigger data-testid="select-edit-role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Admin
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="editor">
-                    <div className="flex items-center gap-2">
-                      <Edit3 className="h-4 w-4" />
-                      Editor
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="viewer">
-                    <div className="flex items-center gap-2">
-                      <Eye className="h-4 w-4" />
-                      Viewer
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+            <Select 
+              value={changeRoleMember?.role} 
+              onValueChange={(value) => changeRoleMember && handleRoleChange(changeRoleMember.id, value as CmsTeamMemberRole)}
+            >
+              <SelectTrigger data-testid="select-change-role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Admin - Full access
+                  </div>
+                </SelectItem>
+                <SelectItem value="editor">
+                  <div className="flex items-center gap-2">
+                    <Edit3 className="h-4 w-4" />
+                    Editor - Content management
+                  </div>
+                </SelectItem>
+                <SelectItem value="viewer">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Viewer - Read-only access
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setChangeRoleMember(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editMember} onOpenChange={() => setEditMember(null)}>
+        <DialogContent data-testid="dialog-edit-user">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update details for {editMember?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={editMember?.avatarUrl} alt={editMember?.name} />
+                <AvatarFallback>{editMember?.name?.split(' ').map(n => n[0]).join('').toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{editMember?.name}</p>
+                <p className="text-sm text-muted-foreground">{editMember?.email}</p>
+              </div>
             </div>
+            <p className="text-sm text-muted-foreground">
+              User details can be edited in the user's profile settings. Use the "Change Role" option to update permissions.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditMember(null)}>
