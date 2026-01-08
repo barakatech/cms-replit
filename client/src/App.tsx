@@ -29,6 +29,11 @@ import AdminMobileInstall from '@/pages/admin-mobile-install';
 import AdminMarketingPixels from '@/pages/admin-marketing-pixels';
 import AdminCTAPerformance from '@/pages/admin-cta-performance';
 import AdminStocks from '@/pages/admin-stocks';
+import AdminNewsletters from '@/pages/admin-newsletters';
+import AdminTemplates from '@/pages/admin-templates';
+import AdminSpotlights from '@/pages/admin-spotlights';
+import AdminSubscribers from '@/pages/admin-subscribers';
+import AdminSettings from '@/pages/admin-settings';
 import PageBuilder from '@/pages/page-builder';
 import LandingPagePublic from '@/pages/landing-page';
 import StockThemePage from '@/pages/stock-theme';
@@ -269,6 +274,91 @@ function Router() {
                   <TopBar />
                   <main className="flex-1 overflow-auto">
                     <AdminMarketingPixels />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/newsletters">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminNewsletters />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/subscribers">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminSubscribers />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/templates">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminTemplates />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/spotlights">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminSpotlights />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/settings">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminSettings />
                   </main>
                 </div>
               </div>

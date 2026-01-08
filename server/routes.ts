@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -938,6 +938,411 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cta-performance", async (_req, res) => {
     const performance = await storage.getCTAPerformance();
     res.json(performance);
+  });
+
+  // ============================================
+  // NEWSLETTER TEMPLATES API
+  // ============================================
+
+  app.get("/api/newsletter-templates", async (_req, res) => {
+    const templates = await storage.getNewsletterTemplates();
+    res.json(templates);
+  });
+
+  app.get("/api/newsletter-templates/:id", async (req, res) => {
+    const template = await storage.getNewsletterTemplate(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: "Newsletter template not found" });
+    }
+    res.json(template);
+  });
+
+  app.post("/api/newsletter-templates", async (req, res) => {
+    try {
+      const template = await storage.createNewsletterTemplate(req.body);
+      res.status(201).json(template);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create newsletter template" });
+    }
+  });
+
+  app.put("/api/newsletter-templates/:id", async (req, res) => {
+    try {
+      const template = await storage.updateNewsletterTemplate(req.params.id, req.body);
+      if (!template) {
+        return res.status(404).json({ error: "Newsletter template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update newsletter template" });
+    }
+  });
+
+  app.delete("/api/newsletter-templates/:id", async (req, res) => {
+    const success = await storage.deleteNewsletterTemplate(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Newsletter template not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // NEWSLETTERS API
+  // ============================================
+
+  app.get("/api/newsletters", async (req, res) => {
+    let newsletters = await storage.getNewsletters();
+    
+    const locale = req.query.locale as string | undefined;
+    const status = req.query.status as string | undefined;
+    
+    if (locale) {
+      newsletters = newsletters.filter(n => n.locale === locale);
+    }
+    if (status) {
+      newsletters = newsletters.filter(n => n.status === status);
+    }
+    
+    res.json(newsletters);
+  });
+
+  app.get("/api/newsletters/:id", async (req, res) => {
+    const newsletter = await storage.getNewsletter(req.params.id);
+    if (!newsletter) {
+      return res.status(404).json({ error: "Newsletter not found" });
+    }
+    res.json(newsletter);
+  });
+
+  app.post("/api/newsletters", async (req, res) => {
+    try {
+      const data = insertNewsletterSchema.parse(req.body);
+      const newsletter = await storage.createNewsletter(data);
+      res.status(201).json(newsletter);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create newsletter" });
+    }
+  });
+
+  app.put("/api/newsletters/:id", async (req, res) => {
+    try {
+      const newsletter = await storage.updateNewsletter(req.params.id, req.body);
+      if (!newsletter) {
+        return res.status(404).json({ error: "Newsletter not found" });
+      }
+      res.json(newsletter);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update newsletter" });
+    }
+  });
+
+  app.delete("/api/newsletters/:id", async (req, res) => {
+    const success = await storage.deleteNewsletter(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Newsletter not found" });
+    }
+    res.json({ success: true });
+  });
+
+  app.post("/api/newsletters/:id/send-test", async (req, res) => {
+    try {
+      const newsletter = await storage.getNewsletter(req.params.id);
+      if (!newsletter) {
+        return res.status(404).json({ error: "Newsletter not found" });
+      }
+      
+      // Mock test send - log the event and update lastTestSentAt
+      console.log(`[Newsletter Test Send] Newsletter ID: ${req.params.id}, Subject: ${newsletter.subject}`);
+      
+      const updated = await storage.updateNewsletter(req.params.id, {
+        lastTestSentAt: new Date().toISOString(),
+      });
+      
+      // Create audit log for test send
+      await storage.createAuditLog({
+        actorUserId: req.body.userId || 'system',
+        actorName: req.body.userName || 'System',
+        actionType: 'newsletter_test_sent',
+        entityType: 'newsletter',
+        entityId: req.params.id,
+        metaJson: { testEmail: req.body.testEmail },
+      });
+      
+      res.json({ success: true, newsletter: updated });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send test newsletter" });
+    }
+  });
+
+  app.post("/api/newsletters/:id/send", async (req, res) => {
+    try {
+      const newsletter = await storage.getNewsletter(req.params.id);
+      if (!newsletter) {
+        return res.status(404).json({ error: "Newsletter not found" });
+      }
+      
+      // Mock send - set status to 'sent' and sentAt
+      console.log(`[Newsletter Send] Newsletter ID: ${req.params.id}, Subject: ${newsletter.subject}`);
+      
+      const updated = await storage.updateNewsletter(req.params.id, {
+        status: 'sent',
+        sentAt: new Date().toISOString(),
+      });
+      
+      // Create audit log for send
+      await storage.createAuditLog({
+        actorUserId: req.body.userId || 'system',
+        actorName: req.body.userName || 'System',
+        actionType: 'newsletter_sent',
+        entityType: 'newsletter',
+        entityId: req.params.id,
+      });
+      
+      res.json({ success: true, newsletter: updated });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to send newsletter" });
+    }
+  });
+
+  // ============================================
+  // SPOTLIGHT BANNERS API
+  // ============================================
+
+  app.get("/api/spotlights", async (req, res) => {
+    let spotlights = await storage.getSpotlightBanners();
+    
+    const locale = req.query.locale as string | undefined;
+    const status = req.query.status as string | undefined;
+    const placement = req.query.placement as string | undefined;
+    
+    if (locale) {
+      spotlights = spotlights.filter(s => s.locale === locale);
+    }
+    if (status) {
+      spotlights = spotlights.filter(s => s.status === status);
+    }
+    if (placement) {
+      spotlights = spotlights.filter(s => s.placements.includes(placement as any));
+    }
+    
+    res.json(spotlights);
+  });
+
+  app.get("/api/spotlights/active", async (req, res) => {
+    const placement = req.query.placement as string | undefined;
+    const spotlights = await storage.getActiveSpotlights(placement);
+    res.json(spotlights);
+  });
+
+  app.get("/api/spotlights/:id", async (req, res) => {
+    const spotlight = await storage.getSpotlightBanner(req.params.id);
+    if (!spotlight) {
+      return res.status(404).json({ error: "Spotlight banner not found" });
+    }
+    res.json(spotlight);
+  });
+
+  app.post("/api/spotlights", async (req, res) => {
+    try {
+      const data = insertSpotlightBannerSchema.parse(req.body);
+      const spotlight = await storage.createSpotlightBanner(data);
+      res.status(201).json(spotlight);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create spotlight banner" });
+    }
+  });
+
+  app.put("/api/spotlights/:id", async (req, res) => {
+    try {
+      const spotlight = await storage.updateSpotlightBanner(req.params.id, req.body);
+      if (!spotlight) {
+        return res.status(404).json({ error: "Spotlight banner not found" });
+      }
+      res.json(spotlight);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update spotlight banner" });
+    }
+  });
+
+  app.delete("/api/spotlights/:id", async (req, res) => {
+    const success = await storage.deleteSpotlightBanner(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Spotlight banner not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // SUBSCRIBERS API
+  // ============================================
+
+  app.get("/api/subscribers", async (req, res) => {
+    let subscribers = await storage.getSubscribers();
+    
+    const locale = req.query.locale as string | undefined;
+    const status = req.query.status as string | undefined;
+    const tag = req.query.tag as string | undefined;
+    
+    if (locale) {
+      subscribers = subscribers.filter(s => s.locale === locale);
+    }
+    if (status) {
+      subscribers = subscribers.filter(s => s.status === status);
+    }
+    if (tag) {
+      subscribers = subscribers.filter(s => s.tags.includes(tag));
+    }
+    
+    res.json(subscribers);
+  });
+
+  app.get("/api/subscribers/:id", async (req, res) => {
+    const subscriber = await storage.getSubscriber(req.params.id);
+    if (!subscriber) {
+      return res.status(404).json({ error: "Subscriber not found" });
+    }
+    res.json(subscriber);
+  });
+
+  app.post("/api/subscribers", async (req, res) => {
+    try {
+      const data = insertSubscriberSchema.parse(req.body);
+      const subscriber = await storage.createSubscriber(data);
+      res.status(201).json(subscriber);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create subscriber" });
+    }
+  });
+
+  app.put("/api/subscribers/:id", async (req, res) => {
+    try {
+      const subscriber = await storage.updateSubscriber(req.params.id, req.body);
+      if (!subscriber) {
+        return res.status(404).json({ error: "Subscriber not found" });
+      }
+      res.json(subscriber);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update subscriber" });
+    }
+  });
+
+  app.delete("/api/subscribers/:id", async (req, res) => {
+    const success = await storage.deleteSubscriber(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Subscriber not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // AUDIT LOGS API
+  // ============================================
+
+  app.get("/api/audit-logs", async (req, res) => {
+    const filters = {
+      entityType: req.query.entityType as string | undefined,
+      entityId: req.query.entityId as string | undefined,
+    };
+    
+    let logs = await storage.getAuditLogs(filters);
+    
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+    if (limit && limit > 0) {
+      logs = logs.slice(0, limit);
+    }
+    
+    res.json(logs);
+  });
+
+  // ============================================
+  // NEWSLETTER SETTINGS API
+  // ============================================
+
+  app.get("/api/newsletter-settings", async (_req, res) => {
+    const settings = await storage.getNewsletterSettings();
+    res.json(settings);
+  });
+
+  app.put("/api/newsletter-settings", async (req, res) => {
+    try {
+      const settings = await storage.updateNewsletterSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update newsletter settings" });
+    }
+  });
+
+  // ============================================
+  // PUBLIC ENDPOINTS (No Auth Required)
+  // ============================================
+
+  // Get active spotlights by locale and placement
+  app.get("/api/public/spotlights", async (req, res) => {
+    const locale = req.query.locale as string | undefined;
+    const placement = req.query.placement as string | undefined;
+    
+    let spotlights = await storage.getActiveSpotlights(placement);
+    
+    if (locale) {
+      spotlights = spotlights.filter(s => s.locale === locale);
+    }
+    
+    res.json(spotlights);
+  });
+
+  // Get sent newsletters list
+  app.get("/api/public/newsletters", async (req, res) => {
+    let newsletters = await storage.getNewsletters();
+    
+    // Only return sent newsletters
+    newsletters = newsletters.filter(n => n.status === 'sent');
+    
+    const locale = req.query.locale as string | undefined;
+    if (locale) {
+      newsletters = newsletters.filter(n => n.locale === locale);
+    }
+    
+    // Return limited fields for public consumption
+    const publicNewsletters = newsletters.map(n => ({
+      id: n.id,
+      subject: n.subject,
+      preheader: n.preheader,
+      locale: n.locale,
+      sentAt: n.sentAt,
+    }));
+    
+    res.json(publicNewsletters);
+  });
+
+  // Get newsletter HTML output
+  app.get("/api/public/newsletters/:id", async (req, res) => {
+    const newsletter = await storage.getNewsletter(req.params.id);
+    if (!newsletter) {
+      return res.status(404).json({ error: "Newsletter not found" });
+    }
+    
+    // Only return sent newsletters publicly
+    if (newsletter.status !== 'sent') {
+      return res.status(404).json({ error: "Newsletter not found" });
+    }
+    
+    res.json({
+      id: newsletter.id,
+      subject: newsletter.subject,
+      preheader: newsletter.preheader,
+      htmlOutput: newsletter.htmlOutput,
+      locale: newsletter.locale,
+      sentAt: newsletter.sentAt,
+    });
   });
 
   const httpServer = createServer(app);
