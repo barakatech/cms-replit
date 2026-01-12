@@ -21,7 +21,7 @@ import {
   Activity,
   Zap
 } from 'lucide-react';
-import { SiMeta, SiTiktok, SiSnapchat, SiGoogleads } from 'react-icons/si';
+import { SiMeta, SiTiktok, SiSnapchat, SiGoogleads, SiGoogleanalytics } from 'react-icons/si';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { MarketingPixel, PixelEventMap, PixelPlatform, CmsEventName } from '@shared/schema';
@@ -59,6 +59,7 @@ const PLATFORM_ICONS: Record<PixelPlatform, JSX.Element> = {
   tiktok: <SiTiktok className="h-4 w-4" />,
   snapchat: <SiSnapchat className="h-4 w-4" />,
   google_ads: <SiGoogleads className="h-4 w-4" />,
+  google_analytics: <SiGoogleanalytics className="h-4 w-4" />,
 };
 
 const PLATFORM_LABELS: Record<PixelPlatform, string> = {
@@ -66,6 +67,7 @@ const PLATFORM_LABELS: Record<PixelPlatform, string> = {
   tiktok: 'TikTok',
   snapchat: 'Snapchat',
   google_ads: 'Google Ads',
+  google_analytics: 'Google Analytics',
 };
 
 export default function AdminMarketingPixels() {
@@ -326,7 +328,7 @@ export default function AdminMarketingPixels() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">Marketing Pixels</h1>
-          <p className="text-muted-foreground mt-1">Configure tracking pixels for Meta, TikTok, Snapchat, and Google Ads</p>
+          <p className="text-muted-foreground mt-1">Configure tracking pixels for Meta, TikTok, Snapchat, Google Ads, and Google Analytics</p>
         </div>
         <Dialog open={isPixelDialogOpen} onOpenChange={setIsPixelDialogOpen}>
           <DialogTrigger asChild>
@@ -391,6 +393,12 @@ export default function AdminMarketingPixels() {
                               Google Ads
                             </div>
                           </SelectItem>
+                          <SelectItem value="google_analytics">
+                            <div className="flex items-center gap-2">
+                              <SiGoogleanalytics className="h-4 w-4" />
+                              Google Analytics
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -411,6 +419,7 @@ export default function AdminMarketingPixels() {
                         {watchedPlatform === 'tiktok' && 'TikTok Pixel ID (e.g., C12345ABCDEF)'}
                         {watchedPlatform === 'snapchat' && 'Snapchat Pixel ID'}
                         {watchedPlatform === 'google_ads' && 'Google Ads Conversion ID (e.g., AW-123456789)'}
+                        {watchedPlatform === 'google_analytics' && 'GA4 Measurement ID (e.g., G-XXXXXXXXXX)'}
                       </FormDescription>
                     </FormItem>
                   )}

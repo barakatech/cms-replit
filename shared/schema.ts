@@ -913,10 +913,10 @@ export const PRESENCE_COLORS = [
 ];
 
 // ============================================
-// MARKETING PIXELS (Meta, TikTok, Snapchat, Google Ads)
+// MARKETING PIXELS (Meta, TikTok, Snapchat, Google Ads, Google Analytics)
 // ============================================
 
-export type PixelPlatform = 'meta' | 'tiktok' | 'snapchat' | 'google_ads';
+export type PixelPlatform = 'meta' | 'tiktok' | 'snapchat' | 'google_ads' | 'google_analytics';
 
 export interface MarketingPixel {
   id: string;
@@ -1401,5 +1401,13 @@ export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<
     newsletter_submit: 'sign_up',
     lead_submit: 'generate_lead',
     app_install_click: 'conversion',
+  },
+  google_analytics: {
+    page_view: 'page_view',
+    banner_impression: 'view_promotion',
+    banner_click: 'select_promotion',
+    newsletter_submit: 'sign_up',
+    lead_submit: 'generate_lead',
+    app_install_click: 'select_content',
   },
 };

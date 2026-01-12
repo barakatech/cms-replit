@@ -91,6 +91,18 @@ function fireGoogleAdsEvent(pixelId: string, eventName: string, params?: Record<
   }
 }
 
+function fireGoogleAnalyticsEvent(measurementId: string, eventName: string, params?: Record<string, unknown>, testMode?: boolean) {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    if (testMode) {
+      console.log('[PixelManager:GoogleAnalytics] TEST MODE - Would fire:', { measurementId, eventName, params });
+      return;
+    }
+    (window as any).gtag('event', eventName, { send_to: measurementId, ...params });
+  } else {
+    console.warn('[PixelManager:GoogleAnalytics] Google Analytics gtag not loaded');
+  }
+}
+
 function firePixelEvent(
   platform: PixelPlatform,
   pixelId: string,
@@ -110,6 +122,9 @@ function firePixelEvent(
       break;
     case 'google_ads':
       fireGoogleAdsEvent(pixelId, eventName, params, testMode);
+      break;
+    case 'google_analytics':
+      fireGoogleAnalyticsEvent(pixelId, eventName, params, testMode);
       break;
   }
 }
