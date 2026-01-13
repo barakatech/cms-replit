@@ -207,6 +207,21 @@ export default function AdminTemplates() {
       return;
     }
 
+    const stockCollectionBlocks = editingTemplate.schemaJson.blocks.filter(
+      block => block.type === 'stockCollection'
+    );
+    for (const block of stockCollectionBlocks) {
+      const tickerCount = (block.tickers || []).length;
+      if (tickerCount < 3 || tickerCount > 5) {
+        toast({ 
+          title: `Stock Collection "${block.label}" must have 3-5 tickers`, 
+          description: `Currently has ${tickerCount} selected`,
+          variant: 'destructive' 
+        });
+        return;
+      }
+    }
+
     let parsedDefaults: Record<string, unknown> = {};
     try {
       parsedDefaults = JSON.parse(defaultValuesJsonString);
