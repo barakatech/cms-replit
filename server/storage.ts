@@ -58,6 +58,8 @@ import {
   type CmsTeamMember,
   type InsertCmsTeamMember,
   type CmsSettings,
+  type AssetLink,
+  type InsertAssetLink,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2273,6 +2275,13 @@ export interface IStorage {
   updateMobileInstallBanner(id: string, banner: Partial<MobileInstallBanner>): Promise<MobileInstallBanner | undefined>;
   deleteMobileInstallBanner(id: string): Promise<boolean>;
   
+  // Asset Links (curated stock collections)
+  getAssetLinks(collectionKey: string): Promise<AssetLink[]>;
+  getAssetLink(id: string): Promise<AssetLink | undefined>;
+  createAssetLink(link: InsertAssetLink): Promise<AssetLink>;
+  updateAssetLink(id: string, link: Partial<AssetLink>): Promise<AssetLink | undefined>;
+  deleteAssetLink(id: string): Promise<boolean>;
+  
   // Analytics Settings
   getAnalyticsSettings(): Promise<AnalyticsSettings>;
   updateAnalyticsSettings(settings: Partial<AnalyticsSettings>): Promise<AnalyticsSettings>;
@@ -2540,6 +2549,7 @@ export class MemStorage implements IStorage {
   private ctaEvents: Map<string, CTAEvent>;
   private teamMembers: Map<string, CmsTeamMember>;
   private cmsSettings: CmsSettings;
+  private assetLinks: Map<string, AssetLink>;
 
   constructor() {
     this.users = new Map();
@@ -2576,6 +2586,7 @@ export class MemStorage implements IStorage {
     this.subscribers = new Map();
     this.auditLogs = new Map();
     this.newsletterSettings = { ...seedNewsletterSettings };
+    this.assetLinks = new Map();
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -2974,6 +2985,49 @@ export class MemStorage implements IStorage {
 
   async deleteMobileInstallBanner(id: string): Promise<boolean> {
     return this.mobileInstallBanners.delete(id);
+  }
+
+  // Asset Links (curated stock collections)
+  async getAssetLinks(collectionKey: string): Promise<AssetLink[]> {
+    return Array.from(this.assetLinks.values())
+      .filter(link => link.collectionKey === collectionKey)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }
+
+  async getAssetLink(id: string): Promise<AssetLink | undefined> {
+    return this.assetLinks.get(id);
+  }
+
+  async createAssetLink(link: InsertAssetLink): Promise<AssetLink> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newLink: AssetLink = {
+      ...link,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.assetLinks.set(id, newLink);
+    return newLink;
+  }
+
+  async updateAssetLink(id: string, link: Partial<AssetLink>): Promise<AssetLink | undefined> {
+    const existing = this.assetLinks.get(id);
+    if (!existing) return undefined;
+    
+    const updated: AssetLink = {
+      ...existing,
+      ...link,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    this.assetLinks.set(id, updated);
+    return updated;
+  }
+
+  async deleteAssetLink(id: string): Promise<boolean> {
+    return this.assetLinks.delete(id);
   }
 
   // Analytics Settings

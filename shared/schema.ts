@@ -697,6 +697,22 @@ export interface MobileInstallBanner {
 export type InsertMobileInstallBanner = Omit<MobileInstallBanner, 'id' | 'createdAt' | 'updatedAt'>;
 
 // ============================================
+// ASSET LINKS (Curated stock link collections)
+// ============================================
+
+export interface AssetLink {
+  id: string;
+  collectionKey: string; // e.g., 'assets-under-500', 'top-gainers'
+  ticker: string; // Stock ticker symbol
+  displayOrder: number;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertAssetLink = Omit<AssetLink, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ============================================
 // ANALYTICS SETTINGS (GA4 Configuration)
 // ============================================
 
