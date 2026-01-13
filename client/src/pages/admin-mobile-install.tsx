@@ -18,7 +18,9 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  Activity
+  Activity,
+  ImageIcon,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -37,6 +39,7 @@ interface BannerFormData {
   ctaText_en: string;
   ctaText_ar: string;
   iconUrl: string;
+  imageUrl: string;
   backgroundStyle: 'surface' | 'tertiary' | 'brand';
   adjustLinkIos: string;
   adjustLinkAndroid: string;
@@ -63,6 +66,7 @@ export default function AdminMobileInstall() {
       ctaText_en: 'Download Now',
       ctaText_ar: 'حمّل الآن',
       iconUrl: '',
+      imageUrl: '',
       backgroundStyle: 'brand',
       adjustLinkIos: '',
       adjustLinkAndroid: '',
@@ -150,6 +154,7 @@ export default function AdminMobileInstall() {
       ctaText_en: data.ctaText_en,
       ctaText_ar: data.ctaText_ar,
       iconUrl: data.iconUrl,
+      imageUrl: data.imageUrl,
       backgroundStyle: data.backgroundStyle,
       adjustLinkIos: data.adjustLinkIos,
       adjustLinkAndroid: data.adjustLinkAndroid,
@@ -179,6 +184,7 @@ export default function AdminMobileInstall() {
       ctaText_en: 'Download Now',
       ctaText_ar: 'حمّل الآن',
       iconUrl: '',
+      imageUrl: '',
       backgroundStyle: 'brand',
       adjustLinkIos: '',
       adjustLinkAndroid: '',
@@ -203,6 +209,7 @@ export default function AdminMobileInstall() {
       ctaText_en: banner.ctaText_en,
       ctaText_ar: banner.ctaText_ar,
       iconUrl: banner.iconUrl ?? '',
+      imageUrl: banner.imageUrl ?? '',
       backgroundStyle: banner.backgroundStyle,
       adjustLinkIos: banner.adjustLinkIos,
       adjustLinkAndroid: banner.adjustLinkAndroid,
@@ -468,6 +475,51 @@ export default function AdminMobileInstall() {
                       <FormControl>
                         <Input {...field} placeholder="https://..." data-testid="input-icon-url" />
                       </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Banner Image (optional)</FormLabel>
+                      <div className="space-y-3">
+                        <FormControl>
+                          <Input {...field} placeholder="https://..." data-testid="input-image-url" />
+                        </FormControl>
+                        {field.value && (
+                          <div className="relative rounded-lg border overflow-hidden">
+                            <img 
+                              src={field.value} 
+                              alt="Banner preview" 
+                              className="w-full h-32 object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="secondary"
+                              className="absolute top-2 right-2 h-6 w-6"
+                              onClick={() => field.onChange('')}
+                              data-testid="button-remove-image"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                        {!field.value && (
+                          <div className="flex items-center justify-center h-24 rounded-lg border border-dashed">
+                            <div className="text-center text-muted-foreground">
+                              <ImageIcon className="h-8 w-8 mx-auto mb-1 opacity-50" />
+                              <p className="text-xs">Enter image URL above</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </FormItem>
                   )}
                 />

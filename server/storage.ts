@@ -757,6 +757,7 @@ const seedMobileInstallBanner: MobileInstallBanner = {
   ctaText_en: 'Download Now',
   ctaText_ar: 'حمّل الآن',
   iconUrl: '',
+  imageUrl: '',
   backgroundStyle: 'brand',
   adjustLinkIos: 'https://app.adjust.com/baraka_ios?campaign=web_install_banner',
   adjustLinkAndroid: 'https://app.adjust.com/baraka_android?campaign=web_install_banner',

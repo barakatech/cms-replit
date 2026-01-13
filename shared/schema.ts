@@ -684,6 +684,7 @@ export interface MobileInstallBanner {
   ctaText_en: string;
   ctaText_ar: string;
   iconUrl?: string;
+  imageUrl?: string; // Banner background or promotional image
   backgroundStyle: 'surface' | 'tertiary' | 'brand';
   adjustLinkIos: string;
   adjustLinkAndroid: string;
