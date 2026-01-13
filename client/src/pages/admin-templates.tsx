@@ -27,16 +27,17 @@ import {
   Code,
   Eye
 } from 'lucide-react';
-import type { NewsletterTemplate, InsertNewsletterTemplate } from '@shared/schema';
+import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage } from '@shared/schema';
 
 type ViewMode = 'list' | 'editor';
 
-type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer';
+type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection';
 
 interface SchemaBlock {
   type: BlockType;
   label: string;
   required: boolean;
+  tickers?: string[];
 }
 
 interface EditingTemplate {
@@ -50,13 +51,14 @@ interface EditingTemplate {
   defaultValuesJson: Record<string, unknown>;
 }
 
-const BLOCK_TYPES: BlockType[] = ['hero', 'intro', 'featured', 'articles', 'cta', 'footer'];
+const BLOCK_TYPES: BlockType[] = ['hero', 'intro', 'featured', 'articles', 'stockCollection', 'cta', 'footer'];
 
 const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
   hero: 'Hero Section',
   intro: 'Introduction',
   featured: 'Featured Content',
   articles: 'Articles List',
+  stockCollection: 'Stock Collection',
   cta: 'Call to Action',
   footer: 'Footer',
 };
@@ -66,6 +68,7 @@ const DUMMY_PREVIEW_DATA = {
   intro: { content: 'Welcome to this week\'s newsletter. Here are the highlights...' },
   featured: { title: 'Featured Story', content: 'This is the main story of the week.', imageUrl: 'https://placehold.co/400x200' },
   articles: { articles: [{ title: 'Article 1', excerpt: 'Short description...', url: '#' }, { title: 'Article 2', excerpt: 'Another piece...', url: '#' }] },
+  stockCollection: { tickers: ['AAPL', 'GOOGL', 'MSFT'] },
   cta: { text: 'Get Started', url: '#', description: 'Take action now!' },
   footer: { content: '© 2024 Baraka. All rights reserved.' },
 };
@@ -79,6 +82,10 @@ export default function AdminTemplates() {
 
   const { data: templates, isLoading } = useQuery<NewsletterTemplate[]>({
     queryKey: ['/api/newsletter-templates'],
+  });
+
+  const { data: stockPages = [] } = useQuery<StockPage[]>({
+    queryKey: ['/api/admin/stocks'],
   });
 
   const createMutation = useMutation({
@@ -261,10 +268,27 @@ export default function AdminTemplates() {
     });
   };
 
-  const updateBlock = (index: number, field: keyof SchemaBlock, value: string | boolean) => {
+  const updateBlock = (index: number, field: keyof SchemaBlock, value: string | boolean | string[]) => {
     if (!editingTemplate) return;
     const blocks = [...editingTemplate.schemaJson.blocks];
     blocks[index] = { ...blocks[index], [field]: value };
+    setEditingTemplate({
+      ...editingTemplate,
+      schemaJson: { blocks },
+    });
+  };
+
+  const updateBlockTickers = (index: number, ticker: string, action: 'add' | 'remove') => {
+    if (!editingTemplate) return;
+    const blocks = [...editingTemplate.schemaJson.blocks];
+    const currentTickers = blocks[index].tickers || [];
+    
+    if (action === 'add' && currentTickers.length < 5 && !currentTickers.includes(ticker)) {
+      blocks[index] = { ...blocks[index], tickers: [...currentTickers, ticker] };
+    } else if (action === 'remove') {
+      blocks[index] = { ...blocks[index], tickers: currentTickers.filter(t => t !== ticker) };
+    }
+    
     setEditingTemplate({
       ...editingTemplate,
       schemaJson: { blocks },
@@ -456,6 +480,81 @@ export default function AdminTemplates() {
                           Required block
                         </Label>
                       </div>
+                      
+                      {block.type === 'stockCollection' && (
+                        <div className="mt-4 space-y-3 border-t pt-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-medium">Stock Tickers (3-5 required)</Label>
+                            <span className="text-xs text-muted-foreground">
+                              {(block.tickers || []).length}/5 selected
+                            </span>
+                          </div>
+                          
+                          {(block.tickers || []).length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {(block.tickers || []).map((ticker) => {
+                                const stock = stockPages.find(s => s.ticker === ticker);
+                                return (
+                                  <Badge 
+                                    key={ticker} 
+                                    variant="secondary" 
+                                    className="flex items-center gap-1"
+                                  >
+                                    <span className="font-mono">{ticker}</span>
+                                    {stock && (
+                                      <span className="text-xs opacity-70 max-w-[100px] truncate">
+                                        {stock.companyName_en}
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => updateBlockTickers(index, ticker, 'remove')}
+                                      className="ml-1 hover:text-destructive"
+                                      data-testid={`button-remove-ticker-${index}-${ticker}`}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {(block.tickers || []).length < 5 && (
+                            <Select
+                              value=""
+                              onValueChange={(ticker) => updateBlockTickers(index, ticker, 'add')}
+                            >
+                              <SelectTrigger data-testid={`select-add-ticker-${index}`}>
+                                <SelectValue placeholder="Add a stock..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <ScrollArea className="h-[200px]">
+                                  {stockPages
+                                    .filter(s => !(block.tickers || []).includes(s.ticker))
+                                    .slice(0, 50)
+                                    .map((stock) => (
+                                      <SelectItem key={stock.id} value={stock.ticker}>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-mono font-medium">{stock.ticker}</span>
+                                          <span className="text-muted-foreground text-xs truncate max-w-[150px]">
+                                            {stock.companyName_en}
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                </ScrollArea>
+                              </SelectContent>
+                            </Select>
+                          )}
+                          
+                          {(block.tickers || []).length < 3 && (
+                            <p className="text-xs text-amber-600">
+                              Please select at least 3 stocks for this collection
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -574,6 +673,28 @@ export default function AdminTemplates() {
                           {block.type === 'footer' && (
                             <div className="text-center text-xs text-gray-400 border-t pt-3">
                               {(dummyData as typeof DUMMY_PREVIEW_DATA.footer).content}
+                            </div>
+                          )}
+                          {block.type === 'stockCollection' && (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-3 gap-2">
+                                {(block.tickers || (dummyData as typeof DUMMY_PREVIEW_DATA.stockCollection).tickers).map((ticker, i) => {
+                                  const stock = stockPages.find(s => s.ticker === ticker);
+                                  return (
+                                    <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                                      <div className="font-mono font-bold text-gray-800">{ticker}</div>
+                                      <div className="text-xs text-gray-500 truncate">
+                                        {stock?.companyName_en || 'Company Name'}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {(block.tickers || []).length === 0 && (
+                                <p className="text-xs text-gray-400 text-center">
+                                  Select 3-5 stocks to display in this collection
+                                </p>
+                              )}
                             </div>
                           )}
                         </div>

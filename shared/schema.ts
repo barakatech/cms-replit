@@ -1128,6 +1128,9 @@ export interface CMSBlogPost {
 
 export type InsertCMSBlogPost = Omit<CMSBlogPost, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
 
+// Newsletter Template Block Type
+export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection';
+
 // Newsletter Template
 export interface NewsletterTemplate {
   id: string;
@@ -1136,9 +1139,10 @@ export interface NewsletterTemplate {
   locale: 'en' | 'ar' | 'global';
   schemaJson: {
     blocks: Array<{
-      type: 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer';
+      type: NewsletterBlockType;
       label: string;
       required: boolean;
+      tickers?: string[];
     }>;
   };
   htmlWrapper: string;
@@ -1154,13 +1158,14 @@ export type NewsletterStatus = 'draft' | 'ready' | 'scheduled' | 'sent';
 
 // Newsletter Content Block
 export interface NewsletterContentBlock {
-  type: 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer';
+  type: NewsletterBlockType;
   title?: string;
   content?: string;
   imageUrl?: string;
   ctaText?: string;
   ctaUrl?: string;
   articles?: Array<{ title: string; excerpt: string; url: string; imageUrl?: string }>;
+  tickers?: string[];
 }
 
 // Newsletter
@@ -1376,9 +1381,10 @@ export const insertNewsletterTemplateSchema = z.object({
   locale: z.enum(['en', 'ar', 'global']),
   schemaJson: z.object({
     blocks: z.array(z.object({
-      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer']),
+      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection']),
       label: z.string(),
       required: z.boolean(),
+      tickers: z.array(z.string()).optional(),
     })),
   }),
   htmlWrapper: z.string(),
