@@ -284,29 +284,33 @@ export default function AdminTemplates() {
   };
 
   const updateBlock = (index: number, field: keyof SchemaBlock, value: string | boolean | string[]) => {
-    if (!editingTemplate) return;
-    const blocks = [...editingTemplate.schemaJson.blocks];
-    blocks[index] = { ...blocks[index], [field]: value };
-    setEditingTemplate({
-      ...editingTemplate,
-      schemaJson: { blocks },
+    setEditingTemplate(prev => {
+      if (!prev) return prev;
+      const blocks = [...prev.schemaJson.blocks];
+      blocks[index] = { ...blocks[index], [field]: value };
+      return {
+        ...prev,
+        schemaJson: { blocks },
+      };
     });
   };
 
   const updateBlockTickers = (index: number, ticker: string, action: 'add' | 'remove') => {
-    if (!editingTemplate) return;
-    const blocks = [...editingTemplate.schemaJson.blocks];
-    const currentTickers = blocks[index].tickers || [];
-    
-    if (action === 'add' && currentTickers.length < 5 && !currentTickers.includes(ticker)) {
-      blocks[index] = { ...blocks[index], tickers: [...currentTickers, ticker] };
-    } else if (action === 'remove') {
-      blocks[index] = { ...blocks[index], tickers: currentTickers.filter(t => t !== ticker) };
-    }
-    
-    setEditingTemplate({
-      ...editingTemplate,
-      schemaJson: { blocks },
+    setEditingTemplate(prev => {
+      if (!prev) return prev;
+      const blocks = [...prev.schemaJson.blocks];
+      const currentTickers = blocks[index].tickers || [];
+      
+      if (action === 'add' && currentTickers.length < 5 && !currentTickers.includes(ticker)) {
+        blocks[index] = { ...blocks[index], tickers: [...currentTickers, ticker] };
+      } else if (action === 'remove') {
+        blocks[index] = { ...blocks[index], tickers: currentTickers.filter(t => t !== ticker) };
+      }
+      
+      return {
+        ...prev,
+        schemaJson: { blocks },
+      };
     });
   };
 
