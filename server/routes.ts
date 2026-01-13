@@ -424,6 +424,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // ASSET LINKS API (Curated stock collections)
+  // ============================================
+
+  // Get asset links by collection key
+  app.get("/api/admin/asset-links/:collectionKey", async (req, res) => {
+    const links = await storage.getAssetLinks(req.params.collectionKey);
+    res.json(links);
+  });
+
+  // Create asset link
+  app.post("/api/admin/asset-links", async (req, res) => {
+    try {
+      const link = await storage.createAssetLink(req.body);
+      res.status(201).json(link);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create asset link" });
+    }
+  });
+
+  // Update asset link
+  app.put("/api/admin/asset-links/:id", async (req, res) => {
+    try {
+      const link = await storage.updateAssetLink(req.params.id, req.body);
+      if (!link) {
+        return res.status(404).json({ error: "Asset link not found" });
+      }
+      res.json(link);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update asset link" });
+    }
+  });
+
+  // Delete asset link
+  app.delete("/api/admin/asset-links/:id", async (req, res) => {
+    const success = await storage.deleteAssetLink(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Asset link not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
   // ANALYTICS SETTINGS API
   // ============================================
 
