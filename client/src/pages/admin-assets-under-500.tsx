@@ -25,6 +25,11 @@ export default function AdminAssetsUnder500() {
 
   const { data: assetLinks = [], isLoading } = useQuery<AssetLink[]>({
     queryKey: ['/api/admin/asset-links', COLLECTION_KEY],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/asset-links/${COLLECTION_KEY}`);
+      if (!res.ok) throw new Error('Failed to fetch asset links');
+      return res.json();
+    },
   });
 
   const { data: stockPages = [] } = useQuery<StockPage[]>({
