@@ -545,13 +545,12 @@ export default function AdminTemplates() {
                               onValueChange={(ticker) => updateBlockTickers(index, ticker, 'add')}
                             >
                               <SelectTrigger data-testid={`select-add-ticker-${index}`}>
-                                <SelectValue placeholder="Add a stock..." />
+                                <SelectValue placeholder={`Add a stock (${stockPages.filter(s => !(block.tickers || []).includes(s.ticker)).length} available)...`} />
                               </SelectTrigger>
                               <SelectContent>
-                                <ScrollArea className="h-[200px]">
+                                <ScrollArea className="h-[300px]">
                                   {stockPages
                                     .filter(s => !(block.tickers || []).includes(s.ticker))
-                                    .slice(0, 50)
                                     .map((stock) => (
                                       <SelectItem key={stock.id} value={stock.ticker}>
                                         <div className="flex items-center gap-2">
@@ -562,6 +561,11 @@ export default function AdminTemplates() {
                                         </div>
                                       </SelectItem>
                                     ))}
+                                  {stockPages.filter(s => !(block.tickers || []).includes(s.ticker)).length === 0 && (
+                                    <div className="p-2 text-center text-muted-foreground text-sm">
+                                      No stocks available
+                                    </div>
+                                  )}
                                 </ScrollArea>
                               </SelectContent>
                             </Select>
