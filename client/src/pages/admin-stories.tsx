@@ -297,28 +297,6 @@ export default function AdminStories() {
           </div>
         </div>
 
-        {isCreatingNew && blogPosts.length > 0 && (
-          <Card className="border-dashed">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-4">
-                <Label className="text-sm font-medium whitespace-nowrap">Prefill from Blog:</Label>
-                <Select onValueChange={handlePrefillFromBlog}>
-                  <SelectTrigger className="flex-1" data-testid="select-prefill-blog">
-                    <SelectValue placeholder="Select a blog post to use as template..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {blogPosts.map((blog) => (
-                      <SelectItem key={blog.id} value={blog.id} data-testid={`option-blog-${blog.id}`}>
-                        {blog.title_en}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Tabs defaultValue="content" className="space-y-4">
           <TabsList>
             <TabsTrigger value="content" data-testid="tab-content">Content</TabsTrigger>
@@ -332,6 +310,24 @@ export default function AdminStories() {
                 <CardDescription>Edit the main content of your story</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {blogPosts.length > 0 && (
+                  <div className="p-3 bg-muted/50 rounded-lg border border-dashed space-y-2">
+                    <Label className="text-sm font-medium">Fetch Content from Blog</Label>
+                    <Select onValueChange={handlePrefillFromBlog}>
+                      <SelectTrigger data-testid="select-prefill-blog">
+                        <SelectValue placeholder="Select a blog post to import content..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {blogPosts.map((blog) => (
+                          <SelectItem key={blog.id} value={blog.id} data-testid={`option-blog-${blog.id}`}>
+                            {blog.title_en}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Selecting a blog will fill in title, snippet, image, and content</p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="title">Title ({editLanguage.toUpperCase()})</Label>
                   <Input
