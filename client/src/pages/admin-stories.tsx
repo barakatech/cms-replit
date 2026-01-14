@@ -14,7 +14,7 @@ import { RichTextEditor } from '@/components/RichTextEditor';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Story, InsertStory, SpotlightBanner } from '@shared/schema';
+import type { Story, InsertStory, SpotlightBanner, CMSBlogPost } from '@shared/schema';
 
 type StoryStatus = 'draft' | 'published';
 type StoryLocale = 'en' | 'ar' | 'both';
@@ -100,6 +100,10 @@ export default function AdminStories() {
 
   const { data: spotlights = [] } = useQuery<SpotlightBanner[]>({
     queryKey: ['/api/spotlights'],
+  });
+
+  const { data: blogPosts = [] } = useQuery<CMSBlogPost[]>({
+    queryKey: ['/api/blog'],
   });
 
   const createStoryMutation = useMutation({
@@ -232,6 +236,25 @@ export default function AdminStories() {
     setIsEditing(true);
   };
 
+  const handlePrefillFromBlog = (blogId: string) => {
+    const blog = blogPosts.find(b => b.id === blogId);
+    if (!blog) return;
+    
+    const prefilledStory: EditableStory = {
+      id: '',
+      title: { en: blog.title_en, ar: blog.title_ar },
+      snippet: { en: blog.excerpt_en, ar: blog.excerpt_ar },
+      imageUrl: blog.coverImageUrl || '',
+      content: { en: blog.content_html_en, ar: blog.content_html_ar },
+      whyItMatters: { en: '', ar: '' },
+      tickers: [],
+      status: 'draft',
+      locale: 'both',
+    };
+    setSelectedStory(prefilledStory);
+    toast({ title: 'Prefilled from blog', description: `Story prefilled with content from "${blog.title_en}"` });
+  };
+
   const isSaving = createStoryMutation.isPending || updateStoryMutation.isPending;
 
   if (isEditing && selectedStory) {
@@ -273,6 +296,28 @@ export default function AdminStories() {
             </Button>
           </div>
         </div>
+
+        {isCreatingNew && blogPosts.length > 0 && (
+          <Card className="border-dashed">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-4">
+                <Label className="text-sm font-medium whitespace-nowrap">Prefill from Blog:</Label>
+                <Select onValueChange={handlePrefillFromBlog}>
+                  <SelectTrigger className="flex-1" data-testid="select-prefill-blog">
+                    <SelectValue placeholder="Select a blog post to use as template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {blogPosts.map((blog) => (
+                      <SelectItem key={blog.id} value={blog.id} data-testid={`option-blog-${blog.id}`}>
+                        {blog.title_en}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="content" className="space-y-4">
           <TabsList>
