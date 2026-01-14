@@ -27,17 +27,27 @@ import {
   Code,
   Eye
 } from 'lucide-react';
-import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage } from '@shared/schema';
+import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage, Story } from '@shared/schema';
 
 type ViewMode = 'list' | 'editor';
 
-type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection';
+type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews' | 'linkedStories';
+
+interface NewsItem {
+  title: string;
+  url: string;
+  source: string;
+}
 
 interface SchemaBlock {
   type: BlockType;
   label: string;
   required: boolean;
   tickers?: string[];
+  term?: string;
+  termDefinition?: string;
+  newsItems?: NewsItem[];
+  storyIds?: string[];
 }
 
 interface EditingTemplate {
@@ -51,7 +61,11 @@ interface EditingTemplate {
   defaultValuesJson: Record<string, unknown>;
 }
 
-const BLOCK_TYPES: BlockType[] = ['hero', 'intro', 'featured', 'articles', 'stockCollection', 'cta', 'footer'];
+const BLOCK_TYPES: BlockType[] = [
+  'hero', 'intro', 'featured', 'articles', 'stockCollection', 
+  'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 
+  'inOtherNews', 'linkedStories', 'cta', 'footer'
+];
 
 const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
   hero: 'Hero Section',
@@ -59,6 +73,12 @@ const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
   featured: 'Featured Content',
   articles: 'Articles List',
   stockCollection: 'Stock Collection',
+  assetsUnder500: 'Assets Under $500',
+  userPicks: 'What Users Picked',
+  assetHighlight: 'Asset Highlight',
+  termOfTheDay: 'Term of the Day',
+  inOtherNews: 'In Other News',
+  linkedStories: 'Linked Stories',
   cta: 'Call to Action',
   footer: 'Footer',
 };
@@ -69,6 +89,12 @@ const DUMMY_PREVIEW_DATA = {
   featured: { title: 'Featured Story', content: 'This is the main story of the week.', imageUrl: 'https://placehold.co/400x200' },
   articles: { articles: [{ title: 'Article 1', excerpt: 'Short description...', url: '#' }, { title: 'Article 2', excerpt: 'Another piece...', url: '#' }] },
   stockCollection: { tickers: ['AAPL', 'GOOGL', 'MSFT'] },
+  assetsUnder500: { title: 'Stocks Under $500', tickers: ['AAPL', 'MSFT', 'GOOGL'] },
+  userPicks: { title: 'What Users Picked Yesterday', tickers: ['TSLA', 'NVDA', 'META'] },
+  assetHighlight: { title: 'Featured Stock', ticker: 'AAPL' },
+  termOfTheDay: { term: 'P/E Ratio', definition: 'Price-to-Earnings ratio measures a company\'s current share price relative to its earnings per share.' },
+  inOtherNews: { newsItems: [{ title: 'Fed announces rate decision', url: '#', source: 'Reuters' }, { title: 'Tech stocks rally', url: '#', source: 'Bloomberg' }] },
+  linkedStories: { storyIds: ['story-1', 'story-2'] },
   cta: { text: 'Get Started', url: '#', description: 'Take action now!' },
   footer: { content: '© 2024 Baraka. All rights reserved.' },
 };
@@ -86,6 +112,10 @@ export default function AdminTemplates() {
 
   const { data: stockPages = [] } = useQuery<StockPage[]>({
     queryKey: ['/api/admin/stocks'],
+  });
+
+  const { data: stories = [] } = useQuery<Story[]>({
+    queryKey: ['/api/stories'],
   });
 
   const createMutation = useMutation({
@@ -305,6 +335,48 @@ export default function AdminTemplates() {
         blocks[index] = { ...blocks[index], tickers: [...currentTickers, ticker] };
       } else if (action === 'remove') {
         blocks[index] = { ...blocks[index], tickers: currentTickers.filter(t => t !== ticker) };
+      }
+      
+      return {
+        ...prev,
+        schemaJson: { blocks },
+      };
+    });
+  };
+
+  const updateBlockNewsItems = (index: number, action: 'add' | 'remove' | 'update', itemIndex?: number, field?: keyof NewsItem, value?: string) => {
+    setEditingTemplate(prev => {
+      if (!prev) return prev;
+      const blocks = [...prev.schemaJson.blocks];
+      const currentItems = blocks[index].newsItems || [];
+      
+      if (action === 'add') {
+        blocks[index] = { ...blocks[index], newsItems: [...currentItems, { title: '', url: '', source: '' }] };
+      } else if (action === 'remove' && itemIndex !== undefined) {
+        blocks[index] = { ...blocks[index], newsItems: currentItems.filter((_, i) => i !== itemIndex) };
+      } else if (action === 'update' && itemIndex !== undefined && field && value !== undefined) {
+        const updatedItems = [...currentItems];
+        updatedItems[itemIndex] = { ...updatedItems[itemIndex], [field]: value };
+        blocks[index] = { ...blocks[index], newsItems: updatedItems };
+      }
+      
+      return {
+        ...prev,
+        schemaJson: { blocks },
+      };
+    });
+  };
+
+  const updateBlockStoryIds = (index: number, storyId: string, action: 'add' | 'remove') => {
+    setEditingTemplate(prev => {
+      if (!prev) return prev;
+      const blocks = [...prev.schemaJson.blocks];
+      const currentStoryIds = blocks[index].storyIds || [];
+      
+      if (action === 'add' && currentStoryIds.length < 3 && !currentStoryIds.includes(storyId)) {
+        blocks[index] = { ...blocks[index], storyIds: [...currentStoryIds, storyId] };
+      } else if (action === 'remove') {
+        blocks[index] = { ...blocks[index], storyIds: currentStoryIds.filter(id => id !== storyId) };
       }
       
       return {
@@ -578,6 +650,305 @@ export default function AdminTemplates() {
                           )}
                         </div>
                       )}
+
+                      {(block.type === 'assetsUnder500' || block.type === 'userPicks') && (
+                        <div className="mt-4 space-y-3 border-t pt-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Section Title</Label>
+                            <Input
+                              value={block.term || ''}
+                              onChange={(e) => updateBlock(index, 'term', e.target.value)}
+                              placeholder={block.type === 'assetsUnder500' ? 'Stocks Under $500' : 'What Users Picked Yesterday'}
+                              data-testid={`input-block-title-${index}`}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-medium">Stock Tickers (3-5 required)</Label>
+                            <span className="text-xs text-muted-foreground">
+                              {(block.tickers || []).length}/5 selected
+                            </span>
+                          </div>
+                          
+                          {(block.tickers || []).length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {(block.tickers || []).map((ticker) => {
+                                const stock = stockPages.find(s => s.ticker === ticker);
+                                return (
+                                  <Badge 
+                                    key={ticker} 
+                                    variant="secondary" 
+                                    className="flex items-center gap-1"
+                                  >
+                                    <span className="font-mono">{ticker}</span>
+                                    {stock && (
+                                      <span className="text-xs opacity-70 max-w-[100px] truncate">
+                                        {stock.companyName_en}
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => updateBlockTickers(index, ticker, 'remove')}
+                                      className="ml-1 hover:text-destructive"
+                                      data-testid={`button-remove-ticker-${index}-${ticker}`}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {(block.tickers || []).length < 5 && (
+                            <Select
+                              value=""
+                              onValueChange={(ticker) => updateBlockTickers(index, ticker, 'add')}
+                            >
+                              <SelectTrigger data-testid={`select-add-ticker-${index}`}>
+                                <SelectValue placeholder="Add a stock..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <ScrollArea className="h-[300px]">
+                                  {stockPages
+                                    .filter(s => !(block.tickers || []).includes(s.ticker))
+                                    .map((stock) => (
+                                      <SelectItem key={stock.id} value={stock.ticker}>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-mono font-medium">{stock.ticker}</span>
+                                          <span className="text-muted-foreground text-xs truncate max-w-[150px]">
+                                            {stock.companyName_en}
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                </ScrollArea>
+                              </SelectContent>
+                            </Select>
+                          )}
+                          
+                          {(block.tickers || []).length < 3 && (
+                            <p className="text-xs text-amber-600">
+                              Please select at least 3 stocks for this collection
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {block.type === 'assetHighlight' && (
+                        <div className="mt-4 space-y-3 border-t pt-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Section Title</Label>
+                            <Input
+                              value={block.term || ''}
+                              onChange={(e) => updateBlock(index, 'term', e.target.value)}
+                              placeholder="Featured Stock of the Week"
+                              data-testid={`input-block-title-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">Select Stock</Label>
+                            {(block.tickers || []).length > 0 ? (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="flex items-center gap-1">
+                                  <span className="font-mono">{block.tickers?.[0]}</span>
+                                  {stockPages.find(s => s.ticker === block.tickers?.[0]) && (
+                                    <span className="text-xs opacity-70">
+                                      {stockPages.find(s => s.ticker === block.tickers?.[0])?.companyName_en}
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBlockTickers(index, block.tickers![0], 'remove')}
+                                    className="ml-1 hover:text-destructive"
+                                    data-testid={`button-remove-highlight-ticker-${index}`}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              </div>
+                            ) : (
+                              <Select
+                                value=""
+                                onValueChange={(ticker) => updateBlock(index, 'tickers', [ticker])}
+                              >
+                                <SelectTrigger data-testid={`select-highlight-ticker-${index}`}>
+                                  <SelectValue placeholder="Select a stock to highlight..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <ScrollArea className="h-[300px]">
+                                    {stockPages.map((stock) => (
+                                      <SelectItem key={stock.id} value={stock.ticker}>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-mono font-medium">{stock.ticker}</span>
+                                          <span className="text-muted-foreground text-xs truncate max-w-[150px]">
+                                            {stock.companyName_en}
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </ScrollArea>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {block.type === 'termOfTheDay' && (
+                        <div className="mt-4 space-y-3 border-t pt-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs">Term</Label>
+                            <Input
+                              value={block.term || ''}
+                              onChange={(e) => updateBlock(index, 'term', e.target.value)}
+                              placeholder="e.g., P/E Ratio"
+                              data-testid={`input-term-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Definition</Label>
+                            <Textarea
+                              value={block.termDefinition || ''}
+                              onChange={(e) => updateBlock(index, 'termDefinition', e.target.value)}
+                              placeholder="Explain the term or concept..."
+                              rows={3}
+                              data-testid={`textarea-term-definition-${index}`}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {block.type === 'inOtherNews' && (
+                        <div className="mt-4 space-y-3 border-t pt-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-medium">News Items</Label>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => updateBlockNewsItems(index, 'add')}
+                              data-testid={`button-add-news-item-${index}`}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add News
+                            </Button>
+                          </div>
+                          
+                          {(block.newsItems || []).map((item, itemIndex) => (
+                            <Card key={itemIndex} className="p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground">News #{itemIndex + 1}</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => updateBlockNewsItems(index, 'remove', itemIndex)}
+                                  data-testid={`button-remove-news-${index}-${itemIndex}`}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <Input
+                                value={item.title}
+                                onChange={(e) => updateBlockNewsItems(index, 'update', itemIndex, 'title', e.target.value)}
+                                placeholder="News headline..."
+                                data-testid={`input-news-title-${index}-${itemIndex}`}
+                              />
+                              <Input
+                                value={item.url}
+                                onChange={(e) => updateBlockNewsItems(index, 'update', itemIndex, 'url', e.target.value)}
+                                placeholder="https://..."
+                                data-testid={`input-news-url-${index}-${itemIndex}`}
+                              />
+                              <Input
+                                value={item.source}
+                                onChange={(e) => updateBlockNewsItems(index, 'update', itemIndex, 'source', e.target.value)}
+                                placeholder="Source (e.g., Reuters, Bloomberg)"
+                                data-testid={`input-news-source-${index}-${itemIndex}`}
+                              />
+                            </Card>
+                          ))}
+                          
+                          {(block.newsItems || []).length === 0 && (
+                            <p className="text-xs text-muted-foreground text-center py-2">
+                              No news items added yet
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {block.type === 'linkedStories' && (
+                        <div className="mt-4 space-y-3 border-t pt-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-medium">Linked Stories (1-3)</Label>
+                            <span className="text-xs text-muted-foreground">
+                              {(block.storyIds || []).length}/3 selected
+                            </span>
+                          </div>
+                          
+                          {(block.storyIds || []).length > 0 && (
+                            <div className="space-y-2">
+                              {(block.storyIds || []).map((storyId) => {
+                                const story = stories.find(s => s.id === storyId);
+                                return (
+                                  <Badge 
+                                    key={storyId} 
+                                    variant="secondary" 
+                                    className="flex items-center gap-1 w-full justify-between"
+                                  >
+                                    <span className="truncate max-w-[200px]">
+                                      {story?.title_en || storyId}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateBlockStoryIds(index, storyId, 'remove')}
+                                      className="ml-1 hover:text-destructive"
+                                      data-testid={`button-remove-story-${index}-${storyId}`}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {(block.storyIds || []).length < 3 && (
+                            <Select
+                              value=""
+                              onValueChange={(storyId) => updateBlockStoryIds(index, storyId, 'add')}
+                            >
+                              <SelectTrigger data-testid={`select-add-story-${index}`}>
+                                <SelectValue placeholder="Add a story..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <ScrollArea className="h-[300px]">
+                                  {stories
+                                    .filter(s => s.status === 'published' && !(block.storyIds || []).includes(s.id))
+                                    .map((story) => (
+                                      <SelectItem key={story.id} value={story.id}>
+                                        <div className="flex items-center gap-2">
+                                          <span className="truncate max-w-[200px]">
+                                            {story.title_en}
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  {stories.filter(s => s.status === 'published' && !(block.storyIds || []).includes(s.id)).length === 0 && (
+                                    <div className="p-2 text-center text-muted-foreground text-sm">
+                                      No stories available
+                                    </div>
+                                  )}
+                                </ScrollArea>
+                              </SelectContent>
+                            </Select>
+                          )}
+                          
+                          {(block.storyIds || []).length === 0 && (
+                            <p className="text-xs text-amber-600">
+                              Please select at least 1 story
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -716,6 +1087,123 @@ export default function AdminTemplates() {
                               {(block.tickers || []).length === 0 && (
                                 <p className="text-xs text-gray-400 text-center">
                                   Select 3-5 stocks to display in this collection
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {(block.type === 'assetsUnder500' || block.type === 'userPicks') && (
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">
+                                {block.term || (dummyData as typeof DUMMY_PREVIEW_DATA.assetsUnder500).title}
+                              </h4>
+                              <div className="grid grid-cols-3 gap-2">
+                                {(block.tickers || (dummyData as typeof DUMMY_PREVIEW_DATA.assetsUnder500).tickers).map((ticker, i) => {
+                                  const stock = stockPages.find(s => s.ticker === ticker);
+                                  return (
+                                    <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                                      <div className="font-mono font-bold text-gray-800">{ticker}</div>
+                                      <div className="text-xs text-gray-500 truncate">
+                                        {stock?.companyName_en || 'Company Name'}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {(block.tickers || []).length === 0 && (
+                                <p className="text-xs text-gray-400 text-center">
+                                  Select 3-5 stocks to display
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {block.type === 'assetHighlight' && (
+                            <div className="space-y-3">
+                              <h4 className="font-medium text-gray-800">
+                                {block.term || (dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).title}
+                              </h4>
+                              {(block.tickers || [(dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).ticker]).length > 0 ? (
+                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                      <span className="font-mono font-bold text-green-700">
+                                        {(block.tickers?.[0] || (dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).ticker).slice(0, 2)}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <div className="font-mono font-bold text-gray-800">
+                                        {block.tickers?.[0] || (dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).ticker}
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        {stockPages.find(s => s.ticker === (block.tickers?.[0] || ''))?.companyName_en || 'Featured Company'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-400 text-center">
+                                  Select a stock to highlight
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {block.type === 'termOfTheDay' && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-lg">📚</span>
+                                <h4 className="font-medium text-blue-800">Term of the Day</h4>
+                              </div>
+                              <div className="font-bold text-gray-800 mb-1">
+                                {block.term || (dummyData as typeof DUMMY_PREVIEW_DATA.termOfTheDay).term}
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                {block.termDefinition || (dummyData as typeof DUMMY_PREVIEW_DATA.termOfTheDay).definition}
+                              </p>
+                            </div>
+                          )}
+                          {block.type === 'inOtherNews' && (
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-800 mb-3">In Other News</h4>
+                              {(block.newsItems || (dummyData as typeof DUMMY_PREVIEW_DATA.inOtherNews).newsItems).length > 0 ? (
+                                <ul className="space-y-2">
+                                  {(block.newsItems || (dummyData as typeof DUMMY_PREVIEW_DATA.inOtherNews).newsItems).map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm">
+                                      <span className="text-gray-400">→</span>
+                                      <div>
+                                        <span className="text-gray-800">{item.title || 'News headline...'}</span>
+                                        <span className="text-xs text-gray-500 ml-2">({item.source || 'Source'})</span>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-xs text-gray-400 text-center">
+                                  Add news items to display
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {block.type === 'linkedStories' && (
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-gray-800 mb-3">Related Stories</h4>
+                              {(block.storyIds || []).length > 0 ? (
+                                <div className="space-y-2">
+                                  {(block.storyIds || []).map((storyId, i) => {
+                                    const story = stories.find(s => s.id === storyId);
+                                    return (
+                                      <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div className="font-medium text-sm text-gray-800">
+                                          {story?.title_en || 'Story Title'}
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                                          {story?.snippet_en || 'Story excerpt...'}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-400 text-center">
+                                  Select 1-3 stories to link
                                 </p>
                               )}
                             </div>

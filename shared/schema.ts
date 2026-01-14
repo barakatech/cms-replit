@@ -1128,8 +1128,34 @@ export interface CMSBlogPost {
 
 export type InsertCMSBlogPost = Omit<CMSBlogPost, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
 
+// Story Status
+export type StoryStatus = 'draft' | 'published';
+
+// Story for Newsletter content
+export interface Story {
+  id: string;
+  title_en: string;
+  title_ar: string;
+  snippet_en: string;
+  snippet_ar: string;
+  imageUrl: string;
+  content_html_en: string;
+  content_html_ar: string;
+  whyItMatters_en: string;
+  whyItMatters_ar: string;
+  tickers: string[];
+  status: StoryStatus;
+  locale: 'en' | 'ar' | 'both';
+  linkedSpotlightId?: string;
+  linkedNewsletterId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertStory = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
+
 // Newsletter Template Block Type
-export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection';
+export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews' | 'linkedStories';
 
 // Newsletter Template
 export interface NewsletterTemplate {
@@ -1381,14 +1407,37 @@ export const insertNewsletterTemplateSchema = z.object({
   locale: z.enum(['en', 'ar', 'global']),
   schemaJson: z.object({
     blocks: z.array(z.object({
-      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection']),
+      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews', 'linkedStories']),
       label: z.string(),
       required: z.boolean(),
       tickers: z.array(z.string()).optional(),
+      storyIds: z.array(z.string()).optional(),
+      newsItems: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+        source: z.string().optional(),
+      })).optional(),
+      term: z.string().optional(),
+      termDefinition: z.string().optional(),
     })),
   }),
   htmlWrapper: z.string(),
   defaultValuesJson: z.record(z.unknown()),
+});
+
+export const insertStorySchema = z.object({
+  title_en: z.string().min(1),
+  title_ar: z.string(),
+  snippet_en: z.string().min(1),
+  snippet_ar: z.string(),
+  imageUrl: z.string(),
+  content_html_en: z.string(),
+  content_html_ar: z.string(),
+  whyItMatters_en: z.string(),
+  whyItMatters_ar: z.string(),
+  tickers: z.array(z.string()),
+  status: z.enum(['draft', 'published']),
+  locale: z.enum(['en', 'ar', 'both']),
 });
 
 // Default event mappings per platform

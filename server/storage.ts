@@ -60,6 +60,8 @@ import {
   type CmsSettings,
   type AssetLink,
   type InsertAssetLink,
+  type Story,
+  type InsertStory,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2389,6 +2391,16 @@ export interface IStorage {
   // CMS Settings
   getCmsSettings(): Promise<CmsSettings>;
   updateCmsSettings(settings: Partial<CmsSettings>): Promise<CmsSettings>;
+  
+  // Stories
+  getStories(): Promise<Story[]>;
+  getStory(id: string): Promise<Story | undefined>;
+  createStory(story: InsertStory): Promise<Story>;
+  updateStory(id: string, story: Partial<Story>): Promise<Story | undefined>;
+  deleteStory(id: string): Promise<boolean>;
+  getStoriesByNewsletterId(newsletterId: string): Promise<Story[]>;
+  linkStoryToSpotlight(storyId: string, spotlightId: string): Promise<Story | undefined>;
+  linkStoryToNewsletter(storyId: string, newsletterId: string): Promise<Story | undefined>;
 }
 
 // Dashboard Summary Types
@@ -2550,6 +2562,7 @@ export class MemStorage implements IStorage {
   private teamMembers: Map<string, CmsTeamMember>;
   private cmsSettings: CmsSettings;
   private assetLinks: Map<string, AssetLink>;
+  private stories: Map<string, Story>;
 
   constructor() {
     this.users = new Map();
@@ -2587,6 +2600,7 @@ export class MemStorage implements IStorage {
     this.auditLogs = new Map();
     this.newsletterSettings = { ...seedNewsletterSettings };
     this.assetLinks = new Map();
+    this.stories = new Map();
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -3794,6 +3808,62 @@ export class MemStorage implements IStorage {
       updatedAt: new Date().toISOString(),
     };
     return this.cmsSettings;
+  }
+
+  // Stories
+  async getStories(): Promise<Story[]> {
+    return Array.from(this.stories.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getStory(id: string): Promise<Story | undefined> {
+    return this.stories.get(id);
+  }
+
+  async createStory(insertStory: InsertStory): Promise<Story> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const story: Story = {
+      ...insertStory,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.stories.set(id, story);
+    return story;
+  }
+
+  async updateStory(id: string, updates: Partial<Story>): Promise<Story | undefined> {
+    const story = this.stories.get(id);
+    if (!story) return undefined;
+    const updated = { ...story, ...updates, updatedAt: new Date().toISOString() };
+    this.stories.set(id, updated);
+    return updated;
+  }
+
+  async deleteStory(id: string): Promise<boolean> {
+    return this.stories.delete(id);
+  }
+
+  async getStoriesByNewsletterId(newsletterId: string): Promise<Story[]> {
+    return Array.from(this.stories.values()).filter(s => s.linkedNewsletterId === newsletterId);
+  }
+
+  async linkStoryToSpotlight(storyId: string, spotlightId: string): Promise<Story | undefined> {
+    const story = this.stories.get(storyId);
+    if (!story) return undefined;
+    const updated = { ...story, linkedSpotlightId: spotlightId, updatedAt: new Date().toISOString() };
+    this.stories.set(storyId, updated);
+    return updated;
+  }
+
+  async linkStoryToNewsletter(storyId: string, newsletterId: string): Promise<Story | undefined> {
+    const story = this.stories.get(storyId);
+    if (!story) return undefined;
+    const updated = { ...story, linkedNewsletterId: newsletterId, updatedAt: new Date().toISOString() };
+    this.stories.set(storyId, updated);
+    return updated;
   }
 }
 

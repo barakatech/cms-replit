@@ -31,12 +31,12 @@ import AdminCTAPerformance from '@/pages/admin-cta-performance';
 import AdminStocks from '@/pages/admin-stocks';
 import AdminNewsletters from '@/pages/admin-newsletters';
 import AdminTemplates from '@/pages/admin-templates';
-import AdminAssetsUnder500 from '@/pages/admin-assets-under-500';
 import AdminSpotlights from '@/pages/admin-spotlights';
 import AdminSubscribers from '@/pages/admin-subscribers';
 import AdminSettings from '@/pages/admin-settings';
 import AdminUsers from '@/pages/admin-users';
 import AdminAuditLog from '@/pages/admin-audit-log';
+import AdminStories from '@/pages/admin-stories';
 import PageBuilder from '@/pages/page-builder';
 import LandingPagePublic from '@/pages/landing-page';
 import StockThemePage from '@/pages/stock-theme';
@@ -335,23 +335,6 @@ function Router() {
           </ProtectedRoute>
         )}
       </Route>
-      <Route path="/admin/assets-under-500">
-        {() => (
-          <ProtectedRoute>
-            <SidebarProvider>
-              <div className="flex h-screen w-full">
-                <AppSidebar />
-                <div className="flex flex-col flex-1">
-                  <TopBar />
-                  <main className="flex-1 overflow-auto">
-                    <AdminAssetsUnder500 />
-                  </main>
-                </div>
-              </div>
-            </SidebarProvider>
-          </ProtectedRoute>
-        )}
-      </Route>
       <Route path="/admin/spotlights">
         {() => (
           <ProtectedRoute>
@@ -362,6 +345,23 @@ function Router() {
                   <TopBar />
                   <main className="flex-1 overflow-auto">
                     <AdminSpotlights />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/stories">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminStories />
                   </main>
                 </div>
               </div>

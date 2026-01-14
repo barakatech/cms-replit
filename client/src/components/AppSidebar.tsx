@@ -15,7 +15,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, LayoutTemplate, Users, ClipboardList, Shield, DollarSign } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, LayoutTemplate, Users, ClipboardList, Shield, Newspaper } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
@@ -27,10 +27,10 @@ const menuItems = [
 
 const blogSubItems = [
   { title: 'Blog Posts', url: '/admin/blog', icon: BookOpen, testId: 'link-blog-posts' },
+  { title: 'Stories', url: '/admin/stories', icon: Newspaper, testId: 'link-stories' },
   { title: 'Newsletters', url: '/admin/newsletters', icon: Mail, testId: 'link-newsletters' },
   { title: 'Spotlights', url: '/admin/spotlights', icon: Sparkles, testId: 'link-spotlights' },
   { title: 'Templates', url: '/admin/templates', icon: LayoutTemplate, testId: 'link-templates' },
-  { title: 'Assets Under 500', url: '/admin/assets-under-500', icon: DollarSign, testId: 'link-assets-under-500' },
   { title: 'Subscribers', url: '/admin/subscribers', icon: Users, testId: 'link-subscribers' },
 ];
 
