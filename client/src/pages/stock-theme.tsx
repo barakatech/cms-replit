@@ -9,6 +9,7 @@ import type { StockTheme, StockPage } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
 import ThemeIcon from '@/components/ThemeIcon';
 import SignUpCTA from '@/components/SignUpCTA';
+import { StockLogo } from '@/components/StockLogo';
 
 export default function StockThemePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -152,11 +153,14 @@ export default function StockThemePage() {
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-lg">{ticker}</h3>
-                    {stockPage && (
-                      <p className="text-sm text-muted-foreground">{stockPage.companyName_en}</p>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <StockLogo ticker={ticker} companyName={stockPage?.companyName_en} size="lg" />
+                    <div>
+                      <h3 className="font-bold text-lg">{ticker}</h3>
+                      {stockPage && (
+                        <p className="text-sm text-muted-foreground">{stockPage.companyName_en}</p>
+                      )}
+                    </div>
                   </div>
                   {hasPage ? (
                     <Badge variant="outline" className="text-green-600 border-green-600/30 bg-green-50 dark:bg-green-900/20">

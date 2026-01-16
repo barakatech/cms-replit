@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { type StockPage } from '@/lib/mockData';
+import { StockLogo } from '@/components/StockLogo';
 
 interface LivePreviewProps {
   stock: StockPage;
@@ -25,11 +26,18 @@ export default function LivePreview({ stock, language }: LivePreviewProps) {
       {/* Hero Section */}
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-1" data-testid="preview-company-name">
-              {stock.companyName}
-            </h1>
-            <div className="text-sm text-muted-foreground font-mono">{stock.ticker}</div>
+          <div className="flex items-start gap-4 flex-1">
+            <StockLogo 
+              ticker={stock.ticker} 
+              companyName={stock.companyName} 
+              size="xl"
+            />
+            <div>
+              <h1 className="text-3xl font-bold mb-1" data-testid="preview-company-name">
+                {stock.companyName}
+              </h1>
+              <div className="text-sm text-muted-foreground font-mono">{stock.ticker}</div>
+            </div>
           </div>
           <Button size="sm" data-testid="preview-invest-button">
             {language === 'en' ? 'Invest' : 'استثمر'}
@@ -175,7 +183,10 @@ export default function LivePreview({ stock, language }: LivePreviewProps) {
             {allLinks.map((ticker) => (
               <Card key={ticker} className="hover-elevate cursor-pointer">
                 <CardContent className="p-4">
-                  <div className="font-mono font-semibold">{ticker}</div>
+                  <div className="flex items-center gap-2">
+                    <StockLogo ticker={ticker} size="sm" />
+                    <div className="font-mono font-semibold">{ticker}</div>
+                  </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {language === 'en' ? 'View details' : 'عرض التفاصيل'}
                   </div>

@@ -21,6 +21,7 @@ import {
 import type { StockPage, StockTheme } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
 import ThemeIcon from '@/components/ThemeIcon';
+import { StockLogo } from '@/components/StockLogo';
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'name' | 'ticker' | 'sector';
@@ -235,18 +236,21 @@ export default function BrowseStocksPage() {
                 <Card className="hover-elevate cursor-pointer h-full group" data-testid={`card-stock-${stock.ticker}`}>
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-lg">{stock.ticker}</h3>
-                          {stock.exchange && (
-                            <Badge variant="outline" className="text-xs">
-                              {stock.exchange}
-                            </Badge>
-                          )}
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <StockLogo ticker={stock.ticker} companyName={stock.companyName_en} size="lg" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-lg">{stock.ticker}</h3>
+                            {stock.exchange && (
+                              <Badge variant="outline" className="text-xs">
+                                {stock.exchange}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {stock.companyName_en}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {stock.companyName_en}
-                        </p>
                       </div>
                       <TrendingUp className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
@@ -279,6 +283,7 @@ export default function BrowseStocksPage() {
                           data-testid={`row-stock-${stock.ticker}`}
                         >
                           <div className="flex items-center gap-4">
+                            <StockLogo ticker={stock.ticker} companyName={stock.companyName_en} size="sm" />
                             <span className="font-bold w-16">{stock.ticker}</span>
                             <span className="text-muted-foreground">{stock.companyName_en}</span>
                           </div>

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { PresenceAvatars } from '@/components/PresenceIndicators';
+import { StockLogo } from '@/components/StockLogo';
 import type { StockPage, UserPresence } from '@shared/schema';
 
 export default function AdminStocks() {
@@ -151,7 +152,12 @@ export default function AdminStocks() {
                       onClick={() => navigate(`/admin/stocks/${page.id}/edit`)}
                       data-testid={`row-stock-${page.id}`}
                     >
-                      <TableCell className="font-mono font-bold">{page.ticker}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <StockLogo ticker={page.ticker} companyName={page.companyName_en} size="sm" />
+                          <span className="font-mono font-bold">{page.ticker}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>{page.companyName_en}</TableCell>
                       <TableCell className="text-muted-foreground">{page.sector}</TableCell>
                       <TableCell>

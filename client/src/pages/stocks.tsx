@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Search, Star, ArrowRight } from 'lucide-react';
 import { mockStocks } from '@/lib/mockData';
+import { StockLogo } from '@/components/StockLogo';
 
 export default function StocksDirectory() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,9 +92,12 @@ export default function StocksDirectory() {
                         <CardContent className="p-5">
                           <div className={`flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <div>
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                                <span className="font-bold text-primary text-sm">{stock.ticker.slice(0, 2)}</span>
-                              </div>
+                              <StockLogo 
+                                ticker={stock.ticker} 
+                                companyName={stock.companyName} 
+                                size="lg" 
+                                className="mb-3"
+                              />
                               <p className="font-mono font-semibold text-lg">{stock.ticker}</p>
                               <p className="text-sm text-muted-foreground line-clamp-1">{stock.companyName}</p>
                             </div>
@@ -131,9 +135,11 @@ export default function StocksDirectory() {
                       <CardContent className="p-4">
                         <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                              <span className="font-bold text-sm">{stock.ticker.slice(0, 2)}</span>
-                            </div>
+                            <StockLogo 
+                              ticker={stock.ticker} 
+                              companyName={stock.companyName} 
+                              size="lg"
+                            />
                             <div className={isRTL ? 'text-right' : ''}>
                               <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                                 <span className="font-mono font-semibold">{stock.ticker}</span>

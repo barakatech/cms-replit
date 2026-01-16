@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Share2, Bell, Star } from 'lucide-react';
 import { type StockPage } from '@/lib/mockData';
 import SignUpCTA from '@/components/SignUpCTA';
+import { StockLogo } from '@/components/StockLogo';
 
 interface StockHeroProps {
   stock: StockPage;
@@ -18,9 +19,12 @@ export function StockHero({ stock, language }: StockHeroProps) {
       <div className={`flex items-start justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
         <div className={`flex-1 ${isRTL ? 'text-right' : ''}`}>
           <div className={`flex items-center gap-3 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border">
-              <span className="font-bold text-primary">{stock.ticker.slice(0, 2)}</span>
-            </div>
+            <StockLogo 
+              ticker={stock.ticker} 
+              companyName={stock.companyName} 
+              size="xl"
+              className="rounded-xl"
+            />
             <div>
               <h1 className="text-2xl md:text-3xl font-bold" data-testid="hero-company-name">
                 {stock.companyName}

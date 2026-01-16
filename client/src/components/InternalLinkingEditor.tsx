@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { X, Plus } from 'lucide-react';
 import { type StockPage } from '@/lib/mockData';
+import { StockLogo } from '@/components/StockLogo';
 
 interface InternalLinkingEditorProps {
   stock: StockPage;
@@ -63,6 +64,7 @@ export default function InternalLinkingEditor({ stock, onChange }: InternalLinki
                 data-testid={`suggestion-${suggestion.ticker}`}
               >
                 <div className="flex items-center gap-3">
+                  <StockLogo ticker={suggestion.ticker} size="sm" />
                   <span className="font-mono font-semibold text-sm">{suggestion.ticker}</span>
                   <Badge variant="outline" className="text-xs no-default-hover-elevate">
                     {suggestion.reason}
@@ -109,6 +111,7 @@ export default function InternalLinkingEditor({ stock, onChange }: InternalLinki
                   className="px-3 py-1.5 text-sm font-mono gap-2 no-default-hover-elevate"
                   data-testid={`badge-manual-${ticker}`}
                 >
+                  <StockLogo ticker={ticker} size="xs" />
                   {ticker}
                   <button
                     onClick={() => removeManualLink(ticker)}

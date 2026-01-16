@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Flame } from 'lucide-react';
+import { StockLogo } from '@/components/StockLogo';
 
 interface TrendingStocksBlockProps {
   language: 'en' | 'ar';
@@ -56,9 +57,7 @@ export function TrendingStocksBlock({ language, currentTicker }: TrendingStocksB
                   data-testid={`trending-${stock.ticker}`}
                 >
                   <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-bold">{stock.ticker.slice(0, 2)}</span>
-                    </div>
+                    <StockLogo ticker={stock.ticker} companyName={stock.name} size="md" />
                     <div className={isRTL ? 'text-right' : ''}>
                       <p className="font-mono font-semibold text-sm">{stock.ticker}</p>
                       <p className="text-xs text-muted-foreground truncate max-w-[100px]">{stock.name}</p>

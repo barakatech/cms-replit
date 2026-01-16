@@ -45,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import type { DiscoverSettings, StockTheme, OfferBanner } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
+import { StockLogo } from '@/components/StockLogo';
 
 export default function Discover() {
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
@@ -337,9 +338,7 @@ export default function Discover() {
           data-testid={`stock-row-${ticker}`}
         >
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-              {ticker.slice(0, 2)}
-            </div>
+            <StockLogo ticker={ticker} companyName={stock?.companyName} size="lg" />
             <div className={isRTL ? 'text-right' : ''}>
               <span className="font-semibold text-sm">{ticker}</span>
               {stock && <p className="text-xs text-muted-foreground">{stock.companyName}</p>}
@@ -370,9 +369,7 @@ export default function Discover() {
         <Card className="hover-elevate cursor-pointer h-full" data-testid={`stock-card-${ticker}`}>
           <CardContent className="p-4">
             <div className={`flex items-center gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                {ticker.slice(0, 2)}
-              </div>
+              <StockLogo ticker={ticker} companyName={stock?.companyName} size="md" />
               <div className={isRTL ? 'text-right' : ''}>
                 <span className="font-semibold text-sm">{ticker}</span>
                 {stock && <p className="text-xs text-muted-foreground truncate">{stock.companyName}</p>}

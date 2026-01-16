@@ -13,6 +13,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import { mockStocks, type StockPage } from '@/lib/mockData';
+import { StockLogo } from '@/components/StockLogo';
 import { 
   StockHero, 
   StockChartPanel, 
@@ -224,7 +225,10 @@ export default function StockDetail() {
                         <Card className="hover-elevate cursor-pointer" data-testid={`related-stock-${ticker}`}>
                           <CardContent className="p-4">
                             <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                              <span className="font-mono font-semibold">{ticker}</span>
+                              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                <StockLogo ticker={ticker} size="sm" />
+                                <span className="font-mono font-semibold">{ticker}</span>
+                              </div>
                               <ChevronRight className={`h-4 w-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
                             </div>
                           </CardContent>
