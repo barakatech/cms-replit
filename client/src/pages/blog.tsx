@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Edit, Trash2, Eye, Calendar, User, ArrowLeft, Globe, Image, Sparkles, Mail, Send } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Calendar, User, ArrowLeft, Globe, Image, Sparkles, Mail, Send, Rocket, Loader2, Check, BookOpen, Megaphone, Newspaper } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost } from '@shared/schema';
+import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost, Story, InsertStory } from '@shared/schema';
 
 type BlogStatus = 'draft' | 'published' | 'archived';
 
@@ -124,6 +124,10 @@ export default function Blog() {
     queryKey: ['/api/newsletters'],
   });
 
+  const { data: stories = [] } = useQuery<Story[]>({
+    queryKey: ['/api/stories'],
+  });
+
   const spotlightsByBlogId = useMemo(() => {
     const map: Record<string, SpotlightBanner> = {};
     spotlights.forEach(s => {
@@ -139,6 +143,24 @@ export default function Blog() {
     });
     return map;
   }, [newsletters]);
+
+  const storiesByBlogId = useMemo(() => {
+    const map: Record<string, Story> = {};
+    stories.forEach(s => {
+      if (s.sourceBlogPostId) map[s.sourceBlogPostId] = s;
+    });
+    blogPosts.forEach(blog => {
+      if (!map[blog.id]) {
+        const matchingStory = stories.find(s => 
+          !s.sourceBlogPostId && s.title_en === blog.title_en
+        );
+        if (matchingStory) {
+          map[blog.id] = matchingStory;
+        }
+      }
+    });
+    return map;
+  }, [stories, blogPosts]);
 
   const createBlogMutation = useMutation({
     mutationFn: async (data: InsertBlogPost) => {
@@ -230,6 +252,134 @@ export default function Blog() {
       queryClient.invalidateQueries({ queryKey: ['/api/newsletters'] });
     },
   });
+
+  const createStoryMutation = useMutation({
+    mutationFn: async ({ blogId, blog }: { blogId: string; blog: EditableBlogPost }) => {
+      const storyData: InsertStory = {
+        title_en: blog.title.en,
+        title_ar: blog.title.ar,
+        snippet_en: blog.excerpt.en,
+        snippet_ar: blog.excerpt.ar,
+        imageUrl: blog.featuredImage || '',
+        content_html_en: blog.content.en,
+        content_html_ar: blog.content.ar,
+        whyItMatters_en: '',
+        whyItMatters_ar: '',
+        tickers: [],
+        status: 'draft',
+        locale: 'both',
+        sourceBlogPostId: blogId,
+      };
+      const response = await apiRequest('POST', '/api/stories', storyData);
+      return response.json() as Promise<Story>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/stories'] });
+    },
+  });
+
+  const [isPublishingEverywhere, setIsPublishingEverywhere] = useState(false);
+
+  const handlePublishEverywhere = async () => {
+    if (!selectedBlog || isCreatingNew) return;
+    
+    setIsPublishingEverywhere(true);
+    
+    const blogId = selectedBlog.id;
+    const existingBlogPost = blogPosts.find(b => b.id === blogId);
+    
+    if (!existingBlogPost) {
+      toast({ title: 'Error', description: 'Blog post not found. Please save first.', variant: 'destructive' });
+      setIsPublishingEverywhere(false);
+      return;
+    }
+
+    const createdItems: string[] = [];
+    const failedItems: string[] = [];
+    const existingSpotlight = spotlightsByBlogId[blogId];
+    const existingNewsletter = newslettersByBlogId[blogId];
+    const existingStory = storiesByBlogId[blogId];
+
+    const updatedPost = { ...selectedBlog, status: 'published' as BlogStatus };
+    if (!updatedPost.publishedAt) {
+      updatedPost.publishedAt = new Date().toISOString();
+    }
+
+    try {
+      await apiRequest('PUT', `/api/blog-posts/${blogId}`, toApiPost(updatedPost));
+      queryClient.invalidateQueries({ queryKey: ['/api/blog-posts'] });
+      createdItems.push('Published blog');
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to publish blog post.', variant: 'destructive' });
+      setIsPublishingEverywhere(false);
+      return;
+    }
+
+    const blogDataForSync: BlogPost = {
+      ...existingBlogPost,
+      slug: updatedPost.slug,
+      title_en: updatedPost.title.en,
+      title_ar: updatedPost.title.ar,
+      excerpt_en: updatedPost.excerpt.en,
+      excerpt_ar: updatedPost.excerpt.ar,
+      content_en: updatedPost.content.en,
+      content_ar: updatedPost.content.ar,
+      featuredImage: updatedPost.featuredImage,
+      category: updatedPost.category,
+      tags: updatedPost.tags,
+      author: updatedPost.author,
+      status: 'published',
+    };
+
+    if (!existingStory) {
+      try {
+        await createStoryMutation.mutateAsync({ blogId, blog: updatedPost });
+        createdItems.push('Story');
+      } catch (e) {
+        console.error('Failed to create story:', e);
+        failedItems.push('Story');
+      }
+    }
+
+    if (!existingSpotlight) {
+      try {
+        await createSpotlightMutation.mutateAsync(blogDataForSync);
+        createdItems.push('Spotlight');
+      } catch (e) {
+        console.error('Failed to create spotlight:', e);
+        failedItems.push('Spotlight');
+      }
+    }
+
+    if (!existingNewsletter) {
+      try {
+        await createNewsletterMutation.mutateAsync(blogDataForSync);
+        createdItems.push('Newsletter');
+      } catch (e) {
+        console.error('Failed to create newsletter:', e);
+        failedItems.push('Newsletter');
+      }
+    }
+
+    setIsPublishingEverywhere(false);
+    setIsEditing(false);
+    setSelectedBlog(null);
+
+    if (failedItems.length > 0) {
+      toast({
+        title: 'Published with some issues',
+        description: `Created: ${createdItems.join(', ')}. Failed: ${failedItems.join(', ')}`,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Published Everywhere!',
+        description: createdItems.length > 0 
+          ? `Created: ${createdItems.join(', ')}`
+          : 'Content already exists in all channels',
+      });
+    }
+  };
 
   const handlePublishBlog = async (blog: BlogPost) => {
     const existingSpotlight = spotlightsByBlogId[blog.id];
@@ -383,9 +533,37 @@ export default function Blog() {
                 AR
               </Button>
             </div>
-            <Button onClick={handleSaveBlog} disabled={isSaving} data-testid="button-save-blog">
-              {isSaving ? 'Saving...' : 'Save Changes'}
+            <Button variant="outline" onClick={handleSaveBlog} disabled={isSaving || isPublishingEverywhere} data-testid="button-save-blog">
+              {isSaving ? 'Saving...' : 'Save Draft'}
             </Button>
+            {!isCreatingNew && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={handlePublishEverywhere} 
+                    disabled={isSaving || isPublishingEverywhere}
+                    className="gap-2"
+                    data-testid="button-publish-everywhere"
+                  >
+                    {isPublishingEverywhere ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <Rocket className="h-4 w-4" />
+                        Publish Everywhere
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <p className="font-medium mb-1">One-click publishing</p>
+                  <p className="text-xs text-muted-foreground">Publishes blog and auto-creates Story, Newsletter, and Spotlight in one click</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
 
@@ -561,6 +739,69 @@ export default function Blog() {
                 </div>
               </CardContent>
             </Card>
+
+            {!isCreatingNew && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Rocket className="h-5 w-5 text-primary" />
+                    Content Distribution
+                  </CardTitle>
+                  <CardDescription>
+                    Use "Publish Everywhere" to create content across all channels at once
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${storiesByBlogId[selectedBlog.id] ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                        <BookOpen className={`h-5 w-5 ${storiesByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Story</p>
+                        <p className="text-xs text-muted-foreground">
+                          {storiesByBlogId[selectedBlog.id] ? (
+                            <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                              <Check className="h-3 w-3" /> Created
+                            </span>
+                          ) : 'Will be created'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${spotlightsByBlogId[selectedBlog.id] ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                        <Megaphone className={`h-5 w-5 ${spotlightsByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Spotlight</p>
+                        <p className="text-xs text-muted-foreground">
+                          {spotlightsByBlogId[selectedBlog.id] ? (
+                            <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                              <Check className="h-3 w-3" /> Created
+                            </span>
+                          ) : 'Will be created'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${newslettersByBlogId[selectedBlog.id] ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                        <Newspaper className={`h-5 w-5 ${newslettersByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Newsletter</p>
+                        <p className="text-xs text-muted-foreground">
+                          {newslettersByBlogId[selectedBlog.id] ? (
+                            <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                              <Check className="h-3 w-3" /> Created
+                            </span>
+                          ) : 'Will be created'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="seo" className="space-y-4">

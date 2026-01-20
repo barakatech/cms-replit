@@ -1148,6 +1148,7 @@ export interface Story {
   locale: 'en' | 'ar' | 'both';
   linkedSpotlightId?: string;
   linkedNewsletterId?: string;
+  sourceBlogPostId?: string;
   createdAt: string;
   updatedAt: string;
 }
