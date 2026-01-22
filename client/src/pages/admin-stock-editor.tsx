@@ -57,6 +57,21 @@ interface StockFormData {
   overview_ar: string;
   thesis_en: string;
   thesis_ar: string;
+  ogTitle_en: string;
+  ogTitle_ar: string;
+  ogDescription_en: string;
+  ogDescription_ar: string;
+  ogImage: string;
+  twitterTitle_en: string;
+  twitterTitle_ar: string;
+  twitterDescription_en: string;
+  twitterDescription_ar: string;
+  twitterImage: string;
+  twitterCardType: 'summary' | 'summary_large_image';
+  schemaType: string;
+  schemaTickerSymbol: string;
+  schemaExchange: string;
+  schemaCurrency: string;
 }
 
 export default function AdminStockEditor() {
@@ -102,6 +117,21 @@ export default function AdminStockEditor() {
       overview_ar: '',
       thesis_en: '',
       thesis_ar: '',
+      ogTitle_en: '',
+      ogTitle_ar: '',
+      ogDescription_en: '',
+      ogDescription_ar: '',
+      ogImage: '',
+      twitterTitle_en: '',
+      twitterTitle_ar: '',
+      twitterDescription_en: '',
+      twitterDescription_ar: '',
+      twitterImage: '',
+      twitterCardType: 'summary_large_image',
+      schemaType: 'Corporation',
+      schemaTickerSymbol: '',
+      schemaExchange: '',
+      schemaCurrency: 'USD',
     },
   });
 
@@ -112,6 +142,9 @@ export default function AdminStockEditor() {
 
   useEffect(() => {
     if (stockPage) {
+      const seo = (stockPage as any).seo || {};
+      const socialMeta = (stockPage as any).socialMeta || {};
+      const schemaMarkup = (stockPage as any).schemaMarkup || {};
       form.reset({
         ticker: stockPage.ticker,
         slug: stockPage.slug,
@@ -124,10 +157,10 @@ export default function AdminStockEditor() {
         sector: stockPage.sector,
         exchange: stockPage.exchange,
         status: stockPage.status,
-        metaTitle_en: (stockPage as any).seo?.metaTitle_en || '',
-        metaTitle_ar: (stockPage as any).seo?.metaTitle_ar || '',
-        metaDescription_en: (stockPage as any).seo?.metaDescription_en || '',
-        metaDescription_ar: (stockPage as any).seo?.metaDescription_ar || '',
+        metaTitle_en: seo.metaTitle_en || '',
+        metaTitle_ar: seo.metaTitle_ar || '',
+        metaDescription_en: seo.metaDescription_en || '',
+        metaDescription_ar: seo.metaDescription_ar || '',
         relatedTickers: stockPage.relatedTickers?.join(', ') || '',
         ceo: (stockPage as any).companyMeta?.ceo || '',
         employees: (stockPage as any).companyMeta?.employees || '',
@@ -137,6 +170,21 @@ export default function AdminStockEditor() {
         overview_ar: (stockPage as any).overview_ar || '',
         thesis_en: (stockPage as any).thesis_en || '',
         thesis_ar: (stockPage as any).thesis_ar || '',
+        ogTitle_en: socialMeta.ogTitle_en || '',
+        ogTitle_ar: socialMeta.ogTitle_ar || '',
+        ogDescription_en: socialMeta.ogDescription_en || '',
+        ogDescription_ar: socialMeta.ogDescription_ar || '',
+        ogImage: socialMeta.ogImage || '',
+        twitterTitle_en: socialMeta.twitterTitle_en || '',
+        twitterTitle_ar: socialMeta.twitterTitle_ar || '',
+        twitterDescription_en: socialMeta.twitterDescription_en || '',
+        twitterDescription_ar: socialMeta.twitterDescription_ar || '',
+        twitterImage: socialMeta.twitterImage || '',
+        twitterCardType: socialMeta.twitterCardType || 'summary_large_image',
+        schemaType: schemaMarkup.type || 'Corporation',
+        schemaTickerSymbol: schemaMarkup.tickerSymbol || '',
+        schemaExchange: schemaMarkup.exchange || '',
+        schemaCurrency: schemaMarkup.currency || 'USD',
       });
     }
   }, [stockPage, form]);
@@ -160,6 +208,25 @@ export default function AdminStockEditor() {
           metaTitle_ar: data.metaTitle_ar,
           metaDescription_en: data.metaDescription_en,
           metaDescription_ar: data.metaDescription_ar,
+        },
+        socialMeta: {
+          ogTitle_en: data.ogTitle_en,
+          ogTitle_ar: data.ogTitle_ar,
+          ogDescription_en: data.ogDescription_en,
+          ogDescription_ar: data.ogDescription_ar,
+          ogImage: data.ogImage,
+          twitterTitle_en: data.twitterTitle_en,
+          twitterTitle_ar: data.twitterTitle_ar,
+          twitterDescription_en: data.twitterDescription_en,
+          twitterDescription_ar: data.twitterDescription_ar,
+          twitterImage: data.twitterImage,
+          twitterCardType: data.twitterCardType,
+        },
+        schemaMarkup: {
+          type: data.schemaType,
+          tickerSymbol: data.schemaTickerSymbol || data.ticker,
+          exchange: data.schemaExchange || data.exchange,
+          currency: data.schemaCurrency,
         },
         relatedTickers: data.relatedTickers.split(',').map(t => t.trim()).filter(Boolean),
         companyMeta: {
@@ -849,6 +916,350 @@ export default function AdminStockEditor() {
                           </FormItem>
                         )}
                       />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Open Graph (Facebook/LinkedIn)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="ogTitle_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>OG Title (English)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Invest in Apple Stock"
+                                onFocus={() => handleFieldFocus('ogTitle_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-og-title-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="ogTitle_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>OG Title (Arabic)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                dir="rtl"
+                                placeholder="استثمر في سهم آبل"
+                                onFocus={() => handleFieldFocus('ogTitle_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-og-title-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="ogDescription_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>OG Description (English)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={2}
+                                placeholder="Trade Apple stock commission-free..."
+                                onFocus={() => handleFieldFocus('ogDescription_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-og-desc-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="ogDescription_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>OG Description (Arabic)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={2}
+                                dir="rtl"
+                                placeholder="تداول سهم آبل بدون عمولة..."
+                                onFocus={() => handleFieldFocus('ogDescription_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-og-desc-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="ogImage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>OG Image URL</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="https://example.com/og-image.jpg"
+                              onFocus={() => handleFieldFocus('ogImage')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-og-image"
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">Recommended size: 1200x630px</p>
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Twitter Cards</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="twitterCardType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Card Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-twitter-card-type">
+                                <SelectValue placeholder="Select card type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="summary">Summary</SelectItem>
+                              <SelectItem value="summary_large_image">Summary with Large Image</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="twitterTitle_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Twitter Title (English)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="Invest in Apple Stock"
+                                onFocus={() => handleFieldFocus('twitterTitle_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-twitter-title-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="twitterTitle_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Twitter Title (Arabic)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                dir="rtl"
+                                placeholder="استثمر في سهم آبل"
+                                onFocus={() => handleFieldFocus('twitterTitle_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-twitter-title-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="twitterDescription_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Twitter Description (English)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={2}
+                                placeholder="Trade Apple stock commission-free..."
+                                onFocus={() => handleFieldFocus('twitterDescription_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-twitter-desc-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="twitterDescription_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Twitter Description (Arabic)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={2}
+                                dir="rtl"
+                                placeholder="تداول سهم آبل بدون عمولة..."
+                                onFocus={() => handleFieldFocus('twitterDescription_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-twitter-desc-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="twitterImage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Twitter Image URL</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="https://example.com/twitter-image.jpg"
+                              onFocus={() => handleFieldFocus('twitterImage')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-twitter-image"
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">Recommended size: 1200x675px for large image</p>
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Schema Markup (Structured Data)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="schemaType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Organization Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-schema-type">
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Corporation">Corporation</SelectItem>
+                                <SelectItem value="Organization">Organization</SelectItem>
+                                <SelectItem value="LocalBusiness">Local Business</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="schemaTickerSymbol"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ticker Symbol</FormLabel>
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="AAPL (auto-fills from ticker)"
+                                onFocus={() => handleFieldFocus('schemaTickerSymbol')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-schema-ticker"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="schemaExchange"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock Exchange</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || form.getValues('exchange')}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-schema-exchange">
+                                  <SelectValue placeholder="Select exchange" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="NASDAQ">NASDAQ</SelectItem>
+                                <SelectItem value="NYSE">NYSE</SelectItem>
+                                <SelectItem value="LSE">LSE</SelectItem>
+                                <SelectItem value="TSE">TSE</SelectItem>
+                                <SelectItem value="HKEX">HKEX</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="schemaCurrency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Currency</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-schema-currency">
+                                  <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="USD">USD - US Dollar</SelectItem>
+                                <SelectItem value="EUR">EUR - Euro</SelectItem>
+                                <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                                <SelectItem value="AED">AED - UAE Dirham</SelectItem>
+                                <SelectItem value="SAR">SAR - Saudi Riyal</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="rounded-md bg-muted p-4">
+                      <p className="text-sm font-medium mb-2">Schema Preview</p>
+                      <pre className="text-xs text-muted-foreground overflow-auto">
+{`{
+  "@context": "https://schema.org",
+  "@type": "${form.watch('schemaType') || 'Corporation'}",
+  "name": "${form.watch('companyName_en') || 'Company Name'}",
+  "tickerSymbol": "${form.watch('schemaTickerSymbol') || form.watch('ticker') || 'AAPL'}",
+  "exchange": "${form.watch('schemaExchange') || form.watch('exchange') || 'NASDAQ'}",
+  "currency": "${form.watch('schemaCurrency') || 'USD'}"
+}`}
+                      </pre>
                     </div>
                   </CardContent>
                 </Card>
