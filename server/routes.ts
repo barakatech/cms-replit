@@ -1492,6 +1492,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stock SEO Templates
+  app.get("/api/settings/stock-seo-templates", async (_req, res) => {
+    const templates = await storage.getStockSeoTemplates();
+    res.json(templates);
+  });
+
+  app.put("/api/settings/stock-seo-templates", async (req, res) => {
+    try {
+      const templates = await storage.updateStockSeoTemplates(req.body);
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update stock SEO templates" });
+    }
+  });
+
   // ============================================
   // PUBLIC ENDPOINTS (No Auth Required)
   // ============================================

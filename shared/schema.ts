@@ -96,6 +96,18 @@ export interface CmsSettings {
   updatedBy?: string;
 }
 
+export interface StockSeoTemplates {
+  stockMetaTitleTemplate_en: string;
+  stockMetaTitleTemplate_ar: string;
+  stockMetaDescriptionTemplate_en: string;
+  stockMetaDescriptionTemplate_ar: string;
+  stockOgTitleTemplate_en: string;
+  stockOgTitleTemplate_ar: string;
+  stockOgDescriptionTemplate_en: string;
+  stockOgDescriptionTemplate_ar: string;
+  updatedAt?: string;
+}
+
 // Price Alert Subscription - for stock price alerts
 export const priceAlertSubscriptions = pgTable("price_alert_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -58,6 +58,7 @@ import {
   type CmsTeamMember,
   type InsertCmsTeamMember,
   type CmsSettings,
+  type StockSeoTemplates,
   type AssetLink,
   type InsertAssetLink,
   type Story,
@@ -2392,6 +2393,10 @@ export interface IStorage {
   getCmsSettings(): Promise<CmsSettings>;
   updateCmsSettings(settings: Partial<CmsSettings>): Promise<CmsSettings>;
   
+  // Stock SEO Templates
+  getStockSeoTemplates(): Promise<StockSeoTemplates>;
+  updateStockSeoTemplates(templates: Partial<StockSeoTemplates>): Promise<StockSeoTemplates>;
+  
   // Stories
   getStories(): Promise<Story[]>;
   getStory(id: string): Promise<Story | undefined>;
@@ -2513,6 +2518,18 @@ const seedCmsSettings: CmsSettings = {
   updatedAt: new Date().toISOString(),
 };
 
+const seedStockSeoTemplates: StockSeoTemplates = {
+  stockMetaTitleTemplate_en: 'Buy {ticker} Stock | {companyName} | Baraka',
+  stockMetaTitleTemplate_ar: 'شراء سهم {ticker} | {companyName} | بركة',
+  stockMetaDescriptionTemplate_en: 'Invest in {companyName} ({ticker}) stock on {exchange}. Trade commission-free with Baraka. Get real-time prices, analysis, and more.',
+  stockMetaDescriptionTemplate_ar: 'استثمر في سهم {companyName} ({ticker}) على {exchange}. تداول بدون عمولة مع بركة. احصل على الأسعار الحية والتحليلات والمزيد.',
+  stockOgTitleTemplate_en: 'Invest in {companyName} Stock | Baraka',
+  stockOgTitleTemplate_ar: 'استثمر في سهم {companyName} | بركة',
+  stockOgDescriptionTemplate_en: 'Trade {ticker} on {exchange} commission-free with Baraka. Join thousands of investors in the MENA region.',
+  stockOgDescriptionTemplate_ar: 'تداول {ticker} على {exchange} بدون عمولة مع بركة. انضم إلى آلاف المستثمرين في منطقة الشرق الأوسط.',
+  updatedAt: new Date().toISOString(),
+};
+
 const seedAppDownloadConfig: AppDownloadConfig = {
   id: '1',
   iosAppStoreUrl: 'https://apps.apple.com/app/baraka/id1234567890',
@@ -2561,6 +2578,7 @@ export class MemStorage implements IStorage {
   private ctaEvents: Map<string, CTAEvent>;
   private teamMembers: Map<string, CmsTeamMember>;
   private cmsSettings: CmsSettings;
+  private stockSeoTemplates: StockSeoTemplates;
   private assetLinks: Map<string, AssetLink>;
   private stories: Map<string, Story>;
 
@@ -2593,6 +2611,7 @@ export class MemStorage implements IStorage {
     this.teamMembers = new Map();
     seedTeamMembers.forEach(m => this.teamMembers.set(m.id, m));
     this.cmsSettings = { ...seedCmsSettings };
+    this.stockSeoTemplates = { ...seedStockSeoTemplates };
     this.newsletters = new Map();
     this.newsletterTemplates = new Map();
     this.spotlightBanners = new Map();
@@ -3808,6 +3827,20 @@ export class MemStorage implements IStorage {
       updatedAt: new Date().toISOString(),
     };
     return this.cmsSettings;
+  }
+
+  // Stock SEO Templates
+  async getStockSeoTemplates(): Promise<StockSeoTemplates> {
+    return this.stockSeoTemplates;
+  }
+
+  async updateStockSeoTemplates(updates: Partial<StockSeoTemplates>): Promise<StockSeoTemplates> {
+    this.stockSeoTemplates = {
+      ...this.stockSeoTemplates,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.stockSeoTemplates;
   }
 
   // Stories

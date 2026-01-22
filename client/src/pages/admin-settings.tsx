@@ -14,7 +14,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } fr
 import { Settings, Mail, Shield, Search, Palette, FileText, Globe, Lock, Key, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { NewsletterSettings, NewsletterTemplate, SpotlightPlacement, CmsSettings } from '@shared/schema';
 
 const SPOTLIGHT_PLACEMENTS: { value: SpotlightPlacement; label: string }[] = [
@@ -70,6 +70,17 @@ interface SecuritySettingsForm {
   enforcePasswordPolicy: boolean;
   enableTwoFactor: boolean;
   allowedIpRanges: string;
+}
+
+interface StockSeoTemplatesForm {
+  stockMetaTitleTemplate_en: string;
+  stockMetaTitleTemplate_ar: string;
+  stockMetaDescriptionTemplate_en: string;
+  stockMetaDescriptionTemplate_ar: string;
+  stockOgTitleTemplate_en: string;
+  stockOgTitleTemplate_ar: string;
+  stockOgDescriptionTemplate_en: string;
+  stockOgDescriptionTemplate_ar: string;
 }
 
 function GeneralSettings() {
@@ -519,6 +530,290 @@ function SeoSettings() {
             <div className="flex justify-end pt-4 border-t">
               <Button type="submit" disabled={isSaving} data-testid="button-save-seo">
                 {isSaving ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </form>
+    </Form>
+  );
+}
+
+function StockSeoTemplatesSettings() {
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const { data: templates, isLoading } = useQuery<StockSeoTemplatesForm>({
+    queryKey: ['/api/settings/stock-seo-templates'],
+  });
+  
+  const form = useForm<StockSeoTemplatesForm>({
+    defaultValues: {
+      stockMetaTitleTemplate_en: 'Buy {ticker} Stock | {companyName} | Baraka',
+      stockMetaTitleTemplate_ar: 'شراء سهم {ticker} | {companyName} | بركة',
+      stockMetaDescriptionTemplate_en: 'Invest in {companyName} ({ticker}) stock on {exchange}. Trade commission-free with Baraka. Get real-time prices, analysis, and more.',
+      stockMetaDescriptionTemplate_ar: 'استثمر في سهم {companyName} ({ticker}) على {exchange}. تداول بدون عمولة مع بركة. احصل على الأسعار الحية والتحليلات والمزيد.',
+      stockOgTitleTemplate_en: 'Invest in {companyName} Stock | Baraka',
+      stockOgTitleTemplate_ar: 'استثمر في سهم {companyName} | بركة',
+      stockOgDescriptionTemplate_en: 'Trade {ticker} on {exchange} commission-free with Baraka. Join thousands of investors in the MENA region.',
+      stockOgDescriptionTemplate_ar: 'تداول {ticker} على {exchange} بدون عمولة مع بركة. انضم إلى آلاف المستثمرين في منطقة الشرق الأوسط.',
+    },
+  });
+
+  useEffect(() => {
+    if (templates) {
+      form.reset(templates);
+    }
+  }, [templates, form]);
+
+  const watchedTitleEn = form.watch('stockMetaTitleTemplate_en');
+  const watchedDescEn = form.watch('stockMetaDescriptionTemplate_en');
+
+  const previewReplacements: Record<string, string> = {
+    '{ticker}': 'AAPL',
+    '{companyName}': 'Apple Inc.',
+    '{exchange}': 'NASDAQ',
+    '{sector}': 'Technology',
+  };
+
+  const applyTemplate = (template: string) => {
+    let result = template;
+    Object.entries(previewReplacements).forEach(([key, value]) => {
+      result = result.replace(new RegExp(key.replace(/[{}]/g, '\\$&'), 'g'), value);
+    });
+    return result;
+  };
+
+  const handleSubmit = async (data: StockSeoTemplatesForm) => {
+    setIsSaving(true);
+    try {
+      await apiRequest('PUT', '/api/settings/stock-seo-templates', data);
+      queryClient.invalidateQueries({ queryKey: ['/api/settings/stock-seo-templates'] });
+      toast({ title: 'Settings saved', description: 'Stock page SEO templates have been updated.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save templates.', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-96" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Stock Page SEO Templates
+            </CardTitle>
+            <CardDescription>
+              Define dynamic templates for all stock pages. Use placeholders that will be replaced with actual values.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="rounded-md bg-muted p-4">
+              <p className="text-sm font-medium mb-2">Available Placeholders</p>
+              <div className="flex flex-wrap gap-2">
+                <code className="px-2 py-1 bg-background rounded text-xs">{'{ticker}'}</code>
+                <code className="px-2 py-1 bg-background rounded text-xs">{'{companyName}'}</code>
+                <code className="px-2 py-1 bg-background rounded text-xs">{'{exchange}'}</code>
+                <code className="px-2 py-1 bg-background rounded text-xs">{'{sector}'}</code>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Meta Title Templates</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="stockMetaTitleTemplate_en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>English Template</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Buy {ticker} Stock | {companyName}" 
+                          {...field} 
+                          data-testid="input-stock-meta-title-en"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stockMetaTitleTemplate_ar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arabic Template</FormLabel>
+                      <FormControl>
+                        <Input 
+                          dir="rtl"
+                          placeholder="شراء سهم {ticker} | {companyName}" 
+                          {...field} 
+                          data-testid="input-stock-meta-title-ar"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Meta Description Templates</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="stockMetaDescriptionTemplate_en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>English Template</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          rows={3}
+                          placeholder="Invest in {companyName} ({ticker}) stock..." 
+                          {...field} 
+                          data-testid="input-stock-meta-desc-en"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stockMetaDescriptionTemplate_ar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arabic Template</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          rows={3}
+                          dir="rtl"
+                          placeholder="استثمر في سهم {companyName} ({ticker})..." 
+                          {...field} 
+                          data-testid="input-stock-meta-desc-ar"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Open Graph Title Templates</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="stockOgTitleTemplate_en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>English Template</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Invest in {companyName} Stock" 
+                          {...field} 
+                          data-testid="input-stock-og-title-en"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stockOgTitleTemplate_ar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arabic Template</FormLabel>
+                      <FormControl>
+                        <Input 
+                          dir="rtl"
+                          placeholder="استثمر في سهم {companyName}" 
+                          {...field} 
+                          data-testid="input-stock-og-title-ar"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium">Open Graph Description Templates</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="stockOgDescriptionTemplate_en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>English Template</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          rows={2}
+                          placeholder="Trade {ticker} on {exchange} commission-free..." 
+                          {...field} 
+                          data-testid="input-stock-og-desc-en"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stockOgDescriptionTemplate_ar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arabic Template</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          rows={2}
+                          dir="rtl"
+                          placeholder="تداول {ticker} على {exchange} بدون عمولة..." 
+                          {...field} 
+                          data-testid="input-stock-og-desc-ar"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-md border p-4 space-y-3">
+              <p className="text-sm font-medium">Live Preview (using AAPL as example)</p>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs text-muted-foreground">Meta Title:</p>
+                  <p className="text-sm font-medium text-primary">{applyTemplate(watchedTitleEn)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Meta Description:</p>
+                  <p className="text-sm text-muted-foreground">{applyTemplate(watchedDescEn)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t">
+              <Button type="submit" disabled={isSaving} data-testid="button-save-stock-seo-templates">
+                {isSaving ? 'Saving...' : 'Save Templates'}
               </Button>
             </div>
           </CardContent>
@@ -1076,8 +1371,9 @@ export default function AdminSettings() {
           <BrandingSettings />
         </TabsContent>
 
-        <TabsContent value="seo" className="mt-6">
+        <TabsContent value="seo" className="mt-6 space-y-6">
           <SeoSettings />
+          <StockSeoTemplatesSettings />
         </TabsContent>
 
         <TabsContent value="content" className="mt-6">
