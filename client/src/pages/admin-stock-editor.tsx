@@ -19,6 +19,7 @@ import {
   Globe,
   FileText,
 } from 'lucide-react';
+import { RichTextEditor } from '@/components/RichTextEditor';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { usePresence } from '@/hooks/use-presence';
@@ -569,100 +570,110 @@ export default function AdminStockEditor() {
                         )}
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="overview_en"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>Overview (English)</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="overview_en" />
-                            </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={4}
+                    <FormField
+                      control={form.control}
+                      name="overview_en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Overview (English)</FormLabel>
+                            <FieldPresenceIndicator presences={othersOnSamePage} field="overview_en" />
+                          </div>
+                          <FormControl>
+                            <div
+                              onFocus={() => handleFieldFocus('overview_en')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-overview-en"
+                            >
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
                                 placeholder="Company overview..."
-                                onFocus={() => handleFieldFocus('overview_en')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-overview-en"
+                                dir="ltr"
                               />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="overview_ar"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>Overview (Arabic)</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="overview_ar" />
                             </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={4}
-                                dir="rtl"
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="overview_ar"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Overview (Arabic)</FormLabel>
+                            <FieldPresenceIndicator presences={othersOnSamePage} field="overview_ar" />
+                          </div>
+                          <FormControl>
+                            <div
+                              onFocus={() => handleFieldFocus('overview_ar')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-overview-ar"
+                            >
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
                                 placeholder="نظرة عامة على الشركة..."
-                                onFocus={() => handleFieldFocus('overview_ar')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-overview-ar"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="thesis_en"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>Investment Thesis (English)</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="thesis_en" />
-                            </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={4}
-                                placeholder="Investment thesis..."
-                                onFocus={() => handleFieldFocus('thesis_en')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-thesis-en"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="thesis_ar"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>Investment Thesis (Arabic)</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="thesis_ar" />
-                            </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={4}
                                 dir="rtl"
-                                placeholder="أطروحة الاستثمار..."
-                                onFocus={() => handleFieldFocus('thesis_ar')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-thesis-ar"
                               />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="thesis_en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Investment Thesis (English)</FormLabel>
+                            <FieldPresenceIndicator presences={othersOnSamePage} field="thesis_en" />
+                          </div>
+                          <FormControl>
+                            <div
+                              onFocus={() => handleFieldFocus('thesis_en')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-thesis-en"
+                            >
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
+                                placeholder="Investment thesis..."
+                                dir="ltr"
+                              />
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="thesis_ar"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Investment Thesis (Arabic)</FormLabel>
+                            <FieldPresenceIndicator presences={othersOnSamePage} field="thesis_ar" />
+                          </div>
+                          <FormControl>
+                            <div
+                              onFocus={() => handleFieldFocus('thesis_ar')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-thesis-ar"
+                            >
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
+                                placeholder="أطروحة الاستثمار..."
+                                dir="rtl"
+                              />
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 
@@ -671,53 +682,58 @@ export default function AdminStockEditor() {
                     <CardTitle>Content</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="content_en"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>English Content</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="content_en" />
-                            </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={10}
-                                placeholder="Full content (HTML supported)..."
-                                onFocus={() => handleFieldFocus('content_en')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-content-en"
+                    <FormField
+                      control={form.control}
+                      name="content_en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>English Content</FormLabel>
+                            <FieldPresenceIndicator presences={othersOnSamePage} field="content_en" />
+                          </div>
+                          <FormControl>
+                            <div
+                              onFocus={() => handleFieldFocus('content_en')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-content-en"
+                            >
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
+                                placeholder="Write stock page content..."
+                                dir="ltr"
                               />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="content_ar"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>Arabic Content</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="content_ar" />
                             </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={10}
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="content_ar"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Arabic Content</FormLabel>
+                            <FieldPresenceIndicator presences={othersOnSamePage} field="content_ar" />
+                          </div>
+                          <FormControl>
+                            <div
+                              onFocus={() => handleFieldFocus('content_ar')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-content-ar"
+                            >
+                              <RichTextEditor
+                                content={field.value}
+                                onChange={field.onChange}
+                                placeholder="اكتب محتوى صفحة السهم..."
                                 dir="rtl"
-                                placeholder="المحتوى الكامل (يدعم HTML)..."
-                                onFocus={() => handleFieldFocus('content_ar')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-content-ar"
                               />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 
