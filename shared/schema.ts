@@ -1453,6 +1453,164 @@ export const insertStorySchema = z.object({
   locale: z.enum(['en', 'ar', 'both']),
 });
 
+// =============================================
+// COMPLIANCE CHECKER TYPES
+// =============================================
+
+export type ComplianceFindingSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type ComplianceContentType = 'blog' | 'newsletter' | 'social' | 'stock_page' | 'story';
+export type EnglishIssueSeverity = 'low' | 'medium' | 'high';
+export type EnglishIssueType = 'grammar' | 'clarity' | 'tone' | 'spelling';
+export type ComplianceLabel = 'compliant' | 'needs_review' | 'high_risk';
+export type EnglishQualityLabel = 'excellent' | 'good' | 'needs_edits' | 'not_configured';
+
+export interface ComplianceFinding {
+  id: string;
+  ruleId: string;
+  ruleName: string;
+  severity: ComplianceFindingSeverity;
+  message: string;
+  dfsaRef?: string;
+  startOffset: number;
+  endOffset: number;
+  suggestedFix?: string;
+}
+
+export interface EnglishIssue {
+  type: EnglishIssueType;
+  severity: EnglishIssueSeverity;
+  message: string;
+  start: number;
+  end: number;
+  suggestion: string;
+}
+
+export interface EnglishEdit {
+  start: number;
+  end: number;
+  replacement: string;
+}
+
+export interface ComplianceScanRun {
+  id: string;
+  contentType: ComplianceContentType;
+  contentId: string;
+  contentTitle: string;
+  originalText: string;
+  scannedAt: string;
+  scannedBy?: string;
+  
+  // Compliance scoring
+  riskScore: number; // 0-100, higher = more risk
+  complianceScore: number; // 0-100, higher = more compliant (100 - riskScore)
+  complianceLabel: ComplianceLabel;
+  complianceFindings: ComplianceFinding[];
+  
+  // English quality scoring
+  englishScore: number | null; // 0-100 or null if not configured
+  englishLabel: EnglishQualityLabel;
+  englishFindings: EnglishIssue[];
+  englishSuggestedEdits: EnglishEdit[];
+  englishProvider?: 'writing_assistant' | 'openai' | 'fallback';
+  
+  // Overall
+  overallScore?: number;
+  
+  // Approval status
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: string;
+  approvalNotes?: string;
+  
+  // Metadata
+  locale: 'en' | 'ar';
+  channel?: string;
+  audience?: 'retail' | 'pro';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InsertComplianceScanRun {
+  contentType: ComplianceContentType;
+  contentId: string;
+  contentTitle: string;
+  originalText: string;
+  locale: 'en' | 'ar';
+  channel?: string;
+  audience?: 'retail' | 'pro';
+  scannedBy?: string;
+}
+
+// Writing Assistant Integration (generic HTTP)
+export interface WritingAssistantIntegration {
+  id: string;
+  name: string;
+  baseUrl: string;
+  authType: 'api_key' | 'bearer' | 'basic' | 'none';
+  headers: Record<string, string>;
+  analyzePath: string;
+  applyPath?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InsertWritingAssistantIntegration {
+  name: string;
+  baseUrl: string;
+  authType: 'api_key' | 'bearer' | 'basic' | 'none';
+  headers: Record<string, string>;
+  analyzePath: string;
+  applyPath?: string;
+}
+
+// Compliance Checker Settings
+export interface ComplianceCheckerSettings {
+  enableEnglishQualityScoring: boolean;
+  englishScoringProvider: 'writing_assistant' | 'openai';
+  openaiModel?: string;
+  writingAssistantIntegrationId?: string;
+  
+  // DFSA Rule thresholds
+  complianceThresholds: {
+    compliant: number; // Score >= this is "Compliant" (default 85)
+    needsReview: number; // Score >= this is "Needs Review" (default 60)
+    // Below needsReview is "High Risk"
+  };
+  
+  // English quality thresholds
+  englishThresholds: {
+    excellent: number; // Score >= this (default 90)
+    good: number; // Score >= this (default 70)
+    // Below good is "Needs Edits"
+  };
+}
+
+// Compliance Rules (DFSA rules engine)
+export interface ComplianceRule {
+  id: string;
+  name: string;
+  description: string;
+  dfsaRef?: string;
+  pattern: string; // regex pattern
+  severity: ComplianceFindingSeverity;
+  message: string;
+  suggestedFix?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InsertComplianceRule {
+  name: string;
+  description: string;
+  dfsaRef?: string;
+  pattern: string;
+  severity: ComplianceFindingSeverity;
+  message: string;
+  suggestedFix?: string;
+}
+
 // Default event mappings per platform
 export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<CmsEventName, string>>> = {
   meta: {

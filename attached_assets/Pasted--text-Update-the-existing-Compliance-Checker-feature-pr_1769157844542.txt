@@ -1,0 +1,125 @@
+```text
+Update the existing “Compliance Checker” feature prompt with the following NEW requirement: add a UI component that visualizes compliance + language quality as green→red bars, and wire it to Grammarly (via generic integration) and/or OpenAI (as an optional integration) to score English quality.
+
+NEW UI COMPONENT: “Quality Bars”
+Create a reusable component used across:
+- Compliance Checker > Inbox (list rows)
+- Compliance Checker > Scanner (detail view)
+- Any CMS editor screen (blog editor, social copy editor) as a right-rail widget
+
+Component name: <QualityBars />
+
+What it shows (2 bars minimum, optionally 3):
+1) Compliance Score Bar (0–100)
+2) English Quality Score Bar (0–100)
+(Optional 3) Overall Risk Bar (0–100) where higher = more risk
+
+Bar behavior:
+- Gradient: green (good) → yellow (medium) → red (bad)
+- Show numeric score + label:
+  - Compliance: “Compliant / Needs Review / High Risk”
+  - English: “Excellent / Good / Needs Edits”
+- Tooltip on hover:
+  - Compliance tooltip: top 3 compliance findings + DFSA rule refs
+  - English tooltip: top 3 grammar/style issues (short summaries)
+
+Click behavior:
+- Clicking Compliance bar scrolls to Findings section + highlights problem spans.
+- Clicking English bar opens Language Suggestions panel (list of issues + suggested fixes).
+- Provide “Apply Fixes” actions:
+  - For compliance: “Apply compliance amendments” (already exists)
+  - For English: “Apply language edits” (new)
+
+DATA + SCORING
+Persist scoring outputs in compliance_scan_runs (extend schema):
+- compliance_score (0–100) [already risk_score exists; keep both: risk_score and compliance_score]
+- english_score (0–100)
+- english_findings JSON (structured)
+- english_suggested_edits JSON (diff-ready suggestions)
+- overall_score (optional derived)
+
+Compute scores from:
+A) Compliance scanner (existing rules engine):
+- compliance_score = 100 - risk_score (bounded)
+- compliance_label thresholds:
+  - 85–100 Compliant
+  - 60–84 Needs Review
+  - 0–59 High Risk
+
+B) English quality via integration:
+- If “Writing Assistant integration” exists in Settings (e.g., Grammarly):
+  - Call integration “analyze” endpoint with text and receive issues + score
+  - Normalize returned score to 0–100 if needed
+- Else if OpenAI integration configured:
+  - Use it to return STRICT JSON with:
+    { "english_score": number(0-100),
+      "issues":[{ "type":"grammar|clarity|tone|spelling",
+                  "severity":"low|medium|high",
+                  "message": string,
+                  "start": int,
+                  "end": int,
+                  "suggestion": string }],
+      "edits":[{ "start": int, "end": int, "replacement": string }]
+    }
+- Else:
+  - Fallback to simple rules-based lint (typos via wordlist optional) and set english_score = null with UI label “Not configured”.
+
+SETTINGS UPDATES
+In Compliance Checker > Settings > API Integrations:
+- Add a toggle: “Enable English Quality Scoring” (ON/OFF)
+- Add a selector: Provider = (Generic Writing Assistant Integration | OpenAI)
+- Add an “OpenAI Model” field if Provider=OpenAI
+- Add “Test Analysis” textarea + run button (shows sample score/issues)
+
+INTEGRATION DESIGN (DO NOT HARDCODE GRAMMARLY SDK)
+Implement “Writing Assistant” as a generic HTTP integration:
+- Integration record includes:
+  - name
+  - base_url
+  - auth_type
+  - headers
+  - analyze_path (e.g., /analyze)
+  - apply_path (optional; if provider supports server-side apply)
+- The CMS sends:
+  POST {base_url}{analyze_path}
+  body: { "text": "...", "language":"en", "metadata": { "channel":"TikTok", "audience":"retail|pro" } }
+- Expects response (normalize if different):
+  { "score": number, "issues":[...], "edits":[...] }
+
+If using OpenAI integration:
+- Use a server-side route that calls OpenAI with a system prompt and returns the STRICT JSON above.
+- Validate JSON schema on receipt; if invalid, treat as failed analysis.
+- NEVER store raw OpenAI prompts containing secrets; store only outputs + hashes.
+
+UI IMPLEMENTATION DETAILS
+- Use a single, consistent color mapping across both bars.
+- Add aria labels for accessibility: “Compliance score 82 needs review” etc.
+- Render compact version in tables (small bars) and full version on detail pages.
+
+WORKFLOW HOOKS
+- When a scan runs, it must compute both:
+  - compliance findings + compliance_score
+  - english findings + english_score (if enabled)
+- Show both bars immediately after scan completes.
+- Allow re-run of “English check only” without re-scanning DFSA rules.
+
+EXPORTERS
+When exporting final copy, include metadata:
+- compliance_score, english_score
+- scan_run_id, approval_id (if present)
+- provider used (writing assistant/openai/fallback)
+
+TESTS
+Add tests for:
+- QualityBars rendering with different score ranges and labels
+- Normalization of english score from integration response
+- JSON schema validation for OpenAI English analysis
+- “Not configured” state
+
+IMPORTANT SAFETY + PRODUCT NOTES
+- Display disclaimer: “English scoring is assistance-only; final review required.”
+- Do NOT mark content as “approved” based solely on english_score; compliance approval remains manual.
+- Keep an audit log entry for each English analysis run and each applied edit.
+
+Finally: implement the UI component and wire it end-to-end on the Scanner page first, then add compact rendering in Inbox list and CMS editor right-rail.
+```
