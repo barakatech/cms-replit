@@ -1,594 +1,370 @@
-# Stock Pages - Product Requirements Document
+# Stock Pages CMS - Product Requirements Document
 
 ## Table of Contents
 1. [Overview](#1-overview)
-2. [Stock Page Information](#2-stock-page-information)
-3. [Public Stock Pages](#3-public-stock-pages)
-4. [Admin Stock Management](#4-admin-stock-management)
-5. [Stock Discovery & Browsing](#5-stock-discovery--browsing)
-6. [Stock Themes](#6-stock-themes)
-7. [SEO & Social Sharing](#7-seo--social-sharing)
-8. [Language & RTL Support](#8-language--rtl-support)
-9. [Real-Time Market Data](#9-real-time-market-data)
-10. [Related Stocks](#10-related-stocks)
-11. [Collaborative Editing](#11-collaborative-editing)
-12. [Additional Features](#12-additional-features)
-13. [Content Syncing: Blog → Stories → Spotlight](#13-content-syncing-blog--stories--spotlight)
+2. [Stock Page Management](#2-stock-page-management)
+3. [Stock Page Editor](#3-stock-page-editor)
+4. [SEO Administration Settings](#4-seo-administration-settings)
+5. [Stock Themes Management](#5-stock-themes-management)
+6. [Collaborative Editing](#6-collaborative-editing)
+7. [Content Syncing: Blog → Stories → Spotlight](#7-content-syncing-blog--stories--spotlight)
 
 ---
 
 ## 1. Overview
 
 ### 1.1 Purpose
-The Stock Pages system is a CMS-driven platform for creating and managing individual stock landing pages. These pages provide investors with company information, market data, analyst ratings, and educational content.
+This document describes the CMS (Content Management System) functionality for managing Stock Pages, including content creation, SEO configuration, theme management, and content syncing across channels.
 
-### 1.2 Core Capabilities
-- **Individual Stock Pages**: Detailed pages for each stock with company info, pricing, charts, and analysis
-- **Stock Directory**: Searchable, filterable list of all available stocks
-- **Stock Discovery**: Curated experience with trending stocks, gainers, losers, and themes
-- **Stock Themes**: Collections of stocks grouped by investment themes (e.g., AI Stocks, EV Stocks)
-- **Admin CMS**: Content management for creating and editing stock pages
-- **Multi-language**: English and Arabic with right-to-left layout support
-- **SEO Optimization**: Meta tags, social sharing cards, and structured data markup
-- **Live Market Data**: Real-time price, change, volume, and performance information
-
-### 1.3 Key User Journeys
-
-**Investor Journey:**
-User browses stocks → Visits Discover or Browse page → Selects a stock → Views Stock Detail page → Clicks CTA to trade
-
-**Editor Journey:**
-Admin opens CMS → Creates/edits stock page → Previews content → Publishes page
-
-**Theme Exploration:**
-User visits Discover page → Browses investment themes → Opens theme page → Explores individual stocks in that theme
+### 1.2 Admin Capabilities
+- Create, edit, and publish individual stock pages
+- Configure SEO settings for stock pages
+- Manage stock themes (curated collections)
+- See who else is editing in real-time
+- Sync content across Blog, Stories, and Spotlight channels
 
 ---
 
-## 2. Stock Page Information
+## 2. Stock Page Management
 
-### 2.1 Basic Stock Information
-Each stock page contains the following information:
-
-| Field | Description |
-|-------|-------------|
-| Ticker Symbol | The stock's trading symbol (e.g., "AAPL") |
-| URL Slug | URL-friendly identifier (e.g., "apple-inc") |
-| Company Name | Full company name in English and Arabic |
-| Description | Short company description in both languages |
-| Rich Content | Detailed content about the company in both languages |
-| Sector | Industry classification (e.g., "Technology", "Healthcare") |
-| Exchange | Stock exchange (NASDAQ, NYSE, AMEX) |
-| Currency | Trading currency (typically USD) |
-| Tags | Categorization labels for filtering |
-| Status | Draft, Published, or Archived |
-| Related Tickers | Other stocks to cross-link |
-
-### 2.2 Company Details
-Additional company information captured:
-
-| Field | Description |
-|-------|-------------|
-| CEO | Current chief executive officer |
-| Employee Count | Number of employees (e.g., "164,000") |
-| Headquarters | Company location |
-| Founded | Year the company was established |
-
-### 2.3 Content Sections
-Stock pages support multiple content sections:
-
-- **Overview**: General company description and business model
-- **Investment Thesis**: Reasons why investors might consider this stock
-- **Risk Factors**: Potential risks and concerns
-- **Key Highlights**: Bullet points of important facts
-- **FAQs**: Common questions and answers about the stock
-
-### 2.4 Dynamic Market Data
-Real-time data displayed on stock pages:
-
-| Data Point | Description |
-|------------|-------------|
-| Current Price | Latest stock price |
-| Price Change | How much the price changed (dollar amount and percentage) |
-| Market Cap | Total market capitalization |
-| Volume | Daily trading volume |
-| P/E Ratio | Price-to-earnings ratio |
-| EPS | Earnings per share |
-| Dividend Yield | Annual dividend percentage |
-| Analyst Sentiment | Buy/Hold/Sell ratings distribution |
-| Performance | Returns over 1 day, 1 week, 1 month, 1 year |
-
----
-
-## 3. Public Stock Pages
-
-### 3.1 Stock Detail Page
-
-**URL Structure:**
-- Primary format: `/stocks/{ticker}` (e.g., `/stocks/aapl`)
-- Alternative format: `/stocks/{slug}` (e.g., `/stocks/apple-inc`)
-
-**Page Layout:**
-The page uses a two-column layout with the main content taking 8 columns and a sidebar taking 4 columns.
-
-**Main Content Sections (top to bottom):**
-
-1. **Hero Section**
-   - Company logo
-   - Ticker symbol with exchange badge
-   - Company name
-   - Current price with change indicator (green for positive, red for negative)
-   - Percentage change with trend arrow
-
-2. **Price Chart Panel**
-   - Interactive chart
-   - Timeframe buttons: 1D, 1W, 1M, 3M, 1Y, ALL
-   - Volume display option
-
-3. **About Company**
-   - Company overview text
-   - Company metadata (CEO, employees, headquarters, founded year)
-   - Investment thesis section
-   - Risk factors (expandable/collapsible)
-
-4. **Key Statistics**
-   - Market Cap
-   - Trading Volume
-   - P/E Ratio
-   - Earnings Per Share
-   - Dividend Yield
-   - 52-Week High/Low
-
-5. **Analyst Ratings**
-   - Visual bar showing Buy/Hold/Sell distribution
-   - Consensus rating label
-   - Price target (if available)
-
-6. **Earnings**
-   - Next earnings date
-   - Historical earnings chart
-   - Revenue trends
-
-7. **News**
-   - Recent news articles about the stock
-   - Source and timestamp for each article
-
-8. **FAQ Section**
-   - Accordion-style expandable questions and answers
-
-9. **Similar Stocks**
-   - Grid of related stock cards for navigation
-
-**Sidebar Sections:**
-
-1. **Trade Widget**
-   - Buy/Trade button linking to app download
-   - Add to Watchlist option
-   - Share buttons
-
-2. **Trending Stocks**
-   - List of popular stocks (excluding the current one)
-
-### 3.2 Sticky Header Behavior
-When the user scrolls down more than 100 pixels:
-- Header condenses to show: ticker symbol, current price, change percentage
-- Quick navigation links appear to jump to page sections
-
-### 3.3 Section Navigation
-Anchor links allow quick jumps to: About | Statistics | Ratings | Earnings | News | FAQ
-
-### 3.4 Page States
-
-| State | Behavior |
-|-------|----------|
-| Published | Full page is visible to the public |
-| Draft | Returns 404 for public visitors; visible in admin preview |
-| Archived | Returns 404 for public visitors |
-| Not Found | Shows "Stock not found" message with link to browse all stocks |
-
-### 3.5 Preview Mode
-Editors can preview unpublished pages by adding `?preview=1` to the URL. A preview banner appears at the top of the page. Language can be overridden using `?locale=ar` or `?locale=en`.
-
----
-
-## 4. Admin Stock Management
-
-### 4.1 Stock List View
+### 2.1 Stock List View
 
 **Location:** `/admin/stocks`
 
 **Dashboard Metrics:**
+Displayed at the top of the page:
 - Total stock pages count
 - Published pages count
 - Draft pages count
-- Currently active editors (real-time)
+- Currently active editors (updated in real-time)
 
-**Stock Table Columns:**
-| Column | Content |
-|--------|---------|
+**Stock Table:**
+
+| Column | What It Shows |
+|--------|---------------|
 | Ticker | Company logo and ticker symbol |
 | Company | English company name |
-| Sector | Industry sector |
-| Status | Badge showing draft/published/archived |
-| Editors | Avatars of users currently editing this page |
+| Sector | Industry sector (e.g., Technology, Healthcare) |
+| Status | Badge showing draft, published, or archived |
+| Editors | Avatar icons of users currently editing this page |
 | Actions | Preview and Edit buttons |
 
-**Features:**
-- Search by ticker, company name, or sector
-- Filter by status (draft, published, archived)
-- Click any row to open the editor
-- "New Stock Page" button to create a new page
-
-### 4.2 Stock Editor
-
-**Location:** `/admin/stocks/:id/edit`
-
-**Content Tab:**
-- **Stock Information**
-  - Ticker Symbol (required)
-  - Exchange selection (NASDAQ/NYSE/AMEX)
-  - Sector
-  - URL Slug (auto-generated from ticker, editable)
-  - Status dropdown
-
-- **Company Names**
-  - English name
-  - Arabic name (right-to-left input)
-
-- **Descriptions**
-  - English description
-  - Arabic description (right-to-left input)
-
-- **About Company**
-  - CEO name
-  - Employee count
-  - Headquarters
-  - Founded year
-  - Overview (rich text editor for English)
-  - Overview (rich text editor for Arabic)
-  - Investment Thesis (English)
-  - Investment Thesis (Arabic)
-
-- **Related Stocks**
-  - Comma-separated list of related tickers
-
-**SEO Tab:**
-- Meta title (English and Arabic)
-- Meta description (English and Arabic)
-- Open Graph title, description, and image URL
-- Twitter Card title, description, image, and card type
-- Schema.org settings (type, ticker, exchange, currency)
-
-**Collaborative Features:**
-- Real-time indicators showing who else is editing
-- Avatars and names of active editors
-- Visual highlighting of fields being edited by others
-- Connection status indicator (online/offline)
+**Filtering and Search:**
+- Search box filters by ticker, company name, or sector
+- Status dropdown filters by: All, Draft, Published, Archived
+- Clicking any row opens that stock page in the editor
 
 **Actions:**
-- Save (saves as draft or published based on status)
-- Preview (opens page in new tab with preview mode)
-- Back to list
+- "New Stock Page" button creates a blank stock page
+- Preview button opens the public page in a new tab (with preview mode if unpublished)
+- Edit button opens the stock page editor
+
+### 2.2 Status Workflow
+
+| Status | Meaning | Public Visibility |
+|--------|---------|-------------------|
+| Draft | Work in progress | Not visible (404) |
+| Published | Live on the website | Fully visible |
+| Archived | Deprecated/removed | Not visible (404) |
+
+**Status Transitions:**
+- New pages start as Draft
+- Editor can change status to Published (page goes live)
+- Published pages can be changed to Archived (removed from public view)
+- Archived pages can be restored to Draft for revision
 
 ---
 
-## 5. Stock Discovery & Browsing
+## 3. Stock Page Editor
 
-### 5.1 Browse Stocks Page
+### 3.1 Editor Location
+**URL:** `/admin/stocks/:id/edit`
 
-**Location:** `/browse-stocks`
+### 3.2 Content Tab
 
-**Features:**
-- **Search Bar**: Filter stocks by ticker or company name
-- **Sector Filters**: Clickable badges to filter by industry
-- **Sort Options**: Sort by Ticker, Name, or Sector
-- **View Toggle**: Switch between grid and list views
+**Stock Information Section:**
 
-**Grid View:**
-Stock cards displaying: logo, ticker with exchange badge, company name, sector badge
+| Field | Required | Description |
+|-------|----------|-------------|
+| Ticker Symbol | Yes | Stock trading symbol (e.g., "AAPL") |
+| Exchange | Yes | Dropdown: NASDAQ, NYSE, or AMEX |
+| Sector | Yes | Industry classification |
+| URL Slug | Yes | Auto-generated from ticker, can be edited |
+| Status | Yes | Dropdown: Draft, Published, Archived |
 
-**List View:**
-Alphabetically grouped by first letter with sticky letter headers. Each row shows logo, ticker, company name, and sector.
+**Company Names Section:**
+| Field | Description |
+|-------|-------------|
+| English Name | Company name in English |
+| Arabic Name | Company name in Arabic (right-to-left input) |
 
-**Theme Integration:**
-When no filters are active, a "Browse by Theme" section appears linking to theme pages.
+**Descriptions Section:**
+| Field | Description |
+|-------|-------------|
+| English Description | Short company description in English |
+| Arabic Description | Short company description in Arabic (right-to-left input) |
 
-### 5.2 Stocks Discover Page
-
-**Location:** `/discover`
-
-**Hero Section:**
-- Configurable title and subtitle
-- Global search bar with autocomplete suggestions
-- Quick filter chips: Trending | Most Viewed | Top Gainers | Top Losers | Newly Added
-
-**Trending Stocks Section:**
-- Horizontally scrollable cards
-- Mini sparkline charts (optional, configurable)
-- Price and change percentage display
-
-**Biggest Movers Section:**
-Two-column layout:
-- **Gainers Column**: Top 5 stocks with highest positive change, ranked
-- **Losers Column**: Top 5 stocks with highest negative change, ranked
-
-**Stock Themes Section:**
-- Grid of theme cards
-- Featured theme badges
-- Stock count per theme
-- Sample ticker previews
-
-**Featured Stocks Section:**
-- Curated grid of stock cards
-- Tickers configured by admin
-
-### 5.3 Discover Page Configuration
-Admins can configure:
-- Hero title and subtitle (both languages)
-- Which tickers appear in trending, gainers, losers, and featured sections
-- Whether sparkline charts are shown
-- Which sections are visible (offers, themes, trending, featured, price alerts, learn, newsletter, disclosures)
-
----
-
-## 6. Stock Themes
-
-### 6.1 Theme Information
-
-Each theme contains:
+**About Company Section:**
 
 | Field | Description |
 |-------|-------------|
-| Title | Theme name (English and Arabic) |
+| CEO | Name of current CEO |
+| Employee Count | Number of employees (e.g., "164,000") |
+| Headquarters | Company headquarters location |
+| Founded | Year the company was established |
+| Overview (English) | Rich text editor for detailed company overview |
+| Overview (Arabic) | Rich text editor for Arabic overview |
+| Investment Thesis (English) | Text explaining why investors might consider this stock |
+| Investment Thesis (Arabic) | Arabic version of investment thesis |
+
+**Related Stocks Section:**
+| Field | Description |
+|-------|-------------|
+| Related Tickers | Comma-separated list of related stock tickers for cross-linking |
+
+### 3.3 SEO Tab
+
+**Meta Information:**
+
+| Field | Description |
+|-------|-------------|
+| Meta Title (English) | Page title shown in browser tab and search results |
+| Meta Title (Arabic) | Arabic version of page title |
+| Meta Description (English) | Summary shown in search result snippets |
+| Meta Description (Arabic) | Arabic version of meta description |
+
+**Open Graph Settings (for social sharing on Facebook, LinkedIn):**
+
+| Field | Description |
+|-------|-------------|
+| OG Title (English) | Title when page is shared on social media |
+| OG Title (Arabic) | Arabic version |
+| OG Description (English) | Description when shared |
+| OG Description (Arabic) | Arabic version |
+| OG Image URL | Image shown when shared on social media |
+
+**Twitter Card Settings:**
+
+| Field | Description |
+|-------|-------------|
+| Twitter Title (English) | Title when shared on Twitter |
+| Twitter Title (Arabic) | Arabic version |
+| Twitter Description (English) | Description when shared on Twitter |
+| Twitter Description (Arabic) | Arabic version |
+| Twitter Image URL | Image shown on Twitter |
+| Card Type | Dropdown: Summary or Summary with Large Image |
+
+**Schema.org Settings (for search engine structured data):**
+
+| Field | Description |
+|-------|-------------|
+| Schema Type | Type of entity (default: Corporation) |
+| Ticker Symbol | Stock ticker for structured data |
+| Exchange | Stock exchange name |
+| Currency | Trading currency (e.g., USD) |
+
+### 3.4 Editor Actions
+
+**Save Button:**
+- Saves all changes to the stock page
+- Maintains current status (does not auto-publish)
+
+**Preview Button:**
+- Opens the stock page in a new browser tab
+- Adds preview mode for unpublished pages
+- Allows viewing before publishing
+
+**Back Button:**
+- Returns to the stock list view
+- Prompts to save if there are unsaved changes
+
+---
+
+## 4. SEO Administration Settings
+
+### 4.1 Global SEO Templates
+
+**Location:** Accessible from admin settings or discover settings
+
+**Purpose:** Define default SEO templates that apply to all stock pages, reducing repetitive entry.
+
+**Template Variables:**
+Templates can include placeholders that get replaced with actual stock data:
+
+| Variable | Replaced With |
+|----------|---------------|
+| `{{ticker}}` | Stock ticker symbol |
+| `{{companyName}}` | Company name |
+| `{{sector}}` | Industry sector |
+| `{{exchange}}` | Stock exchange |
+| `{{price}}` | Current stock price (dynamic) |
+
+**Meta Title Templates:**
+
+| Field | Example |
+|-------|---------|
+| English Template | "{{ticker}} Stock - Buy {{companyName}} Shares \| Baraka" |
+| Arabic Template | Arabic equivalent with same placeholders |
+
+**Meta Description Templates:**
+
+| Field | Example |
+|-------|---------|
+| English Template | "Invest in {{companyName}} ({{ticker}}) on Baraka. Get real-time prices, market data, and expert analysis." |
+| Arabic Template | Arabic equivalent |
+
+**Open Graph Templates:**
+
+| Field | Description |
+|-------|-------------|
+| OG Title Template (English) | Default OG title using variables |
+| OG Title Template (Arabic) | Arabic version |
+| OG Description Template (English) | Default OG description |
+| OG Description Template (Arabic) | Arabic version |
+
+### 4.2 Template Override Behavior
+
+**How templates work with individual pages:**
+1. When a new stock page is created, template values are applied as defaults
+2. Editors can override any template value on the individual page
+3. If an individual page field is blank, the template is used
+4. If an individual page field has content, that content takes precedence
+
+**Example:**
+- Template: "{{ticker}} Stock - Buy {{companyName}} Shares | Baraka"
+- For AAPL: "AAPL Stock - Buy Apple Inc Shares | Baraka"
+- If editor enters custom title, the custom title is used instead
+
+### 4.3 Schema.org Default Settings
+
+| Setting | Description |
+|---------|-------------|
+| Default Schema Type | What type of entity stock pages represent (Corporation) |
+| Default Currency | Default trading currency (USD) |
+| Site Name | Brand name for structured data |
+
+### 4.4 Robots and Indexing Settings
+
+| Setting | Description |
+|---------|-------------|
+| Index Published Pages | Whether search engines should index published stock pages |
+| Index Draft Pages | Whether drafts are indexable (typically No) |
+| Canonical URL Pattern | URL pattern for canonical links |
+
+---
+
+## 5. Stock Themes Management
+
+### 5.1 Theme List View
+
+**Location:** `/admin/themes` or within Discover settings
+
+**What It Shows:**
+- List of all stock themes
+- Theme title and stock count
+- Status (draft, published, archived)
+- Featured flag indicator
+- Edit and preview buttons
+
+### 5.2 Theme Editor
+
+**Basic Information:**
+
+| Field | Description |
+|-------|-------------|
+| Title (English) | Theme name in English (e.g., "AI Stocks") |
+| Title (Arabic) | Theme name in Arabic |
 | Slug | URL identifier (e.g., "ai-stocks") |
-| Short Description | Brief theme description |
-| Long Description | Extended theme explanation |
-| Tickers | List of stocks in this theme |
-| Hero Image | Banner image for the theme page |
-| Icon | Visual icon representing the theme |
-| Badges | Display badges (e.g., "Popular", "New") |
-| Highlights | "Why invest" benefit cards |
-| Sort Mode | How stocks are ordered: manual, by market cap, volume, or performance |
-| Related Blog Tags | Tags to link related blog content |
 | Status | Draft, Published, or Archived |
-| Featured Flag | Whether theme appears prominently |
-| New Flag | Whether "New" badge is shown |
+| Featured | Checkbox to feature this theme prominently |
+| Is New | Checkbox to show "New" badge |
 
-### 6.2 Theme Page
+**Theme Content:**
 
-**Location:** `/stocks/themes/:slug`
+| Field | Description |
+|-------|-------------|
+| Short Description (English) | Brief theme description |
+| Short Description (Arabic) | Arabic version |
+| Long Description (English) | Extended theme explanation |
+| Long Description (Arabic) | Arabic version |
+| Hero Image | Banner image URL for theme page |
+| Icon | Icon identifier for theme |
 
-**Layout:**
+**Stocks in Theme:**
 
-1. **Header**
-   - Theme icon
-   - Theme title
-   - Badges (New, Featured, custom)
-   - Short description
-   - Number of stocks in theme
+| Field | Description |
+|-------|-------------|
+| Tickers | List of stock tickers included in this theme |
+| Sort Mode | How stocks are ordered: Manual, By Market Cap, By Volume, By Performance |
 
-2. **Highlights Section** (if configured)
-   - "Why invest in [Theme]?" heading
-   - Three-column grid of benefit cards
-   - Each card has: icon, title, description
+**Theme Highlights (Why Invest cards):**
+Repeatable section for benefit cards:
 
-3. **Stocks Grid**
-   - Card for each ticker in the theme
-   - "Live" badge if stock page exists and is published
-   - "Coming Soon" badge if no page exists yet
-   - "View Stock Page" button (disabled if page doesn't exist)
+| Field | Description |
+|-------|-------------|
+| Icon | Icon for the highlight card |
+| Title (English) | Benefit title |
+| Title (Arabic) | Arabic version |
+| Description (English) | Benefit explanation |
+| Description (Arabic) | Arabic version |
 
-4. **CTA Section**
-   - "Ready to invest in [Theme]?" heading
-   - App download button
+**Theme SEO:**
 
-5. **Learn More Section**
-   - Links to related blog articles
-
----
-
-## 7. SEO & Social Sharing
-
-### 7.1 Meta Tags
-
-Each stock page has configurable:
-- **Page Title**: Appears in browser tab and search results
-- **Meta Description**: Appears in search result snippets
-- **Canonical URL**: Prevents duplicate content issues
-- **Robots Directives**: Control whether page is indexed/followed
-
-### 7.2 Template Variables
-
-SEO fields can use dynamic placeholders that get replaced with actual values:
-- `{{ticker}}` → Stock ticker symbol
-- `{{companyName}}` → Company name
-- `{{sector}}` → Industry sector
-- `{{exchange}}` → Stock exchange
-- `{{price}}` → Current stock price
-
-**Example template:**
-Title: "{{ticker}} Stock - Buy {{companyName}} Shares | Baraka"
-
-### 7.3 Open Graph (Facebook/LinkedIn Sharing)
-
-When someone shares a stock page on social media, the following information appears:
-- Title
-- Description
-- Preview image
-- Site name
-- URL
-
-### 7.4 Twitter Cards
-
-When shared on Twitter:
-- Card type (summary or large image)
-- Title
-- Description
-- Preview image
-
-### 7.5 Structured Data (Schema.org)
-
-Stock pages include structured data that helps search engines understand the content:
-- Company type (Corporation)
-- Company name
-- Ticker symbol
-- Stock exchange
-- Currency
-- Page description
+| Field | Description |
+|-------|-------------|
+| Meta Title (English/Arabic) | Page title for theme page |
+| Meta Description (English/Arabic) | Description for search results |
+| Canonical URL | Canonical link for this theme |
 
 ---
 
-## 8. Language & RTL Support
+## 6. Collaborative Editing
 
-### 8.1 Language Toggle
-- Toggle button in header switches between English (EN) and Arabic (AR)
-- User preference is saved and remembered
-- URL parameter `?locale=ar` can override the setting
+### 6.1 Real-Time Presence
 
-### 8.2 Right-to-Left Layout
-When Arabic is selected:
-- Text aligns to the right
-- Layout direction reverses (sidebars swap sides)
-- Directional icons rotate appropriately
-- Numbers and prices maintain left-to-right display
+**What It Does:**
+When multiple editors work on the same stock page simultaneously, the system shows who else is editing.
 
-### 8.3 Bilingual Content
-All content fields exist in both languages:
-- Titles, descriptions, and body content
-- SEO metadata
-- UI labels
+**Active Editors Bar:**
+- Appears at the top of the editor when others are present
+- Shows avatar/initial and name of each active editor
+- Each editor has a unique color for identification
 
-### 8.4 Number Formatting
-- Currency displays with proper symbols
-- Percentages show appropriate decimal places
-- Large numbers use locale-appropriate separators
+**How Editors Are Identified:**
+- Display name
+- Unique color from a preset palette
+- Avatar image (if available)
 
----
+### 6.2 Field-Level Presence
 
-## 9. Real-Time Market Data
+**What It Does:**
+Shows which specific field another editor is currently working in.
 
-### 9.1 Data Points Available
-- Current stock price
-- Price change (absolute and percentage)
-- Trading volume
-- Market capitalization
-- Mini sparkline charts (recent price movement)
-- Last update timestamp
+**Visual Indicators:**
+- Colored border around the field being edited
+- Small label showing the editor's name
+- Color matches the editor's assigned presence color
 
-### 9.2 Update Behavior
-- **Initial Load**: Fetches data for all visible stocks
-- **Periodic Refresh**: Updates every 30-60 seconds
-- **On-Demand**: Refreshes when user focuses on price areas
+**Purpose:**
+Prevents confusion when multiple people edit the same page, helping editors avoid overwriting each other's work.
 
-### 9.3 Price Display
-- **Positive changes**: Green text with up arrow
-- **Negative changes**: Red text with down arrow
-- **Animated transitions**: Smooth updates when prices change
+### 6.3 Connection Status
+
+**Online Indicator:**
+- Green dot or "Connected" status when connection is healthy
+- Automatically reconnects if connection drops
+
+**Offline Indicator:**
+- Warning message if connection is lost
+- Changes may not sync until reconnected
 
 ---
 
-## 10. Related Stocks
+## 7. Content Syncing: Blog → Stories → Spotlight
 
-### 10.1 How Related Stocks Are Determined
+This section describes how content flows between Blog Posts, Stories, and Spotlight Banners to reduce duplicate work.
 
-**Automatic Suggestions:**
-- Same sector/industry
-- Similar market capitalization
-- Frequently traded together by users
-- Competitors in the same space
-
-**Manual Curation:**
-Editors can specify related tickers directly in the stock editor.
-
-### 10.2 Display
-- "Similar Stocks" section on each stock page
-- Grid of 4 stock cards
-- Clicking a card navigates to that stock's page
-
----
-
-## 11. Collaborative Editing
-
-### 11.1 Real-Time Presence
-
-When multiple editors work on the same stock page:
-- Each editor sees who else is currently editing
-- Editors are identified by name and a unique color
-- An "Active Editors" bar shows all current participants
-
-### 11.2 Field-Level Awareness
-- Visual indicator shows which specific field another editor is working in
-- Prevents confusion about who is editing what
-
-### 11.3 Connection Status
-- Online/offline indicator shows connection health
-- Reconnects automatically if connection drops
-
-### 11.4 Color Coding
-Each editor is assigned a unique color from a palette. This color appears in their avatar and any field indicators.
-
----
-
-## 12. Additional Features
-
-### 12.1 Stock Watch Subscriptions
-Users can subscribe to receive updates about specific stocks:
-- Email address and mobile number
-- Selected stock ticker
-- Update frequency: daily, weekly, or monthly
-- Language preference
-
-### 12.2 Price Alert Subscriptions
-Users can subscribe to receive price movement alerts:
-- Email address
-- List of tickers to watch
-- Alert frequency: instant, daily, or weekly
-- Language preference
-
-### 12.3 Stock Logo Display
-- Shows company logo from CDN when available
-- Falls back to first two letters of ticker if no logo exists
-- Rounded container with subtle background
-
-### 12.4 Sign-Up CTA
-- Dynamic call-to-action text based on context
-- Supports ticker-specific messaging: "Trade AAPL"
-- Links to app download
-- Mobile: Platform-specific deep links (iOS/Android)
-- Desktop: QR code modal for mobile download
-
-### 12.5 Mobile Install Banner
-- Sticky banner prompting mobile users to install the app
-- Configurable visibility per page
-- Frequency capping (e.g., show once every 7 days)
-- Platform-aware deep links
-
-### 12.6 Page Builder Blocks
-Stock pages are composed of modular blocks that can be:
-- Enabled or disabled
-- Reordered
-- Customized with specific settings
-
-**Available Block Types:**
-- Stock Header (hero with logo, ticker, price)
-- Price Snapshot (current price display)
-- Price Chart (interactive chart)
-- Key Statistics (market metrics)
-- About Company (overview and details)
-- Analyst Ratings (sentiment display)
-- Earnings (earnings data and chart)
-- News (recent articles)
-- FAQ (questions and answers)
-- Trade Widget (CTA and actions)
-- Similar Stocks (related stock cards)
-
----
-
-## 13. Content Syncing: Blog → Stories → Spotlight
-
-This section describes how content flows between Blog Posts, Stories, and Spotlight Banners to reduce duplicate work and maintain consistent messaging.
-
-### 13.1 Content Flow Overview
+### 7.1 Content Flow Overview
 
 Content can be repurposed across three channels:
 
@@ -599,7 +375,7 @@ Web/SEO    Newsletter    In-App Banners
 Content     Content      (Home, Discover)
 ```
 
-### 13.2 Content Relationships
+### 7.2 Content Relationships
 
 **Blog Post** (source content)
 - Full articles for the website
@@ -618,145 +394,132 @@ Content     Content      (Home, Discover)
 - Configurable placements (home screen, discover page, etc.)
 - Tracks its source (Blog or Story)
 
-### 13.3 Syncing Blog to Story
+### 7.3 Syncing Blog to Story
 
 **User Flow:**
-1. Editor opens a Blog Post in the CMS
+1. Editor views a Blog Post in the CMS blog list
 2. Clicks "Sync to Stories" button (purple newspaper icon)
-3. System creates a new Story pre-filled with blog content:
-   - Title copied to Story title (both languages)
-   - Excerpt copied to Story snippet (truncated to 200 characters)
-   - Featured image copied to Story image
-   - First portion of content copied to Story content
-   - Stock tickers extracted from tags
-4. Story is created as a draft
-5. Editor can review and add "Why it matters" section
-6. Story is linked back to the source Blog Post
+3. System creates a new Story as a draft, pre-filled with blog content
+4. Editor is notified of successful sync
+5. Story appears in Stories management with link back to source blog
 
-**What Gets Copied:**
-| Blog Field | Story Field | Notes |
-|------------|-------------|-------|
-| Title (EN/AR) | Title (EN/AR) | Direct copy |
-| Excerpt (EN/AR) | Snippet (EN/AR) | Truncated to 200 characters |
-| Featured Image | Image | Direct copy |
-| Content (EN/AR) | Content (EN/AR) | First 500 characters or 2 paragraphs |
-| Tags | Tickers | Only valid stock symbols |
+**What Gets Copied Automatically:**
+
+| Blog Field | Story Field | How It's Handled |
+|------------|-------------|------------------|
+| Title (EN/AR) | Title (EN/AR) | Copied directly |
+| Excerpt (EN/AR) | Snippet (EN/AR) | Copied, truncated to 200 characters |
+| Featured Image | Image | Copied directly |
+| Content (EN/AR) | Content (EN/AR) | First portion copied |
+| Tags | Tickers | Only valid stock symbols extracted |
 
 **What Editor Must Add:**
-- "Why it matters" section (required for newsletters)
-- Any story-specific edits
+- "Why it matters" section (newsletter-specific context)
+- Any story-specific edits or refinements
 
-### 13.4 Syncing Story to Spotlight
+**Button Visibility:**
+- "Sync to Stories" button appears only when no Story exists for that blog
+- Once synced, button is replaced with "Story" badge linking to the synced Story
+
+### 7.4 Syncing Story to Spotlight
 
 **User Flow:**
 1. Editor opens a Story in the CMS
 2. Clicks "Create Spotlight" button
-3. System creates a new Spotlight pre-filled:
-   - Story title becomes Spotlight headline
-   - Story snippet becomes subtitle (truncated to 120 characters)
-   - Story image becomes Spotlight image
-   - Default CTA text and URL from settings
-4. Editor selects where the banner appears (home, discover, blog, stock pages)
-5. Editor optionally sets schedule (start and end dates)
-6. Spotlight is linked back to the source Story (and original Blog if applicable)
+3. System creates a new Spotlight as a draft
+4. Editor configures placements and schedule
+5. Editor activates the Spotlight when ready
 
-**What Gets Copied:**
-| Story Field | Spotlight Field | Notes |
-|-------------|-----------------|-------|
-| Title | Headline | Based on selected language |
+**What Gets Copied Automatically:**
+
+| Story Field | Spotlight Field | How It's Handled |
+|-------------|-----------------|------------------|
+| Title | Headline | Copied for selected language |
 | Snippet | Subtitle | Truncated to 120 characters |
-| Image | Image | Direct copy |
+| Image | Image | Copied directly |
 
-**What Editor Configures:**
+**What Editor Must Configure:**
 - CTA button text
-- CTA link/deep link
+- CTA link or app deep link
 - Placements (which screens show the banner)
-- Schedule (optional start/end dates)
+- Schedule (optional start and end dates)
+- Status (draft → active)
 
-### 13.5 One-Click Publishing
+### 7.5 One-Click Publishing ("Publish Everywhere")
 
-The "Publish Everywhere" button in the Blog editor performs all syncing in one action:
+**Location:** Blog editor toolbar
+
+**What It Does:**
+Single button that performs all syncing in one action:
 1. Publishes the Blog Post
 2. Creates a Story (if one doesn't exist)
 3. Creates a Spotlight (if one doesn't exist)
 4. Creates a Newsletter draft (if one doesn't exist)
 
-### 13.6 Status Indicators
+**Result:**
+Toast notification shows what was created (e.g., "Created: Published blog, Story, Spotlight, Newsletter")
 
-**On Blog Cards:**
-- Purple "Story" badge: A Story exists for this blog
-- Amber "Spotlight" badge: A Spotlight exists
-- Blue "Newsletter" badge: A Newsletter exists
+### 7.6 Status Indicators in CMS
 
-**On Story Cards:**
+**On Blog Cards (blog list view):**
+
+| Badge | Color | Meaning |
+|-------|-------|---------|
+| Story | Purple | A Story has been created from this blog |
+| Spotlight | Amber | A Spotlight has been created |
+| Newsletter | Blue | A Newsletter has been created |
+
+Clicking any badge navigates to that content type's management page.
+
+**On Story Cards (story list view):**
 - "From Blog: [title]" indicator if synced from a blog
-- "Has Spotlight" badge if a Spotlight was created
+- "Has Spotlight" badge if a Spotlight was created from it
 
-**On Spotlight Cards:**
+**On Spotlight Cards (spotlight list view):**
 - "From Blog" badge if source was a blog
 - "From Story" badge if source was a story
 - "Manual" badge if created directly
 
-### 13.7 Sync Button Visibility
+### 7.7 Sync Button Behavior
 
-**"Sync to Stories" button appears when:**
-- Viewing a Blog Post
-- No Story exists for that Blog yet
+**"Sync to Stories" button:**
+- Visible: When viewing a blog that has no linked Story
+- Hidden: When a Story already exists (replaced with Story badge)
+- Disabled: While sync is in progress
 
-**"Create Spotlight" button appears when:**
-- Viewing a Story
-- No Spotlight exists for that Story yet
+**"Create Spotlight" button:**
+- Visible: When viewing a Story that has no linked Spotlight
+- Hidden: When a Spotlight already exists (replaced with view link)
+- Disabled: While creation is in progress
 
-**Buttons are hidden when:**
-- Linked content already exists (replaced by view/navigate links)
+### 7.8 Traceability
 
-### 13.8 Auto-Sync Settings (Optional)
+**Link Tracking:**
+- Each Story records which Blog Post it came from (`sourceBlogPostId`)
+- Each Spotlight records whether it came from a Blog or Story
+- Links are bidirectional for easy navigation between related content
 
-Administrators can configure automatic syncing:
-- **Auto-create Spotlight on Blog publish**: When enabled, publishing a blog automatically creates and activates a Spotlight
-- **Default placements**: Which screens new Spotlights appear on by default
-- **Default CTA text**: Standard button text for auto-created Spotlights
-
-### 13.9 Update Propagation (Optional Enhancement)
-
-When source content is updated, the system can:
-- **Prompt mode**: Ask editor if linked content should be updated
-- **Auto mode**: Automatically update linked content
-- **Manual mode**: Require editor to manually update linked content
-
-Configurable per field (title, image, excerpt).
+**Audit Trail:**
+All sync operations are logged:
+- What was created
+- When it was created
+- Who initiated the sync
+- Source content reference
 
 ---
 
-## Appendix A: URL Reference
+## Appendix: Admin URL Reference
 
-### Stock Pages
-| URL Pattern | Description |
-|-------------|-------------|
-| `/stocks` | Stock directory listing |
-| `/stocks/:ticker` | Individual stock page |
-| `/browse-stocks` | Full browse with filters |
-| `/discover` | Discovery page with themes and movers |
-| `/stocks/themes/:slug` | Theme detail page |
-
-### Admin Pages
 | URL Pattern | Description |
 |-------------|-------------|
 | `/admin/stocks` | Stock page management list |
 | `/admin/stocks/:id/edit` | Stock page editor |
-| `/admin/blog` | Blog management |
+| `/admin/themes` | Stock themes management |
+| `/admin/blog` | Blog management (with sync buttons) |
 | `/admin/stories` | Stories management |
 | `/admin/spotlights` | Spotlight banner management |
+| `/admin/discover` | Discover page settings (including SEO templates) |
 
 ---
 
-## Appendix B: Disclaimer Requirements
-
-All stock pages must include:
-1. **Footer Disclaimer**: "Capital at risk. For informational purposes only. Not investment advice."
-2. **Risk Warning**: Prominently displayed risk language
-3. **No Financial Advice**: Content must not constitute financial advice
-
----
-
-This document provides the functional specification for the Stock Pages system. It describes what the system does and how users interact with it, serving as a reference for understanding system behavior.
+This document describes the CMS administration functionality for managing Stock Pages, SEO settings, and content syncing across channels.
