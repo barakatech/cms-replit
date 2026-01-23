@@ -2,11 +2,45 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertStorySchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertStorySchema, insertComplianceScanRunSchema, insertComplianceRuleSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import type { EnglishIssue } from "@shared/schema";
+
+// Basic English lint helper for fallback mode
+function runBasicEnglishLint(text: string): EnglishIssue[] {
+  const issues: EnglishIssue[] = [];
+  
+  // Common spelling/typo patterns
+  const commonMistakes: { pattern: RegExp; type: 'spelling' | 'grammar' | 'clarity' | 'tone'; message: string; suggestion: string }[] = [
+    { pattern: /\bteh\b/gi, type: 'spelling', message: 'Possible typo: "teh"', suggestion: 'the' },
+    { pattern: /\brecieve\b/gi, type: 'spelling', message: 'Misspelling: "recieve"', suggestion: 'receive' },
+    { pattern: /\boccured\b/gi, type: 'spelling', message: 'Misspelling: "occured"', suggestion: 'occurred' },
+    { pattern: /\bseperate\b/gi, type: 'spelling', message: 'Misspelling: "seperate"', suggestion: 'separate' },
+    { pattern: /\bdefinately\b/gi, type: 'spelling', message: 'Misspelling: "definately"', suggestion: 'definitely' },
+    { pattern: /\s{2,}/g, type: 'clarity', message: 'Multiple consecutive spaces', suggestion: ' ' },
+    { pattern: /\bi\b/g, type: 'grammar', message: 'Lowercase "i" should be capitalized', suggestion: 'I' },
+    { pattern: /[.!?]\s*[a-z]/g, type: 'grammar', message: 'Sentence should start with capital letter', suggestion: '' },
+  ];
+  
+  for (const mistake of commonMistakes) {
+    let match;
+    while ((match = mistake.pattern.exec(text)) !== null) {
+      issues.push({
+        type: mistake.type,
+        severity: 'low',
+        message: mistake.message,
+        start: match.index,
+        end: match.index + match[0].length,
+        suggestion: mistake.suggestion,
+      });
+    }
+  }
+  
+  return issues;
+}
 
 // Presence management
 const activePresences = new Map<string, UserPresence>();
@@ -1504,6 +1538,304 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(templates);
     } catch (error) {
       res.status(500).json({ error: "Failed to update stock SEO templates" });
+    }
+  });
+
+  // ============================================
+  // COMPLIANCE CHECKER
+  // ============================================
+
+  // Compliance Scan Runs
+  app.get("/api/compliance/scans", async (req, res) => {
+    const contentType = req.query.contentType as string | undefined;
+    const approvalStatus = req.query.approvalStatus as string | undefined;
+    const scans = await storage.getComplianceScanRuns({ contentType, approvalStatus });
+    res.json(scans);
+  });
+
+  app.get("/api/compliance/scans/:id", async (req, res) => {
+    const scan = await storage.getComplianceScanRun(req.params.id);
+    if (!scan) return res.status(404).json({ error: "Scan not found" });
+    res.json(scan);
+  });
+
+  app.post("/api/compliance/scans", async (req, res) => {
+    try {
+      const validatedData = insertComplianceScanRunSchema.parse(req.body);
+      const scan = await storage.createComplianceScanRun(validatedData);
+      
+      // Log audit event
+      await storage.createAuditLog({
+        entityType: 'compliance_scan',
+        entityId: scan.id,
+        actionType: 'scan_created',
+        actorUserId: validatedData.scannedBy || 'system',
+        actorName: 'System',
+        metaJson: { contentType: scan.contentType, contentId: scan.contentId },
+      });
+      
+      res.status(201).json(scan);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create compliance scan" });
+    }
+  });
+
+  app.put("/api/compliance/scans/:id", async (req, res) => {
+    const scan = await storage.updateComplianceScanRun(req.params.id, req.body);
+    if (!scan) return res.status(404).json({ error: "Scan not found" });
+    
+    // Log audit if approval status changed
+    if (req.body.approvalStatus) {
+      const actionMap: Record<string, 'scan_approved' | 'scan_rejected' | 'scan_pending'> = {
+        'approved': 'scan_approved',
+        'rejected': 'scan_rejected',
+        'pending': 'scan_pending',
+      };
+      await storage.createAuditLog({
+        entityType: 'compliance_scan',
+        entityId: scan.id,
+        actionType: actionMap[req.body.approvalStatus] || 'scan_pending',
+        actorUserId: req.body.approvedBy || 'system',
+        actorName: 'System',
+        metaJson: { notes: req.body.approvalNotes },
+      });
+    }
+    
+    res.json(scan);
+  });
+
+  app.delete("/api/compliance/scans/:id", async (req, res) => {
+    const scan = await storage.getComplianceScanRun(req.params.id);
+    if (!scan) return res.status(404).json({ error: "Scan not found" });
+    
+    const success = await storage.deleteComplianceScanRun(req.params.id);
+    if (!success) return res.status(500).json({ error: "Failed to delete scan" });
+    
+    // Log audit event for deletion
+    await storage.createAuditLog({
+      entityType: 'compliance_scan',
+      entityId: req.params.id,
+      actionType: 'scan_created', // Using existing type, could be extended
+      actorUserId: 'system',
+      actorName: 'System',
+      metaJson: { action: 'deleted', contentType: scan.contentType, contentTitle: scan.contentTitle },
+    });
+    
+    res.json({ success: true });
+  });
+
+  app.get("/api/compliance/scans/content/:contentId", async (req, res) => {
+    const scans = await storage.getComplianceScanRunsByContentId(req.params.contentId);
+    res.json(scans);
+  });
+
+  // Compliance Rules
+  app.get("/api/compliance/rules", async (_req, res) => {
+    const rules = await storage.getComplianceRules();
+    res.json(rules);
+  });
+
+  app.get("/api/compliance/rules/:id", async (req, res) => {
+    const rule = await storage.getComplianceRule(req.params.id);
+    if (!rule) return res.status(404).json({ error: "Rule not found" });
+    res.json(rule);
+  });
+
+  app.post("/api/compliance/rules", async (req, res) => {
+    try {
+      const validatedData = insertComplianceRuleSchema.parse(req.body);
+      const rule = await storage.createComplianceRule(validatedData);
+      res.status(201).json(rule);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create compliance rule" });
+    }
+  });
+
+  app.put("/api/compliance/rules/:id", async (req, res) => {
+    const rule = await storage.updateComplianceRule(req.params.id, req.body);
+    if (!rule) return res.status(404).json({ error: "Rule not found" });
+    res.json(rule);
+  });
+
+  app.delete("/api/compliance/rules/:id", async (req, res) => {
+    const success = await storage.deleteComplianceRule(req.params.id);
+    if (!success) return res.status(404).json({ error: "Rule not found" });
+    res.json({ success: true });
+  });
+
+  // Compliance Checker Settings
+  app.get("/api/compliance/settings", async (_req, res) => {
+    const settings = await storage.getComplianceCheckerSettings();
+    res.json(settings);
+  });
+
+  app.put("/api/compliance/settings", async (req, res) => {
+    try {
+      const settings = await storage.updateComplianceCheckerSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update compliance settings" });
+    }
+  });
+
+  // Writing Assistant Integrations
+  app.get("/api/compliance/writing-assistants", async (_req, res) => {
+    const integrations = await storage.getWritingAssistantIntegrations();
+    res.json(integrations);
+  });
+
+  app.get("/api/compliance/writing-assistants/:id", async (req, res) => {
+    const integration = await storage.getWritingAssistantIntegration(req.params.id);
+    if (!integration) return res.status(404).json({ error: "Integration not found" });
+    res.json(integration);
+  });
+
+  app.post("/api/compliance/writing-assistants", async (req, res) => {
+    try {
+      const integration = await storage.createWritingAssistantIntegration(req.body);
+      res.status(201).json(integration);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create writing assistant integration" });
+    }
+  });
+
+  app.put("/api/compliance/writing-assistants/:id", async (req, res) => {
+    const integration = await storage.updateWritingAssistantIntegration(req.params.id, req.body);
+    if (!integration) return res.status(404).json({ error: "Integration not found" });
+    res.json(integration);
+  });
+
+  app.delete("/api/compliance/writing-assistants/:id", async (req, res) => {
+    const success = await storage.deleteWritingAssistantIntegration(req.params.id);
+    if (!success) return res.status(404).json({ error: "Integration not found" });
+    res.json({ success: true });
+  });
+
+  // English Quality Analysis (via OpenAI or Writing Assistant)
+  app.post("/api/compliance/analyze-english", async (req, res) => {
+    try {
+      const { scanId, text } = req.body;
+      const settings = await storage.getComplianceCheckerSettings();
+      
+      if (!settings.enableEnglishQualityScoring) {
+        return res.status(400).json({ error: "English quality scoring is not enabled" });
+      }
+      
+      let englishScore = null;
+      let englishFindings: any[] = [];
+      let englishSuggestedEdits: any[] = [];
+      let englishLabel: 'excellent' | 'good' | 'needs_edits' | 'not_configured' = 'not_configured';
+      let provider: 'writing_assistant' | 'openai' | 'fallback' = 'fallback';
+      
+      if (settings.englishScoringProvider === 'writing_assistant') {
+        const integration = await storage.getActiveWritingAssistantIntegration();
+        if (integration) {
+          try {
+            const response = await fetch(`${integration.baseUrl}${integration.analyzePath}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...integration.headers,
+              },
+              body: JSON.stringify({ text, language: 'en' }),
+            });
+            const data = await response.json();
+            englishScore = Math.min(100, Math.max(0, data.score || 0));
+            englishFindings = data.issues || [];
+            englishSuggestedEdits = data.edits || [];
+            provider = 'writing_assistant';
+          } catch (e) {
+            console.error('Writing assistant error:', e);
+          }
+        }
+      } else if (settings.englishScoringProvider === 'openai') {
+        // OpenAI integration will be handled client-side or via a separate endpoint
+        // For now, use fallback rules-based lint
+        const issues = runBasicEnglishLint(text);
+        englishFindings = issues;
+        englishScore = Math.max(0, 100 - issues.length * 5);
+        provider = 'fallback';
+      }
+      
+      // Calculate label
+      if (englishScore !== null) {
+        if (englishScore >= settings.englishThresholds.excellent) {
+          englishLabel = 'excellent';
+        } else if (englishScore >= settings.englishThresholds.good) {
+          englishLabel = 'good';
+        } else {
+          englishLabel = 'needs_edits';
+        }
+      }
+      
+      // Update scan run if scanId provided
+      if (scanId) {
+        await storage.updateComplianceScanRun(scanId, {
+          englishScore,
+          englishLabel,
+          englishFindings,
+          englishSuggestedEdits,
+          englishProvider: provider,
+        });
+        
+        // Log audit
+        await storage.createAuditLog({
+          entityType: 'compliance_scan',
+          entityId: scanId,
+          actionType: 'english_analysis_run',
+          actorUserId: 'system',
+          actorName: 'System',
+          metaJson: { provider, score: englishScore },
+        });
+      }
+      
+      res.json({
+        englishScore,
+        englishLabel,
+        englishFindings,
+        englishSuggestedEdits,
+        provider,
+      });
+    } catch (error) {
+      console.error('English analysis error:', error);
+      res.status(500).json({ error: "Failed to analyze English quality" });
+    }
+  });
+
+  // Apply English edits
+  app.post("/api/compliance/apply-english-edits", async (req, res) => {
+    try {
+      const { scanId, text, edits } = req.body;
+      
+      // Apply edits in reverse order to maintain offsets
+      let result = text;
+      const sortedEdits = [...edits].sort((a: any, b: any) => b.start - a.start);
+      
+      for (const edit of sortedEdits) {
+        result = result.substring(0, edit.start) + edit.replacement + result.substring(edit.end);
+      }
+      
+      // Log audit
+      if (scanId) {
+        await storage.createAuditLog({
+          entityType: 'compliance_scan',
+          entityId: scanId,
+          actionType: 'english_edits_applied',
+          actorUserId: 'system',
+          actorName: 'System',
+          metaJson: { editCount: edits.length },
+        });
+      }
+      
+      res.json({ success: true, text: result });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to apply edits" });
     }
   });
 

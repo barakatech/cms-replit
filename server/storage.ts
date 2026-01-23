@@ -63,6 +63,14 @@ import {
   type InsertAssetLink,
   type Story,
   type InsertStory,
+  type ComplianceScanRun,
+  type InsertComplianceScanRun,
+  type ComplianceRule,
+  type InsertComplianceRule,
+  type ComplianceCheckerSettings,
+  type WritingAssistantIntegration,
+  type InsertWritingAssistantIntegration,
+  type ComplianceFinding,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2406,6 +2414,33 @@ export interface IStorage {
   getStoriesByNewsletterId(newsletterId: string): Promise<Story[]>;
   linkStoryToSpotlight(storyId: string, spotlightId: string): Promise<Story | undefined>;
   linkStoryToNewsletter(storyId: string, newsletterId: string): Promise<Story | undefined>;
+  
+  // Compliance Checker
+  getComplianceScanRuns(filters?: { contentType?: string; approvalStatus?: string }): Promise<ComplianceScanRun[]>;
+  getComplianceScanRun(id: string): Promise<ComplianceScanRun | undefined>;
+  createComplianceScanRun(run: InsertComplianceScanRun): Promise<ComplianceScanRun>;
+  updateComplianceScanRun(id: string, updates: Partial<ComplianceScanRun>): Promise<ComplianceScanRun | undefined>;
+  deleteComplianceScanRun(id: string): Promise<boolean>;
+  getComplianceScanRunsByContentId(contentId: string): Promise<ComplianceScanRun[]>;
+  
+  // Compliance Rules
+  getComplianceRules(): Promise<ComplianceRule[]>;
+  getComplianceRule(id: string): Promise<ComplianceRule | undefined>;
+  createComplianceRule(rule: InsertComplianceRule): Promise<ComplianceRule>;
+  updateComplianceRule(id: string, updates: Partial<ComplianceRule>): Promise<ComplianceRule | undefined>;
+  deleteComplianceRule(id: string): Promise<boolean>;
+  
+  // Compliance Checker Settings
+  getComplianceCheckerSettings(): Promise<ComplianceCheckerSettings>;
+  updateComplianceCheckerSettings(settings: Partial<ComplianceCheckerSettings>): Promise<ComplianceCheckerSettings>;
+  
+  // Writing Assistant Integrations
+  getWritingAssistantIntegrations(): Promise<WritingAssistantIntegration[]>;
+  getWritingAssistantIntegration(id: string): Promise<WritingAssistantIntegration | undefined>;
+  getActiveWritingAssistantIntegration(): Promise<WritingAssistantIntegration | undefined>;
+  createWritingAssistantIntegration(integration: InsertWritingAssistantIntegration): Promise<WritingAssistantIntegration>;
+  updateWritingAssistantIntegration(id: string, updates: Partial<WritingAssistantIntegration>): Promise<WritingAssistantIntegration | undefined>;
+  deleteWritingAssistantIntegration(id: string): Promise<boolean>;
 }
 
 // Dashboard Summary Types
@@ -2581,6 +2616,10 @@ export class MemStorage implements IStorage {
   private stockSeoTemplates: StockSeoTemplates;
   private assetLinks: Map<string, AssetLink>;
   private stories: Map<string, Story>;
+  private complianceScanRuns: Map<string, ComplianceScanRun>;
+  private complianceRules: Map<string, ComplianceRule>;
+  private complianceCheckerSettings: ComplianceCheckerSettings;
+  private writingAssistantIntegrations: Map<string, WritingAssistantIntegration>;
 
   constructor() {
     this.users = new Map();
@@ -2620,6 +2659,73 @@ export class MemStorage implements IStorage {
     this.newsletterSettings = { ...seedNewsletterSettings };
     this.assetLinks = new Map();
     this.stories = new Map();
+    this.complianceScanRuns = new Map();
+    this.complianceRules = new Map();
+    this.complianceCheckerSettings = {
+      enableEnglishQualityScoring: false,
+      englishScoringProvider: 'openai',
+      openaiModel: 'gpt-4o',
+      complianceThresholds: { compliant: 85, needsReview: 60 },
+      englishThresholds: { excellent: 90, good: 70 },
+    };
+    this.writingAssistantIntegrations = new Map();
+    
+    // Seed default DFSA compliance rules
+    const defaultComplianceRules: ComplianceRule[] = [
+      {
+        id: randomUUID(),
+        name: 'Guaranteed Returns Claim',
+        description: 'Detects claims of guaranteed investment returns',
+        dfsaRef: 'COB 3.2.1',
+        pattern: '\\b(guaranteed|guarantee)\\s+(returns?|profit|income)\\b',
+        severity: 'critical',
+        message: 'Claims of guaranteed returns are prohibited under DFSA regulations',
+        suggestedFix: 'Remove guarantee language or replace with "potential returns"',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: randomUUID(),
+        name: 'Misleading Performance Claims',
+        description: 'Detects potentially misleading past performance claims',
+        dfsaRef: 'COB 3.4.2',
+        pattern: '\\b(always|never fails?|risk[- ]?free|100%|cannot lose)\\b',
+        severity: 'high',
+        message: 'This language may be considered misleading under DFSA guidelines',
+        suggestedFix: 'Use balanced language that acknowledges investment risks',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: randomUUID(),
+        name: 'Missing Risk Disclosure',
+        description: 'Checks for absence of risk disclosure language',
+        dfsaRef: 'COB 3.2.3',
+        pattern: '',
+        severity: 'medium',
+        message: 'Content should include appropriate risk disclosures',
+        suggestedFix: 'Add standard risk disclosure statement',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: randomUUID(),
+        name: 'Unqualified Expert Claims',
+        description: 'Detects expert recommendation claims without proper qualifications',
+        dfsaRef: 'COB 3.5.1',
+        pattern: '\\b(experts? (say|recommend|agree)|industry experts?)\\b',
+        severity: 'medium',
+        message: 'Expert claims should be substantiated with proper qualifications',
+        suggestedFix: 'Provide source attribution or remove expert claims',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+    defaultComplianceRules.forEach(rule => this.complianceRules.set(rule.id, rule));
     
     // Seed landing pages
     seedLandingPages.forEach(page => this.landingPages.set(page.id, page));
@@ -3897,6 +4003,204 @@ export class MemStorage implements IStorage {
     const updated = { ...story, linkedNewsletterId: newsletterId, updatedAt: new Date().toISOString() };
     this.stories.set(storyId, updated);
     return updated;
+  }
+
+  // Compliance Checker
+  async getComplianceScanRuns(filters?: { contentType?: string; approvalStatus?: string }): Promise<ComplianceScanRun[]> {
+    let runs = Array.from(this.complianceScanRuns.values());
+    if (filters?.contentType) {
+      runs = runs.filter(r => r.contentType === filters.contentType);
+    }
+    if (filters?.approvalStatus) {
+      runs = runs.filter(r => r.approvalStatus === filters.approvalStatus);
+    }
+    return runs.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
+  }
+
+  async getComplianceScanRun(id: string): Promise<ComplianceScanRun | undefined> {
+    return this.complianceScanRuns.get(id);
+  }
+
+  async createComplianceScanRun(run: InsertComplianceScanRun): Promise<ComplianceScanRun> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    
+    // Run compliance rules to compute findings and score
+    const findings = this.runComplianceRules(run.originalText);
+    const riskScore = this.calculateRiskScore(findings);
+    const complianceScore = Math.max(0, 100 - riskScore);
+    const complianceLabel = this.getComplianceLabel(complianceScore);
+    
+    const scanRun: ComplianceScanRun = {
+      ...run,
+      id,
+      scannedAt: now,
+      riskScore,
+      complianceScore,
+      complianceLabel,
+      complianceFindings: findings,
+      englishScore: null,
+      englishLabel: 'not_configured',
+      englishFindings: [],
+      englishSuggestedEdits: [],
+      approvalStatus: 'pending',
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.complianceScanRuns.set(id, scanRun);
+    return scanRun;
+  }
+
+  private runComplianceRules(text: string): ComplianceFinding[] {
+    const findings: ComplianceFinding[] = [];
+    const rules = Array.from(this.complianceRules.values()).filter(r => r.isActive && r.pattern);
+    
+    for (const rule of rules) {
+      try {
+        const regex = new RegExp(rule.pattern, 'gi');
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          findings.push({
+            id: randomUUID(),
+            ruleId: rule.id,
+            ruleName: rule.name,
+            severity: rule.severity,
+            message: rule.message,
+            dfsaRef: rule.dfsaRef,
+            startOffset: match.index,
+            endOffset: match.index + match[0].length,
+            suggestedFix: rule.suggestedFix,
+          });
+        }
+      } catch (e) {
+        // Invalid regex, skip
+      }
+    }
+    
+    return findings;
+  }
+
+  private calculateRiskScore(findings: ComplianceFinding[]): number {
+    let score = 0;
+    for (const finding of findings) {
+      switch (finding.severity) {
+        case 'critical': score += 40; break;
+        case 'high': score += 25; break;
+        case 'medium': score += 15; break;
+        case 'low': score += 5; break;
+      }
+    }
+    return Math.min(100, score);
+  }
+
+  private getComplianceLabel(score: number): 'compliant' | 'needs_review' | 'high_risk' {
+    const thresholds = this.complianceCheckerSettings.complianceThresholds;
+    if (score >= thresholds.compliant) return 'compliant';
+    if (score >= thresholds.needsReview) return 'needs_review';
+    return 'high_risk';
+  }
+
+  async updateComplianceScanRun(id: string, updates: Partial<ComplianceScanRun>): Promise<ComplianceScanRun | undefined> {
+    const run = this.complianceScanRuns.get(id);
+    if (!run) return undefined;
+    const updated = { ...run, ...updates, updatedAt: new Date().toISOString() };
+    this.complianceScanRuns.set(id, updated);
+    return updated;
+  }
+
+  async deleteComplianceScanRun(id: string): Promise<boolean> {
+    return this.complianceScanRuns.delete(id);
+  }
+
+  async getComplianceScanRunsByContentId(contentId: string): Promise<ComplianceScanRun[]> {
+    return Array.from(this.complianceScanRuns.values())
+      .filter(r => r.contentId === contentId)
+      .sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
+  }
+
+  // Compliance Rules
+  async getComplianceRules(): Promise<ComplianceRule[]> {
+    return Array.from(this.complianceRules.values());
+  }
+
+  async getComplianceRule(id: string): Promise<ComplianceRule | undefined> {
+    return this.complianceRules.get(id);
+  }
+
+  async createComplianceRule(rule: InsertComplianceRule): Promise<ComplianceRule> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newRule: ComplianceRule = {
+      ...rule,
+      id,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.complianceRules.set(id, newRule);
+    return newRule;
+  }
+
+  async updateComplianceRule(id: string, updates: Partial<ComplianceRule>): Promise<ComplianceRule | undefined> {
+    const rule = this.complianceRules.get(id);
+    if (!rule) return undefined;
+    const updated = { ...rule, ...updates, updatedAt: new Date().toISOString() };
+    this.complianceRules.set(id, updated);
+    return updated;
+  }
+
+  async deleteComplianceRule(id: string): Promise<boolean> {
+    return this.complianceRules.delete(id);
+  }
+
+  // Compliance Checker Settings
+  async getComplianceCheckerSettings(): Promise<ComplianceCheckerSettings> {
+    return this.complianceCheckerSettings;
+  }
+
+  async updateComplianceCheckerSettings(settings: Partial<ComplianceCheckerSettings>): Promise<ComplianceCheckerSettings> {
+    this.complianceCheckerSettings = { ...this.complianceCheckerSettings, ...settings };
+    return this.complianceCheckerSettings;
+  }
+
+  // Writing Assistant Integrations
+  async getWritingAssistantIntegrations(): Promise<WritingAssistantIntegration[]> {
+    return Array.from(this.writingAssistantIntegrations.values());
+  }
+
+  async getWritingAssistantIntegration(id: string): Promise<WritingAssistantIntegration | undefined> {
+    return this.writingAssistantIntegrations.get(id);
+  }
+
+  async getActiveWritingAssistantIntegration(): Promise<WritingAssistantIntegration | undefined> {
+    return Array.from(this.writingAssistantIntegrations.values()).find(i => i.isActive);
+  }
+
+  async createWritingAssistantIntegration(integration: InsertWritingAssistantIntegration): Promise<WritingAssistantIntegration> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newIntegration: WritingAssistantIntegration = {
+      ...integration,
+      id,
+      isActive: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.writingAssistantIntegrations.set(id, newIntegration);
+    return newIntegration;
+  }
+
+  async updateWritingAssistantIntegration(id: string, updates: Partial<WritingAssistantIntegration>): Promise<WritingAssistantIntegration | undefined> {
+    const integration = this.writingAssistantIntegrations.get(id);
+    if (!integration) return undefined;
+    const updated = { ...integration, ...updates, updatedAt: new Date().toISOString() };
+    this.writingAssistantIntegrations.set(id, updated);
+    return updated;
+  }
+
+  async deleteWritingAssistantIntegration(id: string): Promise<boolean> {
+    return this.writingAssistantIntegrations.delete(id);
   }
 }
 

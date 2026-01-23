@@ -1297,10 +1297,17 @@ export type AuditActionType =
   | 'template_deleted'
   | 'subscriber_created'
   | 'subscriber_updated'
-  | 'subscriber_unsubscribed';
+  | 'subscriber_unsubscribed'
+  | 'scan_created'
+  | 'scan_approved'
+  | 'scan_rejected'
+  | 'scan_pending'
+  | 'english_analysis_run'
+  | 'english_edits_applied'
+  | 'compliance_amendments_applied';
 
 // Audit Log Entity Types
-export type AuditEntityType = 'blog_post' | 'spotlight' | 'newsletter' | 'template' | 'subscriber';
+export type AuditEntityType = 'blog_post' | 'spotlight' | 'newsletter' | 'template' | 'subscriber' | 'compliance_scan';
 
 // Audit Log
 export interface AuditLog {
@@ -1540,6 +1547,27 @@ export interface InsertComplianceScanRun {
   audience?: 'retail' | 'pro';
   scannedBy?: string;
 }
+
+export const insertComplianceScanRunSchema = z.object({
+  contentType: z.enum(['blog', 'newsletter', 'social', 'stock_page', 'story']),
+  contentId: z.string().min(1),
+  contentTitle: z.string().min(1),
+  originalText: z.string().min(1),
+  locale: z.enum(['en', 'ar']),
+  channel: z.string().optional(),
+  audience: z.enum(['retail', 'pro']).optional(),
+  scannedBy: z.string().optional(),
+});
+
+export const insertComplianceRuleSchema = z.object({
+  name: z.string().min(1),
+  description: z.string(),
+  dfsaRef: z.string().optional(),
+  pattern: z.string(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  message: z.string().min(1),
+  suggestedFix: z.string().optional(),
+});
 
 // Writing Assistant Integration (generic HTTP)
 export interface WritingAssistantIntegration {

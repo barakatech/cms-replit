@@ -37,6 +37,7 @@ import AdminSettings from '@/pages/admin-settings';
 import AdminUsers from '@/pages/admin-users';
 import AdminAuditLog from '@/pages/admin-audit-log';
 import AdminStories from '@/pages/admin-stories';
+import AdminCompliance from '@/pages/admin-compliance';
 import PageBuilder from '@/pages/page-builder';
 import LandingPagePublic from '@/pages/landing-page';
 import StockThemePage from '@/pages/stock-theme';
@@ -362,6 +363,40 @@ function Router() {
                   <TopBar />
                   <main className="flex-1 overflow-auto">
                     <AdminStories />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/compliance/:rest*">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminCompliance />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/compliance">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminCompliance />
                   </main>
                 </div>
               </div>

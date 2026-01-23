@@ -43,6 +43,7 @@ const bottomMenuItems = [
 
 const adminSubItems = [
   { title: 'Users', url: '/admin/users', icon: Shield, testId: 'link-users' },
+  { title: 'Compliance', url: '/admin/compliance', icon: Shield, testId: 'link-compliance' },
   { title: 'Audit Log', url: '/admin/audit-log', icon: ClipboardList, testId: 'link-audit-log' },
   { title: 'Settings', url: '/admin/settings', icon: Settings, testId: 'link-settings' },
 ];
