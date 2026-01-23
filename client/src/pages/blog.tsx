@@ -477,6 +477,23 @@ export default function Blog() {
     deleteBlogMutation.mutate(id);
   };
 
+  const handleSyncToStory = async (blog: BlogPost) => {
+    const editablePost = toEditablePost(blog);
+    try {
+      await createStoryMutation.mutateAsync({ blogId: blog.id, blog: editablePost });
+      toast({ 
+        title: 'Synced to Stories', 
+        description: `"${blog.title_en}" has been synced to Stories as a draft.` 
+      });
+    } catch (e) {
+      toast({ 
+        title: 'Sync failed', 
+        description: 'Failed to create story from blog post.', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
   const handleCreateNew = () => {
     const newBlog: EditableBlogPost = {
       id: '',
@@ -965,7 +982,15 @@ export default function Blog() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {storiesByBlogId[blog.id] ? (
+                          <Link href="/admin/stories">
+                            <Badge variant="outline" className="cursor-pointer gap-1 text-purple-500 border-purple-500/50">
+                              <BookOpen className="h-3 w-3" />
+                              Story
+                            </Badge>
+                          </Link>
+                        ) : null}
                         {spotlightsByBlogId[blog.id] ? (
                           <Link href="/admin/spotlights">
                             <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
@@ -984,6 +1009,22 @@ export default function Blog() {
                         ) : null}
                       </div>
                       <div className="flex items-center gap-1">
+                        {!storiesByBlogId[blog.id] && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => handleSyncToStory(blog)}
+                                disabled={createStoryMutation.isPending}
+                                data-testid={`button-sync-story-${blog.id}`}
+                              >
+                                <Newspaper className="h-4 w-4 text-purple-500" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Sync to Stories</TooltipContent>
+                          </Tooltip>
+                        )}
                         {blog.status !== 'published' && (
                           <Tooltip>
                             <TooltipTrigger asChild>
