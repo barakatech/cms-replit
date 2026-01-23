@@ -13,6 +13,7 @@
 10. [Internal Linking System](#10-internal-linking-system)
 11. [Collaborative Editing](#11-collaborative-editing)
 12. [Related Features](#12-related-features)
+13. [Content Syncing: Blog → Stories → Spotlight](#13-content-syncing-blog--stories--spotlight)
 
 ---
 
@@ -779,6 +780,396 @@ Each block can be:
 - Enabled/disabled
 - Reordered
 - Customized with block-specific config
+
+---
+
+## 13. Content Syncing: Blog → Stories → Spotlight
+
+This section documents the content syncing functionality that enables seamless content repurposing across three content types: Blog Posts, Stories (for newsletters), and Spotlight Banners.
+
+### 13.1 Overview
+
+The content syncing system allows editors to:
+1. **Blog → Story**: Create a newsletter Story from an existing Blog Post
+2. **Story → Spotlight**: Create a Spotlight Banner from an existing Story
+3. **Blog → Spotlight** (indirect): Blog → Story → Spotlight chain
+
+This reduces duplicate work and ensures consistent messaging across channels.
+
+### 13.2 Content Type Relationships
+
+```
+┌─────────────┐     sync      ┌─────────────┐     sync      ┌──────────────────┐
+│  Blog Post  │ ───────────>  │    Story    │ ───────────>  │ Spotlight Banner │
+└─────────────┘               └─────────────┘               └──────────────────┘
+       │                             │                              │
+       │                             │                              │
+       ▼                             ▼                              ▼
+   Web/SEO                      Newsletter                    In-App Banners
+   Content                       Content                      (Home, Discover)
+```
+
+### 13.3 Data Models
+
+#### 13.3.1 CMSBlogPost (Source)
+
+```typescript
+interface CMSBlogPost {
+  id: string;
+  title_en: string;
+  title_ar: string;
+  slug_en: string;
+  slug_ar: string;
+  excerpt_en: string;
+  excerpt_ar: string;
+  content_html_en: string;
+  content_html_ar: string;
+  content_json_en?: object;       // Structured editor content
+  content_json_ar?: object;
+  coverImageUrl: string;
+  tags: string[];
+  authorId: string;
+  authorName: string;
+  status: 'draft' | 'scheduled' | 'published';
+  publishedAt?: string;
+  scheduledAt?: string;
+  seoTitle_en: string;
+  seoTitle_ar: string;
+  seoDescription_en: string;
+  seoDescription_ar: string;
+  canonicalUrl?: string;
+  
+  // Sync Links
+  linkedSpotlightId?: string;     // Created Spotlight from this blog
+  linkedNewsletterId?: string;    // Newsletter containing this blog
+  
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### 13.3.2 Story (Intermediate)
+
+```typescript
+interface Story {
+  id: string;
+  title_en: string;
+  title_ar: string;
+  snippet_en: string;             // Short teaser text
+  snippet_ar: string;
+  imageUrl: string;
+  content_html_en: string;
+  content_html_ar: string;
+  whyItMatters_en: string;        // Newsletter-specific "Why it matters"
+  whyItMatters_ar: string;
+  tickers: string[];              // Related stock tickers
+  status: 'draft' | 'published';
+  locale: 'en' | 'ar' | 'both';
+  
+  // Sync Links
+  linkedSpotlightId?: string;     // Spotlight created from this story
+  linkedNewsletterId?: string;    // Newsletter containing this story
+  sourceBlogPostId?: string;      // Original blog post (if synced)
+  
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### 13.3.3 SpotlightBanner (Target)
+
+```typescript
+interface SpotlightBanner {
+  id: string;
+  title: string;                  // Headline text
+  subtitle: string;               // Supporting text (max 120 chars)
+  imageUrl: string;
+  ctaText: string;                // Button text
+  ctaUrl: string;                 // Web URL
+  appDeepLink?: string;           // Deep link for mobile app
+  placements: SpotlightPlacement[];  // Where to show
+  startAt?: string;               // Scheduled start
+  endAt?: string;                 // Scheduled end
+  status: 'draft' | 'active' | 'inactive';
+  
+  // Source Tracking
+  sourceType: 'manual' | 'from_blog' | 'from_newsletter';
+  blogPostId?: string;            // Source blog post ID
+  newsletterId?: string;          // Source newsletter ID
+  
+  locale: 'en' | 'ar';
+  createdAt: string;
+  updatedAt: string;
+}
+
+type SpotlightPlacement = 'home' | 'discover' | 'blog' | 'stock' | 'custom';
+```
+
+### 13.4 Sync Flow: Blog → Story
+
+#### 13.4.1 User Flow
+1. Admin views Blog Post in CMS
+2. Clicks "Create Story from Blog" button
+3. System pre-fills Story fields from Blog:
+   - `title_en/ar` → Story `title_en/ar`
+   - `excerpt_en/ar` → Story `snippet_en/ar`
+   - `coverImageUrl` → Story `imageUrl`
+   - First 500 chars of `content_html` → Story `content_html`
+   - `tags` → Extracted `tickers` (if any match stock symbols)
+4. Admin reviews and edits Story content
+5. Admin adds "Why it matters" section (newsletter-specific)
+6. Admin saves Story with `sourceBlogPostId` set
+
+#### 13.4.2 Field Mapping
+
+| Blog Post Field | Story Field | Transformation |
+|-----------------|-------------|----------------|
+| `title_en` | `title_en` | Direct copy |
+| `title_ar` | `title_ar` | Direct copy |
+| `excerpt_en` | `snippet_en` | Direct copy (truncate to 200 chars) |
+| `excerpt_ar` | `snippet_ar` | Direct copy (truncate to 200 chars) |
+| `coverImageUrl` | `imageUrl` | Direct copy |
+| `content_html_en` | `content_html_en` | First 500 chars or first 2 paragraphs |
+| `content_html_ar` | `content_html_ar` | First 500 chars or first 2 paragraphs |
+| `tags` | `tickers` | Filter for valid ticker symbols |
+| - | `whyItMatters_en` | Manual entry required |
+| - | `whyItMatters_ar` | Manual entry required |
+
+#### 13.4.3 API Endpoint
+
+```typescript
+// POST /api/stories/from-blog
+interface CreateStoryFromBlogRequest {
+  blogPostId: string;
+  locale: 'en' | 'ar' | 'both';
+  overrides?: Partial<InsertStory>;  // Optional field overrides
+}
+
+interface CreateStoryFromBlogResponse {
+  story: Story;
+  blogPost: CMSBlogPost;  // Updated with linkedNewsletterId reference
+}
+```
+
+### 13.5 Sync Flow: Story → Spotlight
+
+#### 13.5.1 User Flow
+1. Admin views Story in CMS
+2. Clicks "Create Spotlight from Story" button
+3. System pre-fills Spotlight fields:
+   - `title_en/ar` → Spotlight `title`
+   - `snippet_en/ar` → Spotlight `subtitle`
+   - `imageUrl` → Spotlight `imageUrl`
+   - Default CTA text and URL from settings
+4. Admin selects placements (home, discover, blog, stock)
+5. Admin sets schedule (optional startAt/endAt)
+6. Admin saves Spotlight with:
+   - `sourceType: 'from_newsletter'`
+   - Story's `sourceBlogPostId` → Spotlight `blogPostId` (for traceability)
+7. Story is updated with `linkedSpotlightId`
+
+#### 13.5.2 Field Mapping
+
+| Story Field | Spotlight Field | Transformation |
+|-------------|-----------------|----------------|
+| `title_en` or `title_ar` | `title` | Based on selected locale |
+| `snippet_en` or `snippet_ar` | `subtitle` | Truncate to 120 chars |
+| `imageUrl` | `imageUrl` | Direct copy |
+| - | `ctaText` | From settings: `defaultCtaText_en/ar` |
+| - | `ctaUrl` | Constructed from blog slug or story link |
+| - | `placements` | From settings: `defaultSpotlightPlacements` |
+| `sourceBlogPostId` | `blogPostId` | Pass through for traceability |
+
+#### 13.5.3 API Endpoint
+
+```typescript
+// POST /api/spotlight-banners/from-story
+interface CreateSpotlightFromStoryRequest {
+  storyId: string;
+  locale: 'en' | 'ar';
+  placements: SpotlightPlacement[];
+  startAt?: string;
+  endAt?: string;
+  overrides?: Partial<InsertSpotlightBanner>;
+}
+
+interface CreateSpotlightFromStoryResponse {
+  spotlight: SpotlightBanner;
+  story: Story;  // Updated with linkedSpotlightId
+}
+```
+
+### 13.6 Auto-Sync Settings
+
+#### 13.6.1 Newsletter Settings Configuration
+
+```typescript
+interface NewsletterSettings {
+  // ... other fields
+  
+  // Auto-sync configuration
+  autoActivateSpotlightOnPublish: boolean;  // Auto-activate when blog publishes
+  defaultSpotlightPlacements: SpotlightPlacement[];
+  defaultCtaText_en: string;
+  defaultCtaText_ar: string;
+}
+```
+
+#### 13.6.2 Auto-Create Spotlight on Blog Publish
+When `autoActivateSpotlightOnPublish` is enabled:
+1. Blog Post status changes to `published`
+2. System checks if Story exists for this Blog
+3. If Story exists, create Spotlight automatically
+4. Spotlight status set to `active`
+5. Audit log entry: `spotlight_auto_created`
+
+### 13.7 Sync Status Indicators
+
+#### 13.7.1 Blog Post Card (in list view)
+Display badges:
+- 📧 "Has Story" - if Story exists for this blog
+- 📢 "Has Spotlight" - if Spotlight exists
+
+#### 13.7.2 Story Card (in list view)
+Display badges:
+- 📝 "From Blog: {title}" - if `sourceBlogPostId` is set
+- 📢 "Has Spotlight" - if `linkedSpotlightId` is set
+
+#### 13.7.3 Spotlight Card (in list view)
+Display source badge:
+- 📝 "From Blog" - if `sourceType === 'from_blog'`
+- 📧 "From Story" - if `sourceType === 'from_newsletter'`
+- ✏️ "Manual" - if `sourceType === 'manual'`
+
+### 13.8 Audit Trail
+
+All sync operations are logged:
+
+```typescript
+type AuditActionType = 
+  | 'spotlight_auto_created'          // Auto-created from blog publish
+  | 'newsletter_auto_draft_created'   // Auto-draft when story created
+  // ... other actions
+
+interface AuditLog {
+  id: string;
+  actorUserId: string;
+  actorName: string;
+  actionType: AuditActionType;
+  entityType: 'blog_post' | 'spotlight' | 'newsletter' | 'template' | 'subscriber';
+  entityId: string;
+  metaJson?: {
+    sourceBlogPostId?: string;
+    sourceStoryId?: string;
+    sourceNewsletterId?: string;
+  };
+  createdAt: string;
+}
+```
+
+### 13.9 UI Components
+
+#### 13.9.1 Blog Editor Sync Actions
+
+```typescript
+// Sync action buttons in Blog editor toolbar
+interface BlogSyncActions {
+  createStory: {
+    label: "Create Story";
+    icon: "mail";
+    disabled: boolean;  // Disabled if Story already exists
+    tooltip: string;    // "Story already exists" or "Create newsletter story"
+  };
+  viewStory: {
+    label: "View Story";
+    icon: "external-link";
+    visible: boolean;   // Only if linkedNewsletterId exists
+  };
+  viewSpotlight: {
+    label: "View Spotlight";
+    icon: "megaphone";
+    visible: boolean;   // Only if linkedSpotlightId exists
+  };
+}
+```
+
+#### 13.9.2 Story Editor Sync Actions
+
+```typescript
+// Sync action buttons in Story editor toolbar
+interface StorySyncActions {
+  createSpotlight: {
+    label: "Create Spotlight";
+    icon: "megaphone";
+    disabled: boolean;  // Disabled if Spotlight already exists
+  };
+  viewSpotlight: {
+    label: "View Spotlight";
+    icon: "external-link";
+    visible: boolean;   // Only if linkedSpotlightId exists
+  };
+  viewSourceBlog: {
+    label: "View Source Blog";
+    icon: "file-text";
+    visible: boolean;   // Only if sourceBlogPostId exists
+  };
+}
+```
+
+#### 13.9.3 Sync Modal
+
+When clicking "Create Story" or "Create Spotlight":
+
+```typescript
+interface SyncModal {
+  title: string;              // "Create Story from Blog" / "Create Spotlight from Story"
+  sourcePreview: {
+    title: string;
+    excerpt: string;
+    image: string;
+  };
+  targetPreview: {
+    // Editable fields pre-filled from source
+    title: string;
+    subtitle: string;
+    image: string;
+    // Additional required fields
+    placements?: SpotlightPlacement[];  // For Spotlight
+    whyItMatters?: string;              // For Story
+  };
+  actions: {
+    create: "Create & Open";
+    createDraft: "Create as Draft";
+    cancel: "Cancel";
+  };
+}
+```
+
+### 13.10 Bidirectional Updates (Optional Enhancement)
+
+#### 13.10.1 Update Propagation Settings
+
+```typescript
+interface SyncPropagationSettings {
+  // When Blog is updated, prompt to update linked Story
+  propagateBlogToStory: 'auto' | 'prompt' | 'manual';
+  
+  // When Story is updated, prompt to update linked Spotlight
+  propagateStoryToSpotlight: 'auto' | 'prompt' | 'manual';
+  
+  // Fields to propagate
+  propagateFields: {
+    title: boolean;
+    image: boolean;
+    excerpt: boolean;
+  };
+}
+```
+
+#### 13.10.2 Update Prompt UI
+When source content is updated:
+- Show notification: "Source blog was updated. Update linked Story?"
+- Options: "Update Now" | "Review Changes" | "Ignore"
 
 ---
 
