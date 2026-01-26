@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search, Edit, Trash2, Eye, Calendar, User, ArrowLeft, Globe, Image, Sparkles, Mail, Send, Rocket, Loader2, Check, BookOpen, Megaphone, Newspaper } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { ContentScorePanel } from '@/components/ContentScorePanel';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -592,88 +593,99 @@ export default function Blog() {
           </TabsList>
 
           <TabsContent value="content" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Blog Content</CardTitle>
-                <CardDescription>Edit the main content of your blog post</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title ({editLanguage.toUpperCase()})</Label>
-                  <Input
-                    id="title"
-                    value={selectedBlog.title[editLanguage]}
-                    onChange={(e) => setSelectedBlog({
-                      ...selectedBlog,
-                      title: { ...selectedBlog.title, [editLanguage]: e.target.value }
-                    })}
-                    placeholder="Enter blog title..."
-                    data-testid="input-title"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="slug">URL Slug</Label>
-                  <Input
-                    id="slug"
-                    value={selectedBlog.slug}
-                    onChange={(e) => setSelectedBlog({ ...selectedBlog, slug: e.target.value })}
-                    placeholder="blog-post-url-slug"
-                    data-testid="input-slug"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="excerpt">Excerpt ({editLanguage.toUpperCase()})</Label>
-                  <Textarea
-                    id="excerpt"
-                    value={selectedBlog.excerpt[editLanguage]}
-                    onChange={(e) => setSelectedBlog({
-                      ...selectedBlog,
-                      excerpt: { ...selectedBlog.excerpt, [editLanguage]: e.target.value }
-                    })}
-                    placeholder="Brief summary of the blog post..."
-                    rows={3}
-                    data-testid="input-excerpt"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Content ({editLanguage.toUpperCase()})</Label>
-                  <RichTextEditor
-                    content={selectedBlog.content[editLanguage]}
-                    onChange={(value) => setSelectedBlog({
-                      ...selectedBlog,
-                      content: { ...selectedBlog.content, [editLanguage]: value }
-                    })}
-                    placeholder="Write your blog content here..."
-                    dir={editLanguage === 'ar' ? 'rtl' : 'ltr'}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="featuredImage">Featured Image URL</Label>
-                  <div className="flex gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Blog Content</CardTitle>
+                  <CardDescription>Edit the main content of your blog post</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title ({editLanguage.toUpperCase()})</Label>
                     <Input
-                      id="featuredImage"
-                      value={selectedBlog.featuredImage}
-                      onChange={(e) => setSelectedBlog({ ...selectedBlog, featuredImage: e.target.value })}
-                      placeholder="https://example.com/image.jpg"
-                      data-testid="input-featured-image"
+                      id="title"
+                      value={selectedBlog.title[editLanguage]}
+                      onChange={(e) => setSelectedBlog({
+                        ...selectedBlog,
+                        title: { ...selectedBlog.title, [editLanguage]: e.target.value }
+                      })}
+                      placeholder="Enter blog title..."
+                      data-testid="input-title"
                     />
-                    <Button variant="outline" size="icon" data-testid="button-browse-image">
-                      <Image className="h-4 w-4" />
-                    </Button>
                   </div>
-                  {selectedBlog.featuredImage && (
-                    <div className="mt-2 border rounded-lg overflow-hidden">
-                      <img 
-                        src={selectedBlog.featuredImage} 
-                        alt="Featured" 
-                        className="w-full h-40 object-cover"
-                        data-testid="img-featured-preview"
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">URL Slug</Label>
+                    <Input
+                      id="slug"
+                      value={selectedBlog.slug}
+                      onChange={(e) => setSelectedBlog({ ...selectedBlog, slug: e.target.value })}
+                      placeholder="blog-post-url-slug"
+                      data-testid="input-slug"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="excerpt">Excerpt ({editLanguage.toUpperCase()})</Label>
+                    <Textarea
+                      id="excerpt"
+                      value={selectedBlog.excerpt[editLanguage]}
+                      onChange={(e) => setSelectedBlog({
+                        ...selectedBlog,
+                        excerpt: { ...selectedBlog.excerpt, [editLanguage]: e.target.value }
+                      })}
+                      placeholder="Brief summary of the blog post..."
+                      rows={3}
+                      data-testid="input-excerpt"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Content ({editLanguage.toUpperCase()})</Label>
+                    <RichTextEditor
+                      content={selectedBlog.content[editLanguage]}
+                      onChange={(value) => setSelectedBlog({
+                        ...selectedBlog,
+                        content: { ...selectedBlog.content, [editLanguage]: value }
+                      })}
+                      placeholder="Write your blog content here..."
+                      dir={editLanguage === 'ar' ? 'rtl' : 'ltr'}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="featuredImage">Featured Image URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="featuredImage"
+                        value={selectedBlog.featuredImage}
+                        onChange={(e) => setSelectedBlog({ ...selectedBlog, featuredImage: e.target.value })}
+                        placeholder="https://example.com/image.jpg"
+                        data-testid="input-featured-image"
                       />
+                      <Button variant="outline" size="icon" data-testid="button-browse-image">
+                        <Image className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    {selectedBlog.featuredImage && (
+                      <div className="mt-2 border rounded-lg overflow-hidden">
+                        <img 
+                          src={selectedBlog.featuredImage} 
+                          alt="Featured" 
+                          className="w-full h-40 object-cover"
+                          data-testid="img-featured-preview"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <div className="lg:block">
+                <ContentScorePanel
+                  title={selectedBlog.title[editLanguage]}
+                  excerpt={selectedBlog.excerpt[editLanguage]}
+                  content={selectedBlog.content[editLanguage]}
+                  language={editLanguage}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4">
