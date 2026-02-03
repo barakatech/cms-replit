@@ -79,6 +79,10 @@ import {
   type InsertTickerCatalogEntry,
   type NewsletterBlockInstance,
   type InsertNewsletterBlockInstance,
+  type SchemaBlockDefinition,
+  type InsertSchemaBlockDefinition,
+  type NewsletterTemplateBlockOverride,
+  type InsertNewsletterTemplateBlockOverride,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2562,6 +2566,21 @@ export interface IStorage {
   updateSchemaBlock(id: string, block: Partial<SchemaBlock>): Promise<SchemaBlock | undefined>;
   deleteSchemaBlock(id: string): Promise<boolean>;
   
+  // Schema Block Definitions (canonical structure + defaults)
+  getSchemaBlockDefinitions(): Promise<SchemaBlockDefinition[]>;
+  getSchemaBlockDefinition(id: string): Promise<SchemaBlockDefinition | undefined>;
+  getSchemaBlockDefinitionByType(blockType: string): Promise<SchemaBlockDefinition | undefined>;
+  createSchemaBlockDefinition(def: InsertSchemaBlockDefinition): Promise<SchemaBlockDefinition>;
+  updateSchemaBlockDefinition(id: string, def: Partial<SchemaBlockDefinition>): Promise<SchemaBlockDefinition | undefined>;
+  deleteSchemaBlockDefinition(id: string): Promise<boolean>;
+  
+  // Newsletter Template Block Overrides (template-level settings)
+  getTemplateBlockOverrides(templateId: string): Promise<NewsletterTemplateBlockOverride[]>;
+  getTemplateBlockOverride(templateId: string, blockType: string): Promise<NewsletterTemplateBlockOverride | undefined>;
+  createTemplateBlockOverride(override: InsertNewsletterTemplateBlockOverride): Promise<NewsletterTemplateBlockOverride>;
+  updateTemplateBlockOverride(id: string, override: Partial<NewsletterTemplateBlockOverride>): Promise<NewsletterTemplateBlockOverride | undefined>;
+  deleteTemplateBlockOverride(id: string): Promise<boolean>;
+  
   // Spotlight Banners
   getSpotlightBanners(): Promise<SpotlightBanner[]>;
   getSpotlightBanner(id: string): Promise<SpotlightBanner | undefined>;
@@ -2844,6 +2863,8 @@ export class MemStorage implements IStorage {
   private blockLibraryTemplates: Map<string, BlockLibraryTemplate>;
   private tickerCatalog: Map<string, TickerCatalogEntry>;
   private newsletterBlockInstances: Map<string, NewsletterBlockInstance>;
+  private schemaBlockDefinitions: Map<string, SchemaBlockDefinition>;
+  private templateBlockOverrides: Map<string, NewsletterTemplateBlockOverride>;
 
   constructor() {
     this.users = new Map();
@@ -2897,6 +2918,106 @@ export class MemStorage implements IStorage {
     this.blockLibraryTemplates = new Map();
     this.tickerCatalog = new Map();
     this.newsletterBlockInstances = new Map();
+    this.schemaBlockDefinitions = new Map();
+    this.templateBlockOverrides = new Map();
+    
+    // Seed schema block definitions with default settings
+    const defaultSchemaBlockDefinitions: SchemaBlockDefinition[] = [
+      {
+        id: 'sbd-1',
+        blockType: 'stock_list_manual',
+        name: 'Stock List (Manual)',
+        description: 'Manually curated list of stock picks with notes and links',
+        defaultSchemaJson: { title: { required: true }, items: { required: true, minItems: 1 } },
+        defaultSettingsJson: { max_items: 10, show_notes: true, card_style: 'compact', show_links: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-2',
+        blockType: 'options_ideas_manual',
+        name: 'Options Ideas',
+        description: 'Manual options contract ideas with strike, expiry, and rationale',
+        defaultSchemaJson: { title: { required: true }, contracts: { required: true, minItems: 1 } },
+        defaultSettingsJson: { max_contracts: 6, show_premium: true, show_rationale: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-3',
+        blockType: 'market_snapshot_manual',
+        name: 'Market Snapshot',
+        description: 'Quick bullet points summarizing market conditions',
+        defaultSchemaJson: { title: { required: true }, bullets: { required: true, minItems: 3, maxItems: 6 } },
+        defaultSettingsJson: { max_bullets: 6, show_what_to_watch: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-4',
+        blockType: 'top_themes_manual',
+        name: 'Top Themes',
+        description: 'Market themes with related tickers and one-liners',
+        defaultSchemaJson: { title: { required: true }, themes: { required: true, minItems: 1 } },
+        defaultSettingsJson: { max_themes: 6, max_tickers_per_theme: 5 },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-5',
+        blockType: 'econ_calendar_manual',
+        name: 'Economic Calendar',
+        description: 'Upcoming economic events with impact notes',
+        defaultSchemaJson: { title: { required: true }, events: { required: true, minItems: 1 } },
+        defaultSettingsJson: { max_events: 8, show_why_it_matters: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-6',
+        blockType: 'earnings_watch_manual',
+        name: 'Earnings Watch',
+        description: 'Upcoming earnings with dates and notes',
+        defaultSchemaJson: { title: { required: true }, entries: { required: true, minItems: 1 } },
+        defaultSettingsJson: { max_entries: 10, show_company_name: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-7',
+        blockType: 'education_card',
+        name: 'Education Card',
+        description: 'Educational content with bullet points and CTA',
+        defaultSchemaJson: { title: { required: true }, bullets: { required: true, minItems: 2, maxItems: 4 } },
+        defaultSettingsJson: { bullet_style: 'dots', show_cta: true },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sbd-8',
+        blockType: 'promo_banner',
+        name: 'Promo Banner',
+        description: 'Promotional banner with image and optional title',
+        defaultSchemaJson: { image_url: { required: true }, link_url: { required: true } },
+        defaultSettingsJson: { title_position: 'overlay', height: 'md' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+    defaultSchemaBlockDefinitions.forEach(def => this.schemaBlockDefinitions.set(def.id, def));
+    
+    // Seed sample template block overrides (Weekly Roundup template)
+    const sampleTemplateOverrides: NewsletterTemplateBlockOverride[] = [
+      {
+        id: 'tbo-1',
+        templateId: 'template-1',
+        blockType: 'stock_list_manual',
+        overrideSettingsJson: { max_items: 20, card_style: 'detailed' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+    sampleTemplateOverrides.forEach(override => this.templateBlockOverrides.set(override.id, override));
     
     // Seed ticker catalog
     seedTickerCatalog.forEach(entry => this.tickerCatalog.set(entry.id, entry));
@@ -4008,6 +4129,93 @@ export class MemStorage implements IStorage {
 
   async deleteSchemaBlock(id: string): Promise<boolean> {
     return this.schemaBlocks.delete(id);
+  }
+
+  // Schema Block Definition Methods
+  async getSchemaBlockDefinitions(): Promise<SchemaBlockDefinition[]> {
+    return Array.from(this.schemaBlockDefinitions.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getSchemaBlockDefinition(id: string): Promise<SchemaBlockDefinition | undefined> {
+    return this.schemaBlockDefinitions.get(id);
+  }
+
+  async getSchemaBlockDefinitionByType(blockType: string): Promise<SchemaBlockDefinition | undefined> {
+    return Array.from(this.schemaBlockDefinitions.values()).find(def => def.blockType === blockType);
+  }
+
+  async createSchemaBlockDefinition(def: InsertSchemaBlockDefinition): Promise<SchemaBlockDefinition> {
+    const id = `sbd-${randomUUID()}`;
+    const now = new Date().toISOString();
+    const newDef: SchemaBlockDefinition = { 
+      ...def, 
+      id, 
+      createdAt: now, 
+      updatedAt: now 
+    };
+    this.schemaBlockDefinitions.set(id, newDef);
+    return newDef;
+  }
+
+  async updateSchemaBlockDefinition(id: string, def: Partial<SchemaBlockDefinition>): Promise<SchemaBlockDefinition | undefined> {
+    const existing = this.schemaBlockDefinitions.get(id);
+    if (!existing) return undefined;
+    const updated: SchemaBlockDefinition = { 
+      ...existing, 
+      ...def, 
+      id, 
+      updatedAt: new Date().toISOString() 
+    };
+    this.schemaBlockDefinitions.set(id, updated);
+    return updated;
+  }
+
+  async deleteSchemaBlockDefinition(id: string): Promise<boolean> {
+    return this.schemaBlockDefinitions.delete(id);
+  }
+
+  // Template Block Override Methods
+  async getTemplateBlockOverrides(templateId: string): Promise<NewsletterTemplateBlockOverride[]> {
+    return Array.from(this.templateBlockOverrides.values())
+      .filter(override => override.templateId === templateId)
+      .sort((a, b) => a.blockType.localeCompare(b.blockType));
+  }
+
+  async getTemplateBlockOverride(templateId: string, blockType: string): Promise<NewsletterTemplateBlockOverride | undefined> {
+    return Array.from(this.templateBlockOverrides.values())
+      .find(override => override.templateId === templateId && override.blockType === blockType);
+  }
+
+  async createTemplateBlockOverride(override: InsertNewsletterTemplateBlockOverride): Promise<NewsletterTemplateBlockOverride> {
+    const id = `tbo-${randomUUID()}`;
+    const now = new Date().toISOString();
+    const newOverride: NewsletterTemplateBlockOverride = { 
+      ...override, 
+      id, 
+      createdAt: now, 
+      updatedAt: now 
+    };
+    this.templateBlockOverrides.set(id, newOverride);
+    return newOverride;
+  }
+
+  async updateTemplateBlockOverride(id: string, override: Partial<NewsletterTemplateBlockOverride>): Promise<NewsletterTemplateBlockOverride | undefined> {
+    const existing = this.templateBlockOverrides.get(id);
+    if (!existing) return undefined;
+    const updated: NewsletterTemplateBlockOverride = { 
+      ...existing, 
+      ...override, 
+      id, 
+      updatedAt: new Date().toISOString() 
+    };
+    this.templateBlockOverrides.set(id, updated);
+    return updated;
+  }
+
+  async deleteTemplateBlockOverride(id: string): Promise<boolean> {
+    return this.templateBlockOverrides.delete(id);
   }
 
   // Spotlight Banner Methods

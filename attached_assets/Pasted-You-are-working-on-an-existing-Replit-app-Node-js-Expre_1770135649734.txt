@@ -1,0 +1,306 @@
+You are working on an existing Replit app (Node.js + Express + SQLite + simple UI) that already has a Newsletter editor with some existing Schema Blocks. IMPORTANT: Do NOT modify, delete, or refactor any existing schema blocks. Only ADD new schema blocks and the minimal supporting code/DB needed.
+
+Goal:
+Add a new system for NEW schema blocks (additive only) where:
+- Schema Block Definitions are separate & reusable (canonical structure + defaults)
+- Newsletter Templates can override schema block defaults/settings at the template level
+- Individual Newsletters can override schema block defaults/settings at the newsletter issue level
+This must work WITHOUT changing existing schema blocks.
+
+Core behavior:
+When rendering a block inside a newsletter issue, resolve config in this order:
+1) Schema Block Definition defaults (base)
+2) Template-level override (if exists)
+3) Newsletter issue-level override (if exists)
+The effective config is the merged result.
+
+Constraints:
+- Replit free tier, no paid data sources.
+- No external market data APIs required.
+- Keep existing schema blocks fully intact. Add new ones in parallel only.
+
+------------------------------------------------------------
+NEW SCHEMA BLOCKS TO ADD (ADDITIVE ONLY)
+------------------------------------------------------------
+
+A) Stock List Block (Manual Picks)
+- Block type: "stock_list_manual"
+- Data fields (instance content):
+  - title (required)
+  - description (optional)
+  - items[]:
+    - ticker (required, 1–6 chars A–Z + optional dot)
+    - note (optional)
+    - link (optional)
+- Settings fields (configurable defaults/overrides):
+  - max_items (default 10)
+  - show_notes (default true)
+  - card_style (default "compact" | "detailed")
+  - show_links (default true)
+
+B) Options Ideas Block (Manual Contracts)
+- Block type: "options_ideas_manual"
+- Data fields:
+  - title (required)
+  - intro (optional)
+  - contracts[]:
+    - underlying_ticker (required)
+    - type (CALL | PUT)
+    - expiry_date (YYYY-MM-DD)
+    - strike (numeric)
+    - premium (optional)
+    - rationale (optional)
+    - link (optional)
+- Settings:
+  - max_contracts (default 6)
+  - show_premium (default true)
+  - show_rationale (default true)
+
+C) Market Snapshot Block (Manual)
+- Block type: "market_snapshot_manual"
+- Data fields:
+  - title (required)
+  - bullets[] (3–6 required)
+  - what_to_watch (optional)
+- Settings:
+  - max_bullets (default 6)
+  - show_what_to_watch (default true)
+
+D) Top Themes Block (Manual)
+- Block type: "top_themes_manual"
+- Data fields:
+  - title (required)
+  - themes[]:
+    - theme_name (required)
+    - one_liner (required)
+    - tickers[] (optional, 0–5)
+    - link (optional)
+- Settings:
+  - max_themes (default 6)
+  - max_tickers_per_theme (default 5)
+
+E) Economic Calendar Block (Manual)
+- Block type: "econ_calendar_manual"
+- Data fields:
+  - title (required)
+  - events[]:
+    - date (YYYY-MM-DD)
+    - event (required)
+    - why_it_matters (optional)
+- Settings:
+  - max_events (default 8)
+  - show_why_it_matters (default true)
+
+F) Earnings Watch Block (Manual)
+- Block type: "earnings_watch_manual"
+- Data fields:
+  - title (required)
+  - entries[]:
+    - ticker (required)
+    - company_name (optional)
+    - earnings_datetime (optional)
+    - note (optional)
+- Settings:
+  - max_entries (default 10)
+  - show_company_name (default true)
+
+G) Education Card Block (Structured)
+- Block type: "education_card"
+- Data fields:
+  - title (required)
+  - bullets[] (2–4 required)
+  - cta_text (optional)
+  - cta_link (optional)
+- Settings:
+  - bullet_style (default "dots" | "checks")
+  - show_cta (default true)
+
+H) Promotional Banner Block (Schema)
+- Block type: "promo_banner"
+- Data fields:
+  - image_url (required)
+  - link_url (required)
+  - banner_title (optional, NOT mandatory)
+- Settings:
+  - title_position (default "overlay" | "below" | "hidden")
+  - height (default "md" | "lg")
+- Render rules:
+  - If banner_title is empty → image-only banner
+  - If present → render based on title_position
+
+------------------------------------------------------------
+BLOCK DEFINITIONS vs TEMPLATE OVERRIDES vs NEWSLETTER OVERRIDES
+------------------------------------------------------------
+
+1) Schema Block Definitions (separate, canonical)
+- Stored as reusable definitions containing:
+  - block_type (unique)
+  - default_schema_json (field definitions + validation rules)
+  - default_settings_json (default config settings)
+- Editors can manage these in a "Schema Blocks" admin screen.
+- IMPORTANT: You are only adding NEW schema block types above. Do not alter existing ones.
+
+2) Template-level overrides (per template + block type)
+- Each NewsletterTemplate should be able to define overrides for any schema block type:
+  - template_overrides_json per block type
+- This gives “template control” over how the block behaves/looks when used with that template.
+- Example: In “Weekly Roundup” template, Stock List max_items=20, card_style="detailed".
+
+3) Newsletter issue-level overrides (per newsletter + block instance)
+- Each newsletter can manually override the settings for a specific block instance inside that newsletter.
+- These overrides must be editable:
+  - from the Newsletter editor
+  - AND from the Individual Newsletter page (/newsletters/:id)
+- Issue-level overrides should never update the template overrides automatically.
+
+Merging rule:
+effective_settings = merge(default_settings, template_override, issue_override)
+
+------------------------------------------------------------
+BLOCKS LIBRARY (OPTIONAL REUSABLE STARTERS)
+------------------------------------------------------------
+
+Keep the Blocks Library concept, but clarify it is for quick insertion:
+- A library template stores:
+  - name
+  - block_type
+  - default_block_data_json (starter content)
+  - optional default_issue_override_json (starter overrides for that instance)
+- Insertion clones into a newsletter issue as a new block instance.
+- Editing a newsletter instance never mutates library templates.
+
+------------------------------------------------------------
+TICKER CATALOG (MANUAL)
+------------------------------------------------------------
+
+Add a manual Ticker Catalog to improve selection UX:
+- ticker (unique)
+- display_name (optional)
+- category (optional)
+Used by Stock List + Options blocks.
+
+------------------------------------------------------------
+DATABASE (ADD ONLY)
+------------------------------------------------------------
+
+DO NOT modify existing tables for old blocks.
+
+Add new tables if not present:
+
+1) schema_block_definitions
+- id
+- block_type (unique)
+- default_schema_json (text)
+- default_settings_json (text)
+- created_at
+- updated_at
+
+2) newsletter_template_block_overrides
+- id
+- template_id (fk -> newsletter_templates.id)
+- block_type
+- override_settings_json (text)
+- created_at
+- updated_at
+Unique constraint: (template_id, block_type)
+
+3) block_library_templates
+- id
+- name
+- block_type
+- default_block_data_json (text)
+- default_issue_override_json (text, optional)
+- created_at
+- updated_at
+
+4) ticker_catalog
+- id
+- ticker (unique)
+- display_name
+- category
+- created_at
+- updated_at
+
+For newsletter instances:
+Use existing newsletter_blocks table if present and do NOT change it.
+If you need additional data without changing it, store issue-level overrides inside block_data_json OR create a separate additive table:
+
+Preferred additive table (if you can add without breaking):
+5) newsletter_block_instance_overrides
+- id
+- newsletter_block_id (fk -> newsletter_blocks.id)
+- override_settings_json (text)
+- created_at
+- updated_at
+Unique constraint: (newsletter_block_id)
+
+IMPORTANT:
+- If newsletter_blocks already has a JSON field, you may store:
+  - block_data_json (content)
+  - issue_override_settings_json (settings overrides)
+But do not change existing columns. Use a separate table if necessary.
+
+------------------------------------------------------------
+UI / ROUTES
+------------------------------------------------------------
+
+Add UI pages (without breaking existing):
+- Schema Blocks (new): manage NEW schema definitions only
+  - list block types
+  - edit default settings (default_settings_json)
+  - edit schema/validation rules (default_schema_json)
+- Templates: add a section "Block Overrides"
+  - choose a block type
+  - set override settings for that template
+- Newsletter editor:
+  - add block instance (blank or from library)
+  - edit block content fields
+  - edit block issue-level settings overrides (per instance)
+- Individual Newsletter page (GET /newsletters/:id):
+  - same: edit block content + edit issue-level overrides + reorder + add/remove
+
+Routes (minimum):
+- GET/POST /schema-blocks (new)
+- GET/POST /templates/:id/block-overrides
+- Blocks Library CRUD
+- Ticker Catalog CRUD
+- Newsletter block instance CRUD + reorder + override update
+
+Rendering:
+- Newsletter preview must use the merging rule:
+  - default settings from schema definition
+  - apply template override for that block type (based on newsletter.template_id)
+  - apply issue-level override for that block instance
+- Preview should clearly reflect overrides (no need to show a debug panel unless easy).
+
+Validation:
+- Required fields enforced
+- ticker format validation
+- date/numeric validation
+- promo_banner banner_title optional allowed
+
+------------------------------------------------------------
+SEED DATA
+------------------------------------------------------------
+
+Seed:
+- schema_block_definitions for all new block types A–H with sensible defaults
+- ticker_catalog: AAPL, TSLA, NVDA, MSFT, AMZN
+- 2 newsletter templates
+- template overrides example:
+  - Weekly Roundup: stock_list_manual.max_items=20, card_style="detailed"
+- 2 block library templates (starter content)
+- 1 sample newsletter issue demonstrating:
+  - template override applied
+  - and one block instance issue override applied
+
+------------------------------------------------------------
+DELIVERABLES
+------------------------------------------------------------
+
+- Working codebase
+- Seed data
+- README with run instructions
+- Minimal, shippable implementation
+- No refactors outside scope
+- DO NOT modify existing schema blocks; only add new types and new override layer.

@@ -1325,12 +1325,95 @@ export type NewsletterBlockData =
   | PromoBannerData
   | Record<string, unknown>;
 
+// Block Settings Interfaces (configurable defaults/overrides)
+export interface StockListManualSettings {
+  max_items: number;
+  show_notes: boolean;
+  card_style: 'compact' | 'detailed';
+  show_links: boolean;
+}
+
+export interface OptionsIdeasManualSettings {
+  max_contracts: number;
+  show_premium: boolean;
+  show_rationale: boolean;
+}
+
+export interface MarketSnapshotManualSettings {
+  max_bullets: number;
+  show_what_to_watch: boolean;
+}
+
+export interface TopThemesManualSettings {
+  max_themes: number;
+  max_tickers_per_theme: number;
+}
+
+export interface EconCalendarManualSettings {
+  max_events: number;
+  show_why_it_matters: boolean;
+}
+
+export interface EarningsWatchManualSettings {
+  max_entries: number;
+  show_company_name: boolean;
+}
+
+export interface EducationCardSettings {
+  bullet_style: 'dots' | 'checks';
+  show_cta: boolean;
+}
+
+export interface PromoBannerSettings {
+  title_position: 'overlay' | 'below' | 'hidden';
+  height: 'md' | 'lg';
+}
+
+// Union type for all block settings
+export type NewsletterBlockSettings = 
+  | StockListManualSettings 
+  | OptionsIdeasManualSettings 
+  | MarketSnapshotManualSettings 
+  | TopThemesManualSettings 
+  | EconCalendarManualSettings 
+  | EarningsWatchManualSettings 
+  | EducationCardSettings 
+  | PromoBannerSettings
+  | Record<string, unknown>;
+
+// Schema Block Definition (canonical structure + defaults)
+export interface SchemaBlockDefinition {
+  id: string;
+  blockType: NewsletterBlockType;
+  name: string;
+  description: string;
+  defaultSchemaJson: Record<string, unknown>;
+  defaultSettingsJson: NewsletterBlockSettings;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertSchemaBlockDefinition = Omit<SchemaBlockDefinition, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Newsletter Template Block Override (template-level settings)
+export interface NewsletterTemplateBlockOverride {
+  id: string;
+  templateId: string;
+  blockType: NewsletterBlockType;
+  overrideSettingsJson: Partial<NewsletterBlockSettings>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertNewsletterTemplateBlockOverride = Omit<NewsletterTemplateBlockOverride, 'id' | 'createdAt' | 'updatedAt'>;
+
 // Newsletter Block Instance (per-newsletter)
 export interface NewsletterBlockInstance {
   id: string;
   newsletterId: string;
   blockType: NewsletterBlockType;
   blockDataJson: NewsletterBlockData;
+  overrideSettingsJson?: Partial<NewsletterBlockSettings>;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
