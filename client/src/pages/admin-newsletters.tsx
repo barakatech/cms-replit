@@ -12,6 +12,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -32,11 +40,50 @@ import {
   Calendar,
   Clock,
   FileText,
-  Globe
+  Globe,
+  ChevronDown,
+  MoreVertical,
+  Star,
+  TrendingUp,
+  DollarSign,
+  Users,
+  Lightbulb,
+  Newspaper,
+  Layers
 } from 'lucide-react';
 import type { Newsletter, NewsletterTemplate, NewsletterContentBlock, NewsletterStatus } from '@shared/schema';
 
 type ViewMode = 'list' | 'editor';
+
+type BlockTypeOption = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer';
+
+const CONTENT_BLOCK_TYPES: { type: BlockTypeOption; label: string; icon: typeof FileText; description: string }[] = [
+  { type: 'hero', label: 'Hero', icon: Star, description: 'Hero section with title, content, and CTA' },
+  { type: 'intro', label: 'Introduction', icon: FileText, description: 'Introduction paragraph' },
+  { type: 'featured', label: 'Featured', icon: TrendingUp, description: 'Featured content section' },
+  { type: 'articles', label: 'Articles', icon: Newspaper, description: 'List of articles' },
+  { type: 'cta', label: 'Call to Action', icon: Send, description: 'Call to action button' },
+  { type: 'footer', label: 'Footer', icon: Globe, description: 'Footer section' },
+];
+
+const getDefaultBlockContent = (type: BlockTypeOption): NewsletterContentBlock => {
+  switch (type) {
+    case 'hero':
+      return { type: 'hero', title: 'Newsletter Title', content: 'Newsletter description...', imageUrl: '', ctaText: '', ctaUrl: '' };
+    case 'intro':
+      return { type: 'intro', title: 'Introduction', content: 'Welcome to our newsletter...', imageUrl: '' };
+    case 'featured':
+      return { type: 'featured', title: 'Featured', content: 'Featured content description', imageUrl: '' };
+    case 'articles':
+      return { type: 'articles', title: 'Latest Articles', articles: [] };
+    case 'cta':
+      return { type: 'cta', title: 'Take Action', ctaText: 'Learn More', ctaUrl: '' };
+    case 'footer':
+      return { type: 'footer', content: 'Thank you for reading!' };
+    default:
+      return { type: 'intro', title: '', content: '' };
+  }
+};
 
 export default function AdminNewsletters() {
   const { toast } = useToast();
@@ -189,6 +236,21 @@ export default function AdminNewsletters() {
     const blocks = [...editingNewsletter.contentBlocks];
     blocks[index] = { ...blocks[index], [field]: value };
     setEditingNewsletter({ ...editingNewsletter, contentBlocks: blocks });
+  };
+
+  const addBlock = (type: BlockTypeOption) => {
+    const newBlock = getDefaultBlockContent(type);
+    const blocks = editingNewsletter?.contentBlocks ? [...editingNewsletter.contentBlocks, newBlock] : [newBlock];
+    setEditingNewsletter({ ...editingNewsletter, contentBlocks: blocks });
+    toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} block added` });
+  };
+
+  const deleteBlock = (index: number) => {
+    if (!editingNewsletter?.contentBlocks) return;
+    const blocks = [...editingNewsletter.contentBlocks];
+    blocks.splice(index, 1);
+    setEditingNewsletter({ ...editingNewsletter, contentBlocks: blocks });
+    toast({ title: 'Block deleted' });
   };
 
   if (viewMode === 'editor' && editingNewsletter) {
@@ -348,9 +410,37 @@ export default function AdminNewsletters() {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Content Blocks</CardTitle>
-                <CardDescription>Edit the content sections of your newsletter</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
+                <div>
+                  <CardTitle>Content Blocks</CardTitle>
+                  <CardDescription>Edit the content sections of your newsletter</CardDescription>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button data-testid="button-add-content-block">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Block
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Content Block Types</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {CONTENT_BLOCK_TYPES.map((blockType) => (
+                      <DropdownMenuItem
+                        key={blockType.type}
+                        onClick={() => addBlock(blockType.type)}
+                        data-testid={`dropdown-add-${blockType.type}`}
+                      >
+                        <blockType.icon className="h-4 w-4 mr-2" />
+                        <div>
+                          <div className="font-medium">{blockType.label}</div>
+                          <div className="text-xs text-muted-foreground">{blockType.description}</div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardHeader>
               <CardContent className="space-y-4">
                 {editingNewsletter.contentBlocks?.map((block, index) => (
@@ -361,26 +451,44 @@ export default function AdminNewsletters() {
                           <GripVertical className="h-4 w-4 text-muted-foreground" />
                           <Badge variant="outline" className="capitalize">{block.type}</Badge>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => moveBlock(index, 'up')}
-                            disabled={index === 0}
-                            data-testid={`button-block-up-${index}`}
-                          >
-                            <ArrowUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => moveBlock(index, 'down')}
-                            disabled={index === (editingNewsletter.contentBlocks?.length || 0) - 1}
-                            data-testid={`button-block-down-${index}`}
-                          >
-                            <ArrowDown className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              data-testid={`button-block-menu-${index}`}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              disabled={index === 0}
+                              onClick={() => moveBlock(index, 'up')}
+                              data-testid={`menu-block-up-${index}`}
+                            >
+                              <ArrowUp className="h-4 w-4 mr-2" />
+                              Move Up
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={index === (editingNewsletter.contentBlocks?.length || 0) - 1}
+                              onClick={() => moveBlock(index, 'down')}
+                              data-testid={`menu-block-down-${index}`}
+                            >
+                              <ArrowDown className="h-4 w-4 mr-2" />
+                              Move Down
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => deleteBlock(index)}
+                              className="text-destructive"
+                              data-testid={`menu-block-delete-${index}`}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Block
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
