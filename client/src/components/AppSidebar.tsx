@@ -30,6 +30,7 @@ const blogSubItems = [
   { title: 'Newsletters', url: '/admin/newsletters', icon: Mail, testId: 'link-newsletters' },
   { title: 'Spotlights', url: '/admin/spotlights', icon: Sparkles, testId: 'link-spotlights' },
   { title: 'Templates', url: '/admin/templates', icon: LayoutTemplate, testId: 'link-templates' },
+  { title: 'Schema Blocks', url: '/admin/schema-blocks', icon: Layers, testId: 'link-schema-blocks' },
   { title: 'Subscribers', url: '/admin/subscribers', icon: Users, testId: 'link-subscribers' },
 ];
 

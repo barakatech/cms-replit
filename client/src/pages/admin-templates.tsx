@@ -9,8 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -19,8 +17,6 @@ import {
   Trash2, 
   Copy,
   ArrowLeft,
-  ArrowUp,
-  ArrowDown,
   FileText,
   Globe,
   Layers,
@@ -33,29 +29,19 @@ type ViewMode = 'list' | 'editor';
 
 type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews';
 
-interface NewsItem {
-  title: string;
-  url: string;
-  source: string;
-}
+type ZoneName = 'header' | 'body' | 'footer';
 
-interface SchemaBlock {
-  type: BlockType;
-  label: string;
-  required: boolean;
-  tickers?: string[];
-  term?: string;
-  termDefinition?: string;
-  newsItems?: NewsItem[];
+interface TemplateZone {
+  zone: ZoneName;
+  allowedBlockTypes: BlockType[];
+  maxBlocks?: number;
 }
 
 interface EditingTemplate {
   name: string;
   description: string;
   locale: 'en' | 'ar' | 'global';
-  schemaJson: {
-    blocks: SchemaBlock[];
-  };
+  zones: TemplateZone[];
   htmlWrapper: string;
   defaultValuesJson: Record<string, unknown>;
 }
@@ -81,19 +67,18 @@ const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
   footer: 'Footer',
 };
 
-const DUMMY_PREVIEW_DATA = {
-  hero: { title: 'Newsletter Title', subtitle: 'Your weekly update', imageUrl: 'https://placehold.co/600x200' },
-  intro: { content: 'Welcome to this week\'s newsletter. Here are the highlights...' },
-  featured: { title: 'Featured Story', content: 'This is the main story of the week.', imageUrl: 'https://placehold.co/400x200' },
-  articles: { articles: [{ title: 'Article 1', excerpt: 'Short description...', url: '#' }, { title: 'Article 2', excerpt: 'Another piece...', url: '#' }] },
-  stockCollection: { tickers: ['AAPL', 'GOOGL', 'MSFT'] },
-  assetsUnder500: { title: 'Stocks Under $500', tickers: ['AAPL', 'MSFT', 'GOOGL'] },
-  userPicks: { title: 'What Users Picked Yesterday', tickers: ['TSLA', 'NVDA', 'META'] },
-  assetHighlight: { title: 'Featured Stock', ticker: 'AAPL' },
-  termOfTheDay: { term: 'P/E Ratio', definition: 'Price-to-Earnings ratio measures a company\'s current share price relative to its earnings per share.' },
-  inOtherNews: { newsItems: [{ title: 'Fed announces rate decision', url: '#', source: 'Reuters' }, { title: 'Tech stocks rally', url: '#', source: 'Bloomberg' }] },
-  cta: { text: 'Get Started', url: '#', description: 'Take action now!' },
-  footer: { content: '© 2024 Baraka. All rights reserved.' },
+const ZONE_NAMES: ZoneName[] = ['header', 'body', 'footer'];
+
+const ZONE_LABELS: Record<ZoneName, string> = {
+  header: 'Header Zone',
+  body: 'Body Zone',
+  footer: 'Footer Zone',
+};
+
+const DEFAULT_ZONE_BLOCKS: Record<ZoneName, BlockType[]> = {
+  header: ['hero'],
+  body: ['intro', 'featured', 'articles', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews', 'cta'],
+  footer: ['footer', 'cta'],
 };
 
 export default function AdminTemplates() {
@@ -159,14 +144,11 @@ export default function AdminTemplates() {
       name: '',
       description: '',
       locale: 'global',
-      schemaJson: {
-        blocks: [
-          { type: 'hero', label: 'Hero Section', required: true },
-          { type: 'intro', label: 'Introduction', required: false },
-          { type: 'cta', label: 'Call to Action', required: true },
-          { type: 'footer', label: 'Footer', required: true },
-        ],
-      },
+      zones: [
+        { zone: 'header', allowedBlockTypes: ['hero'], maxBlocks: 1 },
+        { zone: 'body', allowedBlockTypes: ['intro', 'featured', 'articles', 'cta'], maxBlocks: 10 },
+        { zone: 'footer', allowedBlockTypes: ['footer', 'cta'], maxBlocks: 2 },
+      ],
       htmlWrapper: `<!DOCTYPE html>
 <html lang="{{locale}}">
 <head>
@@ -200,7 +182,7 @@ export default function AdminTemplates() {
       name: template.name,
       description: template.description,
       locale: template.locale,
-      schemaJson: template.schemaJson,
+      zones: template.zones,
       htmlWrapper: template.htmlWrapper,
       defaultValuesJson: template.defaultValuesJson,
     });
@@ -213,7 +195,7 @@ export default function AdminTemplates() {
       name: `${template.name} (Copy)`,
       description: template.description,
       locale: template.locale,
-      schemaJson: { blocks: [...template.schemaJson.blocks] },
+      zones: JSON.parse(JSON.stringify(template.zones)),
       htmlWrapper: template.htmlWrapper,
       defaultValuesJson: { ...template.defaultValuesJson },
     };
@@ -230,21 +212,6 @@ export default function AdminTemplates() {
       return;
     }
 
-    const stockCollectionBlocks = editingTemplate.schemaJson.blocks.filter(
-      block => block.type === 'stockCollection'
-    );
-    for (const block of stockCollectionBlocks) {
-      const tickerCount = (block.tickers || []).length;
-      if (tickerCount < 3 || tickerCount > 5) {
-        toast({ 
-          title: `Stock Collection "${block.label}" must have 3-5 tickers`, 
-          description: `Currently has ${tickerCount} selected`,
-          variant: 'destructive' 
-        });
-        return;
-      }
-    }
-
     let parsedDefaults: Record<string, unknown> = {};
     try {
       parsedDefaults = JSON.parse(defaultValuesJsonString);
@@ -257,7 +224,7 @@ export default function AdminTemplates() {
       name: editingTemplate.name,
       description: editingTemplate.description,
       locale: editingTemplate.locale,
-      schemaJson: editingTemplate.schemaJson,
+      zones: editingTemplate.zones,
       htmlWrapper: editingTemplate.htmlWrapper,
       defaultValuesJson: parsedDefaults,
     };
@@ -269,95 +236,27 @@ export default function AdminTemplates() {
     }
   };
 
-  const addBlock = () => {
+  const toggleBlockType = (zoneName: ZoneName, blockType: BlockType) => {
     if (!editingTemplate) return;
-    const newBlock: SchemaBlock = {
-      type: 'intro',
-      label: 'New Block',
-      required: false,
-    };
-    setEditingTemplate({
-      ...editingTemplate,
-      schemaJson: {
-        blocks: [...editingTemplate.schemaJson.blocks, newBlock],
-      },
+    const newZones = editingTemplate.zones.map(z => {
+      if (z.zone !== zoneName) return z;
+      const currentTypes = z.allowedBlockTypes;
+      const newTypes = currentTypes.includes(blockType)
+        ? currentTypes.filter(t => t !== blockType)
+        : [...currentTypes, blockType];
+      return { ...z, allowedBlockTypes: newTypes };
     });
+    
+    setEditingTemplate({ ...editingTemplate, zones: newZones });
   };
 
-  const removeBlock = (index: number) => {
+  const updateZoneLimits = (zoneName: ZoneName, value: number) => {
     if (!editingTemplate) return;
-    const blocks = [...editingTemplate.schemaJson.blocks];
-    blocks.splice(index, 1);
-    setEditingTemplate({
-      ...editingTemplate,
-      schemaJson: { blocks },
+    const newZones = editingTemplate.zones.map(z => {
+      if (z.zone !== zoneName) return z;
+      return { ...z, maxBlocks: value };
     });
-  };
-
-  const moveBlock = (index: number, direction: 'up' | 'down') => {
-    if (!editingTemplate) return;
-    const blocks = [...editingTemplate.schemaJson.blocks];
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= blocks.length) return;
-    [blocks[index], blocks[newIndex]] = [blocks[newIndex], blocks[index]];
-    setEditingTemplate({
-      ...editingTemplate,
-      schemaJson: { blocks },
-    });
-  };
-
-  const updateBlock = (index: number, field: keyof SchemaBlock, value: string | boolean | string[]) => {
-    setEditingTemplate(prev => {
-      if (!prev) return prev;
-      const blocks = [...prev.schemaJson.blocks];
-      blocks[index] = { ...blocks[index], [field]: value };
-      return {
-        ...prev,
-        schemaJson: { blocks },
-      };
-    });
-  };
-
-  const updateBlockTickers = (index: number, ticker: string, action: 'add' | 'remove') => {
-    setEditingTemplate(prev => {
-      if (!prev) return prev;
-      const blocks = [...prev.schemaJson.blocks];
-      const currentTickers = blocks[index].tickers || [];
-      
-      if (action === 'add' && currentTickers.length < 5 && !currentTickers.includes(ticker)) {
-        blocks[index] = { ...blocks[index], tickers: [...currentTickers, ticker] };
-      } else if (action === 'remove') {
-        blocks[index] = { ...blocks[index], tickers: currentTickers.filter(t => t !== ticker) };
-      }
-      
-      return {
-        ...prev,
-        schemaJson: { blocks },
-      };
-    });
-  };
-
-  const updateBlockNewsItems = (index: number, action: 'add' | 'remove' | 'update', itemIndex?: number, field?: keyof NewsItem, value?: string) => {
-    setEditingTemplate(prev => {
-      if (!prev) return prev;
-      const blocks = [...prev.schemaJson.blocks];
-      const currentItems = blocks[index].newsItems || [];
-      
-      if (action === 'add') {
-        blocks[index] = { ...blocks[index], newsItems: [...currentItems, { title: '', url: '', source: '' }] };
-      } else if (action === 'remove' && itemIndex !== undefined) {
-        blocks[index] = { ...blocks[index], newsItems: currentItems.filter((_, i) => i !== itemIndex) };
-      } else if (action === 'update' && itemIndex !== undefined && field && value !== undefined) {
-        const updatedItems = [...currentItems];
-        updatedItems[itemIndex] = { ...updatedItems[itemIndex], [field]: value };
-        blocks[index] = { ...blocks[index], newsItems: updatedItems };
-      }
-      
-      return {
-        ...prev,
-        schemaJson: { blocks },
-      };
-    });
+    setEditingTemplate({ ...editingTemplate, zones: newZones });
   };
 
   const formatDate = (dateString: string) => {
@@ -455,409 +354,105 @@ export default function AdminTemplates() {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardHeader>
                 <div>
-                  <CardTitle>Schema Blocks</CardTitle>
-                  <CardDescription>Define the content sections of your template</CardDescription>
+                  <CardTitle>Layout Zones</CardTitle>
+                  <CardDescription>Configure allowed block types for each zone</CardDescription>
                 </div>
-                <Button size="sm" onClick={addBlock} data-testid="button-add-block">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Block
-                </Button>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {editingTemplate.schemaJson.blocks.map((block, index) => (
-                  <Card key={index} className="bg-surface2">
+              <CardContent className="space-y-4">
+                {editingTemplate.zones.map((zoneConfig) => (
+                  <Card key={zoneConfig.zone} className="bg-surface2">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Layers className="h-4 w-4 text-muted-foreground" />
-                          <Badge variant="outline" className="capitalize">{block.type}</Badge>
-                          {block.required && <Badge className="bg-brand text-xs">Required</Badge>}
+                          <span className="font-medium capitalize">{ZONE_LABELS[zoneConfig.zone]}</span>
+                          <Badge variant="outline">
+                            {zoneConfig.allowedBlockTypes.length} types
+                          </Badge>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => moveBlock(index, 'up')}
-                            disabled={index === 0}
-                            data-testid={`button-block-up-${index}`}
-                          >
-                            <ArrowUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => moveBlock(index, 'down')}
-                            disabled={index === editingTemplate.schemaJson.blocks.length - 1}
-                            data-testid={`button-block-down-${index}`}
-                          >
-                            <ArrowDown className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => removeBlock(index)}
-                            data-testid={`button-block-delete-${index}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <Label className="text-xs">Type</Label>
-                          <Select
-                            value={block.type}
-                            onValueChange={(value: BlockType) => {
-                              updateBlock(index, 'type', value);
-                              updateBlock(index, 'label', DEFAULT_BLOCK_LABELS[value]);
-                            }}
-                          >
-                            <SelectTrigger data-testid={`select-block-type-${index}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {BLOCK_TYPES.map((t) => (
-                                <SelectItem key={t} value={t} className="capitalize">{t}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs">Label</Label>
-                          <Input
-                            value={block.label}
-                            onChange={(e) => updateBlock(index, 'label', e.target.value)}
-                            placeholder="Block label..."
-                            data-testid={`input-block-label-${index}`}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Checkbox
-                          id={`required-${index}`}
-                          checked={block.required}
-                          onCheckedChange={(checked) => updateBlock(index, 'required', Boolean(checked))}
-                          data-testid={`checkbox-block-required-${index}`}
-                        />
-                        <Label htmlFor={`required-${index}`} className="text-sm text-muted-foreground">
-                          Required block
-                        </Label>
                       </div>
                       
-                      {block.type === 'stockCollection' && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs font-medium">Stock Tickers (3-5 required)</Label>
-                            <span className="text-xs text-muted-foreground">
-                              {(block.tickers || []).length}/5 selected
-                            </span>
-                          </div>
-                          
-                          {(block.tickers || []).length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {(block.tickers || []).map((ticker) => {
-                                const stock = stockPages.find(s => s.ticker === ticker);
-                                return (
-                                  <Badge 
-                                    key={ticker} 
-                                    variant="secondary" 
-                                    className="flex items-center gap-1"
-                                  >
-                                    <span className="font-mono">{ticker}</span>
-                                    {stock && (
-                                      <span className="text-xs opacity-70 max-w-[100px] truncate">
-                                        {stock.companyName_en}
-                                      </span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => updateBlockTickers(index, ticker, 'remove')}
-                                      className="ml-1 hover:text-destructive"
-                                      data-testid={`button-remove-ticker-${index}-${ticker}`}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          )}
-                          
-                          {(block.tickers || []).length < 5 && (
-                            <Select
-                              value=""
-                              onValueChange={(ticker) => updateBlockTickers(index, ticker, 'add')}
-                            >
-                              <SelectTrigger data-testid={`select-add-ticker-${index}`}>
-                                <SelectValue placeholder={`Add a stock (${stockPages.filter(s => !(block.tickers || []).includes(s.ticker)).length} available)...`} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <ScrollArea className="h-[300px]">
-                                  {stockPages
-                                    .filter(s => !(block.tickers || []).includes(s.ticker))
-                                    .map((stock) => (
-                                      <SelectItem key={stock.id} value={stock.ticker}>
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-mono font-medium">{stock.ticker}</span>
-                                          <span className="text-muted-foreground text-xs truncate max-w-[150px]">
-                                            {stock.companyName_en}
-                                          </span>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  {stockPages.filter(s => !(block.tickers || []).includes(s.ticker)).length === 0 && (
-                                    <div className="p-2 text-center text-muted-foreground text-sm">
-                                      No stocks available
-                                    </div>
-                                  )}
-                                </ScrollArea>
-                              </SelectContent>
-                            </Select>
-                          )}
-                          
-                          {(block.tickers || []).length < 3 && (
-                            <p className="text-xs text-amber-600">
-                              Please select at least 3 stocks for this collection
-                            </p>
-                          )}
-                        </div>
-                      )}
+                      <div className="space-y-2 mb-3">
+                        <Label className="text-xs">Max Blocks</Label>
+                        <Select
+                          value={String(zoneConfig.maxBlocks ?? 10)}
+                          onValueChange={(value) => updateZoneLimits(zoneConfig.zone, parseInt(value))}
+                        >
+                          <SelectTrigger data-testid={`select-zone-max-${zoneConfig.zone}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[1, 2, 3, 5, 10].map((n) => (
+                              <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                      {(block.type === 'assetsUnder500' || block.type === 'userPicks') && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs">Section Title</Label>
-                            <Input
-                              value={block.term || ''}
-                              onChange={(e) => updateBlock(index, 'term', e.target.value)}
-                              placeholder={block.type === 'assetsUnder500' ? 'Stocks Under $500' : 'What Users Picked Yesterday'}
-                              data-testid={`input-block-title-${index}`}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs font-medium">Stock Tickers (3-5 required)</Label>
-                            <span className="text-xs text-muted-foreground">
-                              {(block.tickers || []).length}/5 selected
-                            </span>
-                          </div>
-                          
-                          {(block.tickers || []).length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {(block.tickers || []).map((ticker) => {
-                                const stock = stockPages.find(s => s.ticker === ticker);
-                                return (
-                                  <Badge 
-                                    key={ticker} 
-                                    variant="secondary" 
-                                    className="flex items-center gap-1"
-                                  >
-                                    <span className="font-mono">{ticker}</span>
-                                    {stock && (
-                                      <span className="text-xs opacity-70 max-w-[100px] truncate">
-                                        {stock.companyName_en}
-                                      </span>
-                                    )}
-                                    <button
-                                      type="button"
-                                      onClick={() => updateBlockTickers(index, ticker, 'remove')}
-                                      className="ml-1 hover:text-destructive"
-                                      data-testid={`button-remove-ticker-${index}-${ticker}`}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          )}
-                          
-                          {(block.tickers || []).length < 5 && (
-                            <Select
-                              value=""
-                              onValueChange={(ticker) => updateBlockTickers(index, ticker, 'add')}
-                            >
-                              <SelectTrigger data-testid={`select-add-ticker-${index}`}>
-                                <SelectValue placeholder="Add a stock..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <ScrollArea className="h-[300px]">
-                                  {stockPages
-                                    .filter(s => !(block.tickers || []).includes(s.ticker))
-                                    .map((stock) => (
-                                      <SelectItem key={stock.id} value={stock.ticker}>
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-mono font-medium">{stock.ticker}</span>
-                                          <span className="text-muted-foreground text-xs truncate max-w-[150px]">
-                                            {stock.companyName_en}
-                                          </span>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                </ScrollArea>
-                              </SelectContent>
-                            </Select>
-                          )}
-                          
-                          {(block.tickers || []).length < 3 && (
-                            <p className="text-xs text-amber-600">
-                              Please select at least 3 stocks for this collection
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {block.type === 'assetHighlight' && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs">Section Title</Label>
-                            <Input
-                              value={block.term || ''}
-                              onChange={(e) => updateBlock(index, 'term', e.target.value)}
-                              placeholder="Featured Stock of the Week"
-                              data-testid={`input-block-title-${index}`}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium">Select Stock</Label>
-                            {(block.tickers || []).length > 0 ? (
-                              <div className="flex items-center gap-2">
-                                <Badge variant="secondary" className="flex items-center gap-1">
-                                  <span className="font-mono">{block.tickers?.[0]}</span>
-                                  {stockPages.find(s => s.ticker === block.tickers?.[0]) && (
-                                    <span className="text-xs opacity-70">
-                                      {stockPages.find(s => s.ticker === block.tickers?.[0])?.companyName_en}
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => updateBlockTickers(index, block.tickers![0], 'remove')}
-                                    className="ml-1 hover:text-destructive"
-                                    data-testid={`button-remove-highlight-ticker-${index}`}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
-                                </Badge>
-                              </div>
-                            ) : (
-                              <Select
-                                value=""
-                                onValueChange={(ticker) => updateBlock(index, 'tickers', [ticker])}
+                      <div className="space-y-2">
+                        <Label className="text-xs">Allowed Block Types</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {DEFAULT_ZONE_BLOCKS[zoneConfig.zone].map((blockType) => {
+                            const isSelected = zoneConfig.allowedBlockTypes.includes(blockType);
+                            return (
+                              <Badge
+                                key={blockType}
+                                variant={isSelected ? "default" : "outline"}
+                                className={`cursor-pointer capitalize ${isSelected ? 'bg-brand' : ''}`}
+                                onClick={() => toggleBlockType(zoneConfig.zone, blockType)}
+                                data-testid={`toggle-block-${zoneConfig.zone}-${blockType}`}
                               >
-                                <SelectTrigger data-testid={`select-highlight-ticker-${index}`}>
-                                  <SelectValue placeholder="Select a stock to highlight..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <ScrollArea className="h-[300px]">
-                                    {stockPages.map((stock) => (
-                                      <SelectItem key={stock.id} value={stock.ticker}>
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-mono font-medium">{stock.ticker}</span>
-                                          <span className="text-muted-foreground text-xs truncate max-w-[150px]">
-                                            {stock.companyName_en}
-                                          </span>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  </ScrollArea>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </div>
+                                {DEFAULT_BLOCK_LABELS[blockType]}
+                              </Badge>
+                            );
+                          })}
                         </div>
-                      )}
-
-                      {block.type === 'termOfTheDay' && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs">Term</Label>
-                            <Input
-                              value={block.term || ''}
-                              onChange={(e) => updateBlock(index, 'term', e.target.value)}
-                              placeholder="e.g., P/E Ratio"
-                              data-testid={`input-term-${index}`}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs">Definition</Label>
-                            <Textarea
-                              value={block.termDefinition || ''}
-                              onChange={(e) => updateBlock(index, 'termDefinition', e.target.value)}
-                              placeholder="Explain the term or concept..."
-                              rows={3}
-                              data-testid={`textarea-term-definition-${index}`}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {block.type === 'inOtherNews' && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs font-medium">News Items</Label>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => updateBlockNewsItems(index, 'add')}
-                              data-testid={`button-add-news-item-${index}`}
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add News
-                            </Button>
-                          </div>
-                          
-                          {(block.newsItems || []).map((item, itemIndex) => (
-                            <Card key={itemIndex} className="p-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">News #{itemIndex + 1}</span>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => updateBlockNewsItems(index, 'remove', itemIndex)}
-                                  data-testid={`button-remove-news-${index}-${itemIndex}`}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <Input
-                                value={item.title}
-                                onChange={(e) => updateBlockNewsItems(index, 'update', itemIndex, 'title', e.target.value)}
-                                placeholder="News headline..."
-                                data-testid={`input-news-title-${index}-${itemIndex}`}
-                              />
-                              <Input
-                                value={item.url}
-                                onChange={(e) => updateBlockNewsItems(index, 'update', itemIndex, 'url', e.target.value)}
-                                placeholder="https://..."
-                                data-testid={`input-news-url-${index}-${itemIndex}`}
-                              />
-                              <Input
-                                value={item.source}
-                                onChange={(e) => updateBlockNewsItems(index, 'update', itemIndex, 'source', e.target.value)}
-                                placeholder="Source (e.g., Reuters, Bloomberg)"
-                                data-testid={`input-news-source-${index}-${itemIndex}`}
-                              />
-                            </Card>
-                          ))}
-                          
-                          {(block.newsItems || []).length === 0 && (
-                            <p className="text-xs text-muted-foreground text-center py-2">
-                              No news items added yet
-                            </p>
-                          )}
-                        </div>
-                      )}
-
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
-                {editingTemplate.schemaJson.blocks.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No blocks defined. Click "Add Block" to get started.</p>
-                  </div>
-                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="sticky top-6">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4" />
+                  <CardTitle>Zone Preview</CardTitle>
+                </div>
+                <CardDescription>Template zone configuration preview</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4" data-testid="preview-container">
+                  {editingTemplate.zones.map((zoneConfig) => (
+                    <div 
+                      key={zoneConfig.zone}
+                      className="border border-dashed border-gray-300 rounded-lg p-4"
+                      data-testid={`preview-zone-${zoneConfig.zone}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium capitalize">{ZONE_LABELS[zoneConfig.zone]}</span>
+                        <Badge variant="outline">
+                          max {zoneConfig.maxBlocks ?? 10} blocks
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {zoneConfig.allowedBlockTypes.map((blockType) => (
+                          <Badge key={blockType} variant="secondary" className="text-xs capitalize">
+                            {DEFAULT_BLOCK_LABELS[blockType]}
+                          </Badge>
+                        ))}
+                        {zoneConfig.allowedBlockTypes.length === 0 && (
+                          <span className="text-xs text-muted-foreground">No block types allowed</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -898,203 +493,6 @@ export default function AdminTemplates() {
                   className="font-mono text-sm"
                   data-testid="textarea-default-values"
                 />
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="sticky top-6">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
-                  <CardTitle>Preview</CardTitle>
-                </div>
-                <CardDescription>Template structure preview with dummy data</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[700px] border rounded-md bg-white p-4">
-                  <div className="space-y-4" data-testid="preview-container">
-                    {editingTemplate.schemaJson.blocks.map((block, index) => {
-                      const dummyData = DUMMY_PREVIEW_DATA[block.type];
-                      return (
-                        <div 
-                          key={index} 
-                          className="border border-dashed border-gray-300 rounded-lg p-4"
-                          data-testid={`preview-block-${index}`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-gray-500 uppercase">{block.label}</span>
-                            {block.required && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Required</span>
-                            )}
-                          </div>
-                          {block.type === 'hero' && (
-                            <div className="bg-gradient-to-r from-gray-800 to-gray-600 text-white p-6 rounded">
-                              <h2 className="text-xl font-bold">{(dummyData as typeof DUMMY_PREVIEW_DATA.hero).title}</h2>
-                              <p className="text-sm opacity-80">{(dummyData as typeof DUMMY_PREVIEW_DATA.hero).subtitle}</p>
-                            </div>
-                          )}
-                          {block.type === 'intro' && (
-                            <p className="text-gray-600 text-sm">{(dummyData as typeof DUMMY_PREVIEW_DATA.intro).content}</p>
-                          )}
-                          {block.type === 'featured' && (
-                            <div className="flex gap-4">
-                              <div className="w-24 h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-400">Image</div>
-                              <div>
-                                <h3 className="font-medium text-gray-800">{(dummyData as typeof DUMMY_PREVIEW_DATA.featured).title}</h3>
-                                <p className="text-sm text-gray-600">{(dummyData as typeof DUMMY_PREVIEW_DATA.featured).content}</p>
-                              </div>
-                            </div>
-                          )}
-                          {block.type === 'articles' && (
-                            <ul className="space-y-2">
-                              {(dummyData as typeof DUMMY_PREVIEW_DATA.articles).articles.map((article, i) => (
-                                <li key={i} className="border-l-2 border-gray-300 pl-3">
-                                  <span className="font-medium text-sm text-gray-800">{article.title}</span>
-                                  <p className="text-xs text-gray-500">{article.excerpt}</p>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          {block.type === 'cta' && (
-                            <div className="text-center">
-                              <p className="text-sm text-gray-600 mb-2">{(dummyData as typeof DUMMY_PREVIEW_DATA.cta).description}</p>
-                              <button className="bg-green-500 text-white px-4 py-2 rounded text-sm font-medium">
-                                {(dummyData as typeof DUMMY_PREVIEW_DATA.cta).text}
-                              </button>
-                            </div>
-                          )}
-                          {block.type === 'footer' && (
-                            <div className="text-center text-xs text-gray-400 border-t pt-3">
-                              {(dummyData as typeof DUMMY_PREVIEW_DATA.footer).content}
-                            </div>
-                          )}
-                          {block.type === 'stockCollection' && (
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-3 gap-2">
-                                {(block.tickers || (dummyData as typeof DUMMY_PREVIEW_DATA.stockCollection).tickers).map((ticker, i) => {
-                                  const stock = stockPages.find(s => s.ticker === ticker);
-                                  return (
-                                    <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                                      <div className="font-mono font-bold text-gray-800">{ticker}</div>
-                                      <div className="text-xs text-gray-500 truncate">
-                                        {stock?.companyName_en || 'Company Name'}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              {(block.tickers || []).length === 0 && (
-                                <p className="text-xs text-gray-400 text-center">
-                                  Select 3-5 stocks to display in this collection
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {(block.type === 'assetsUnder500' || block.type === 'userPicks') && (
-                            <div className="space-y-3">
-                              <h4 className="font-medium text-gray-800">
-                                {block.term || (dummyData as typeof DUMMY_PREVIEW_DATA.assetsUnder500).title}
-                              </h4>
-                              <div className="grid grid-cols-3 gap-2">
-                                {(block.tickers || (dummyData as typeof DUMMY_PREVIEW_DATA.assetsUnder500).tickers).map((ticker, i) => {
-                                  const stock = stockPages.find(s => s.ticker === ticker);
-                                  return (
-                                    <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                                      <div className="font-mono font-bold text-gray-800">{ticker}</div>
-                                      <div className="text-xs text-gray-500 truncate">
-                                        {stock?.companyName_en || 'Company Name'}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              {(block.tickers || []).length === 0 && (
-                                <p className="text-xs text-gray-400 text-center">
-                                  Select 3-5 stocks to display
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {block.type === 'assetHighlight' && (
-                            <div className="space-y-3">
-                              <h4 className="font-medium text-gray-800">
-                                {block.term || (dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).title}
-                              </h4>
-                              {(block.tickers || [(dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).ticker]).length > 0 ? (
-                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                      <span className="font-mono font-bold text-green-700">
-                                        {(block.tickers?.[0] || (dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).ticker).slice(0, 2)}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <div className="font-mono font-bold text-gray-800">
-                                        {block.tickers?.[0] || (dummyData as typeof DUMMY_PREVIEW_DATA.assetHighlight).ticker}
-                                      </div>
-                                      <div className="text-sm text-gray-600">
-                                        {stockPages.find(s => s.ticker === (block.tickers?.[0] || ''))?.companyName_en || 'Featured Company'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <p className="text-xs text-gray-400 text-center">
-                                  Select a stock to highlight
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {block.type === 'termOfTheDay' && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-lg">📚</span>
-                                <h4 className="font-medium text-blue-800">Term of the Day</h4>
-                              </div>
-                              <div className="font-bold text-gray-800 mb-1">
-                                {block.term || (dummyData as typeof DUMMY_PREVIEW_DATA.termOfTheDay).term}
-                              </div>
-                              <p className="text-sm text-gray-600">
-                                {block.termDefinition || (dummyData as typeof DUMMY_PREVIEW_DATA.termOfTheDay).definition}
-                              </p>
-                            </div>
-                          )}
-                          {block.type === 'inOtherNews' && (
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-gray-800 mb-3">In Other News</h4>
-                              {(block.newsItems || (dummyData as typeof DUMMY_PREVIEW_DATA.inOtherNews).newsItems).length > 0 ? (
-                                <ul className="space-y-2">
-                                  {(block.newsItems || (dummyData as typeof DUMMY_PREVIEW_DATA.inOtherNews).newsItems).map((item, i) => (
-                                    <li key={i} className="flex items-start gap-2 text-sm">
-                                      <span className="text-gray-400">→</span>
-                                      <div>
-                                        <span className="text-gray-800">{item.title || 'News headline...'}</span>
-                                        <span className="text-xs text-gray-500 ml-2">({item.source || 'Source'})</span>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-xs text-gray-400 text-center">
-                                  Add news items to display
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {editingTemplate.schemaJson.blocks.length === 0 && (
-                      <div className="flex items-center justify-center h-[200px] text-gray-400">
-                        <div className="text-center">
-                          <Layers className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>Add blocks to see preview</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
               </CardContent>
             </Card>
           </div>
@@ -1141,11 +539,11 @@ export default function AdminTemplates() {
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 mb-1">
               <Layers className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-muted-foreground">Avg Blocks</span>
+              <span className="text-xs text-muted-foreground">Zones</span>
             </div>
             <p className="text-2xl font-bold" data-testid="text-avg-blocks">
               {templates?.length 
-                ? Math.round(templates.reduce((sum, t) => sum + t.schemaJson.blocks.length, 0) / templates.length)
+                ? Math.round(templates.reduce((sum, t) => sum + t.zones.length, 0) / templates.length)
                 : 0}
             </p>
           </CardContent>
@@ -1171,7 +569,7 @@ export default function AdminTemplates() {
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Locale</TableHead>
-                  <TableHead>Blocks</TableHead>
+                  <TableHead>Zones</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -1191,8 +589,8 @@ export default function AdminTemplates() {
                         {template.locale === 'global' ? 'Global' : template.locale.toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell data-testid={`text-blocks-${template.id}`}>
-                      {template.schemaJson.blocks.length}
+                    <TableCell data-testid={`text-zones-${template.id}`}>
+                      {template.zones.length} zones
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm" data-testid={`text-created-${template.id}`}>
                       {formatDate(template.createdAt)}

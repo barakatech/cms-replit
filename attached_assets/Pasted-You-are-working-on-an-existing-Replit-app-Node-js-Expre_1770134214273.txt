@@ -1,0 +1,239 @@
+You are working on an existing Replit app (Node.js + Express + SQLite + simple UI) that already has a Newsletter editor with some existing Schema Blocks. IMPORTANT: Do NOT modify, delete, or refactor any existing schema blocks. Only ADD new schema blocks and the minimal supporting code/DB needed.
+
+Goal:
+Add a new set of “Newsletter Schema Blocks” that are selectable and editable BOTH:
+1) inside the Newsletter editor (per-newsletter instance editing), and
+2) from a central “Blocks Library” area (where editors can create/edit reusable block templates and then insert them into any newsletter),
+AND
+3) from the Individual Newsletter page (viewing a single newsletter issue), where the user can edit the schema blocks that belong to THAT newsletter instance.
+
+Constraints:
+- Replit free tier, no paid data sources.
+- No external market data APIs required.
+- Keep existing schema blocks fully intact. Add new ones in parallel only.
+
+------------------------------------------------------------
+NEW SCHEMA BLOCKS TO ADD (ADDITIVE ONLY)
+------------------------------------------------------------
+
+A) Stock List Block (Manual Picks)
+- Block type: "stock_list_manual"
+- Fields:
+  - title (required)
+  - description (optional)
+  - items[]:
+    - ticker (required, 1–6 chars A–Z + optional dot)
+    - note (optional)
+    - link (optional)
+- Features:
+  - Manual add or select from Ticker Catalog
+  - Reorder items
+  - Render as ticker cards
+
+B) Options Ideas Block (Manual Contracts)
+- Block type: "options_ideas_manual"
+- Fields:
+  - title (required)
+  - intro (optional)
+  - contracts[]:
+    - underlying_ticker (required)
+    - type (CALL | PUT)
+    - expiry_date (YYYY-MM-DD)
+    - strike (numeric)
+    - premium (optional)
+    - rationale (optional)
+    - link (optional)
+
+C) Market Snapshot Block (Manual)
+- Block type: "market_snapshot_manual"
+- Fields:
+  - title (required)
+  - bullets[] (3–6 required)
+  - what_to_watch (optional)
+
+D) Top Themes Block (Manual)
+- Block type: "top_themes_manual"
+- Fields:
+  - title (required)
+  - themes[]:
+    - theme_name (required)
+    - one_liner (required)
+    - tickers[] (optional, 0–5)
+    - link (optional)
+
+E) Economic Calendar Block (Manual)
+- Block type: "econ_calendar_manual"
+- Fields:
+  - title (required)
+  - events[]:
+    - date (YYYY-MM-DD)
+    - event (required)
+    - why_it_matters (optional)
+
+F) Earnings Watch Block (Manual)
+- Block type: "earnings_watch_manual"
+- Fields:
+  - title (required)
+  - entries[]:
+    - ticker (required)
+    - company_name (optional)
+    - earnings_datetime (optional)
+    - note (optional)
+
+G) Education Card Block (Structured)
+- Block type: "education_card"
+- Fields:
+  - title (required)
+  - bullets[] (2–4 required)
+  - cta_text (optional)
+  - cta_link (optional)
+
+H) Promotional Banner Block (Schema)
+- Block type: "promo_banner"
+- Fields:
+  - image_url (required)
+  - link_url (required)
+  - banner_title (optional, NOT mandatory)
+- Render rules:
+  - If banner_title is empty → render image-only banner
+  - If present → render title with banner
+
+------------------------------------------------------------
+BLOCKS LIBRARY (REUSABLE TEMPLATES)
+------------------------------------------------------------
+
+Add a “Blocks Library” section:
+- Editors can create reusable templates for ALL NEW schema blocks above.
+- Library template stores:
+  - name
+  - block_type
+  - block_data_json
+  - created_at / updated_at
+
+Insert behavior:
+- Newsletter editor → “Add Block”
+  - Option 1: Blank block
+  - Option 2: Insert from Library (clone)
+- Editing a block inside a newsletter edits ONLY that newsletter instance.
+- Editing a library template affects only future inserts.
+- IMPORTANT: Editing a newsletter instance must NEVER mutate a library template automatically. If user wants to update the library, provide an explicit action like “Save as new library template” (optional) or keep library edits only within Blocks Library.
+
+------------------------------------------------------------
+INDIVIDUAL NEWSLETTER PAGE EDITING (NEW REQUIREMENT)
+------------------------------------------------------------
+
+Add an Individual Newsletter detail page route:
+- GET /newsletters/:id
+This page must show:
+- Newsletter metadata (title, type, template, status, timestamps)
+- Rendered preview
+- The list of block instances (schema blocks) used by this newsletter
+
+On the Individual Newsletter page, allow the user to:
+- Edit any schema block instance fields inline or via “Edit” modal
+- Add a new block instance (same “Add Block” flow: blank or from library)
+- Remove a block instance
+- Reorder block instances
+- Save changes (updates only this newsletter instance)
+- Optionally “Publish” if allowed by role
+
+This is in addition to the existing Newsletter editor. Both must edit the same underlying newsletter_blocks rows for that newsletter.
+
+------------------------------------------------------------
+TICKER CATALOG (MANUAL)
+------------------------------------------------------------
+
+Add a manual Ticker Catalog to improve UX:
+- Fields:
+  - ticker (unique)
+  - display_name (optional)
+  - category (optional)
+- Used by:
+  - Stock List Block
+  - Options Ideas Block
+
+------------------------------------------------------------
+DATABASE (ADD ONLY)
+------------------------------------------------------------
+
+DO NOT modify existing tables.
+
+Add if not present:
+
+1) block_library_templates
+- id
+- name
+- block_type
+- block_data_json
+- created_at
+- updated_at
+
+2) ticker_catalog
+- id
+- ticker (unique)
+- display_name
+- category
+- created_at
+- updated_at
+
+Use existing newsletter_blocks table if present.
+If not present, create:
+- newsletter_blocks
+  - id
+  - newsletter_id
+  - block_type
+  - block_data_json
+  - sort_order
+
+IMPORTANT:
+- newsletter_blocks stores per-newsletter block INSTANCES (this is what both Newsletter Editor and Individual Newsletter page edit).
+
+------------------------------------------------------------
+ROUTES / UI
+------------------------------------------------------------
+
+Add:
+- Blocks Library CRUD
+- Ticker Catalog CRUD
+
+Update Newsletter functionality to support both:
+1) Newsletter Editor page editing block instances, and
+2) Individual Newsletter page editing block instances
+
+Required routes (minimum):
+- GET /newsletters/:id (individual newsletter page with edit controls)
+- POST /newsletters/:id/blocks/add
+- POST /newsletters/:id/blocks/:blockId/update
+- POST /newsletters/:id/blocks/:blockId/delete
+- POST /newsletters/:id/blocks/reorder
+
+Keep changes localized and do not break existing routes.
+
+Validation:
+- Enforce required fields
+- Validate ticker format
+- Validate dates and numeric fields
+- Allow empty banner_title in promo_banner
+
+------------------------------------------------------------
+SEED DATA
+------------------------------------------------------------
+
+Include seed data:
+- Tickers: AAPL, TSLA, NVDA, MSFT, AMZN
+- Library templates:
+  - "Top Traded Stocks"
+  - "Options to Watch"
+  - "Market Snapshot"
+  - "Referral Promo Banner" (promo_banner with empty title allowed)
+- One sample newsletter that uses at least 2 of the new schema blocks
+
+------------------------------------------------------------
+DELIVERABLES
+------------------------------------------------------------
+
+- Working codebase
+- Seed data
+- README with run instructions
+- Minimal, shippable implementation
+- No refactors outside this scope
