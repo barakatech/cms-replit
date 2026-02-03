@@ -34,6 +34,7 @@ import AdminNewsletterEdit from '@/pages/admin-newsletter-edit';
 import AdminTemplates from '@/pages/admin-templates';
 import AdminSchemaBlocks from '@/pages/admin-schema-blocks';
 import AdminBlocksLibrary from '@/pages/admin-blocks-library';
+import AdminSchemaBlockDefinitions from '@/pages/admin-schema-block-definitions';
 import AdminTickerCatalog from '@/pages/admin-ticker-catalog';
 import AdminSpotlights from '@/pages/admin-spotlights';
 import AdminSubscribers from '@/pages/admin-subscribers';
@@ -383,6 +384,23 @@ function Router() {
                   <TopBar />
                   <main className="flex-1 overflow-auto">
                     <AdminBlocksLibrary />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/schema-block-definitions">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminSchemaBlockDefinitions />
                   </main>
                 </div>
               </div>
