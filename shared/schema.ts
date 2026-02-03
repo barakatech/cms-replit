@@ -1265,12 +1265,29 @@ export interface FeaturedContentBlockData {
 // Articles List Block
 export interface ArticlesListBlockData {
   title: string;
+  sourceType: 'internal' | 'external';
+  // Internal source options
+  selectionMode?: 'manual' | 'latest';
+  numberOfArticles?: number;
   articles: Array<{
     articleId: string;
     articleTitle: string;
     articleExcerpt?: string;
     articleImageUrl?: string;
     articleUrl?: string;
+  }>;
+  // Latest filters (when selectionMode is 'latest')
+  latestFilters?: {
+    category?: string;
+    tag?: string;
+    locale?: 'en' | 'ar';
+  };
+  // External source items
+  externalItems?: Array<{
+    title: string;
+    source: string;
+    url: string;
+    imageUrl?: string;
   }>;
   showExcerpts?: boolean;
 }
@@ -1279,18 +1296,35 @@ export interface ArticlesListBlockData {
 export interface StockCollectionBlockData {
   title: string;
   description?: string;
+  mode: 'manual' | 'dynamic';
+  limit?: number;
+  // Manual mode - selected stocks
   stocks: Array<{
     stockId: string;
     ticker: string;
     companyName: string;
     note?: string;
   }>;
+  // Dynamic mode options
+  dynamicType?: 'top_traded' | 'top_gainers' | 'top_losers' | 'most_viewed';
+  filters?: {
+    market?: 'US' | 'UAE';
+    assetType?: 'stock' | 'etf';
+    exchange?: string;
+  };
 }
 
 // Assets Under $500 Block
 export interface AssetsUnder500BlockData {
   title: string;
   description?: string;
+  maxPrice?: number;
+  limit?: number;
+  sortBy?: 'volume' | 'performance' | 'popularity';
+  filters?: {
+    market?: 'US' | 'UAE';
+    assetType?: 'stock' | 'etf';
+  };
   stocks: Array<{
     stockId: string;
     ticker: string;
@@ -1304,6 +1338,11 @@ export interface AssetsUnder500BlockData {
 export interface WhatUsersPickedBlockData {
   title: string;
   description?: string;
+  timeWindow?: '24h' | '7d' | '30d';
+  limit?: number;
+  filters?: {
+    market?: 'US' | 'UAE';
+  };
   stocks: Array<{
     stockId: string;
     ticker: string;
@@ -1335,6 +1374,16 @@ export interface TermOfTheDayBlockData {
 // In Other News Block
 export interface InOtherNewsBlockData {
   title: string;
+  sourceType?: 'internal' | 'external';
+  // Internal source - selection of articles
+  selectionMode?: 'manual' | 'latest';
+  limit?: number;
+  articles?: Array<{
+    articleId: string;
+    articleTitle: string;
+    articleUrl?: string;
+  }>;
+  // External source - news items
   newsItems: Array<{
     headline: string;
     source?: string;

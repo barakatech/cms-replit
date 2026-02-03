@@ -89,21 +89,21 @@ const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockDat
     case 'introduction':
       return { title: '', subtitle: '', body: '' };
     case 'featured_content':
-      return { title: '', articles: [] };
+      return { title: '', sourceType: 'internal', selectionMode: 'manual', numberOfArticles: 3, articles: [] };
     case 'articles_list':
-      return { title: '', articles: [], showExcerpts: true };
+      return { title: '', sourceType: 'internal', selectionMode: 'manual', numberOfArticles: 5, articles: [], showExcerpts: true };
     case 'stock_collection':
-      return { title: '', description: '', stocks: [] };
+      return { title: '', description: '', mode: 'manual', limit: 5, stocks: [], dynamicType: 'top_traded' };
     case 'assets_under_500':
-      return { title: '', description: '', stocks: [] };
+      return { title: '', description: '', maxPrice: 500, limit: 5, sortBy: 'volume', stocks: [] };
     case 'what_users_picked':
-      return { title: '', description: '', stocks: [] };
+      return { title: '', description: '', timeWindow: '7d', limit: 5, stocks: [] };
     case 'asset_highlight':
       return { title: '', stockId: '', ticker: '', companyName: '', description: '', whyItMatters: '' };
     case 'term_of_the_day':
       return { term: '', definition: '', example: '', relatedTerms: [] };
     case 'in_other_news':
-      return { title: '', newsItems: [] };
+      return { title: '', sourceType: 'external', newsItems: [] };
     case 'call_to_action':
       return { title: '', subtitle: '', buttonText: '', buttonUrl: '' };
     default:
@@ -353,6 +353,8 @@ export default function AdminNewsletterEdit() {
 
       case 'featured_content':
       case 'articles_list':
+        const sourceType = (d.sourceType as string) || 'internal';
+        const selectionMode = (d.selectionMode as string) || 'manual';
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -364,82 +366,246 @@ export default function AdminNewsletterEdit() {
                 data-testid="input-block-title"
               />
             </div>
+
+            {/* Source Type Toggle */}
             <div className="space-y-2">
-              <Label>Articles</Label>
+              <Label>Source Type</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Search articles by title..."
-                  value={articleSearchQuery}
-                  onChange={(e) => setArticleSearchQuery(e.target.value)}
-                  data-testid="input-article-search"
-                />
                 <Button
-                  variant="outline"
+                  variant={sourceType === 'internal' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => {
-                    if (filteredArticles && filteredArticles.length > 0) {
-                      const article = filteredArticles[0];
-                      const articles = (d.articles as Array<Record<string, unknown>>) || [];
-                      updateData('articles', [...articles, {
-                        articleId: article.id,
-                        articleTitle: article.title_en,
-                        articleExcerpt: article.excerpt_en || '',
-                        articleImageUrl: article.featuredImageUrl || '',
-                        articleUrl: `/blog/${article.slug}`,
-                      }]);
-                      setArticleSearchQuery('');
-                    }
-                  }}
+                  onClick={() => updateData('sourceType', 'internal')}
+                  data-testid="button-source-internal"
                 >
-                  <Plus className="h-4 w-4" />
+                  Internal Articles
+                </Button>
+                <Button
+                  variant={sourceType === 'external' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateData('sourceType', 'external')}
+                  data-testid="button-source-external"
+                >
+                  External Links
                 </Button>
               </div>
-              {articleSearchQuery && filteredArticles && filteredArticles.length > 0 && (
-                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
-                  {filteredArticles.slice(0, 5).map(article => (
-                    <div
-                      key={article.id}
-                      className="p-2 hover-elevate cursor-pointer text-sm"
-                      onClick={() => {
-                        const articles = (d.articles as Array<Record<string, unknown>>) || [];
-                        updateData('articles', [...articles, {
-                          articleId: article.id,
-                          articleTitle: article.title_en,
-                          articleExcerpt: article.excerpt_en || '',
-                          articleImageUrl: article.featuredImageUrl || '',
-                          articleUrl: `/blog/${article.slug}`,
-                        }]);
-                        setArticleSearchQuery('');
-                      }}
+            </div>
+
+            {/* Number of Articles */}
+            <div className="space-y-2">
+              <Label>Number of Articles</Label>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={d.numberOfArticles as number || 5}
+                onChange={(e) => updateData('numberOfArticles', parseInt(e.target.value) || 5)}
+                data-testid="input-number-articles"
+              />
+            </div>
+
+            {/* Internal Source UI */}
+            {sourceType === 'internal' && (
+              <>
+                <div className="space-y-2">
+                  <Label>Selection Mode</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={selectionMode === 'manual' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => updateData('selectionMode', 'manual')}
+                      data-testid="button-selection-manual"
                     >
-                      {article.title_en}
-                    </div>
-                  ))}
+                      Manual Selection
+                    </Button>
+                    <Button
+                      variant={selectionMode === 'latest' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => updateData('selectionMode', 'latest')}
+                      data-testid="button-selection-latest"
+                    >
+                      Latest Articles
+                    </Button>
+                  </div>
                 </div>
-              )}
-              {((d.articles as Array<Record<string, unknown>>) || []).map((article, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg">
-                  <span className="flex-1 text-sm truncate">{article.articleTitle as string}</span>
+
+                {selectionMode === 'manual' && (
+                  <div className="space-y-2">
+                    <Label>Select Articles</Label>
+                    <Input
+                      placeholder="Search articles by title..."
+                      value={articleSearchQuery}
+                      onChange={(e) => setArticleSearchQuery(e.target.value)}
+                      data-testid="input-article-search"
+                    />
+                    {articleSearchQuery && filteredArticles && filteredArticles.length > 0 && (
+                      <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                        {filteredArticles.slice(0, 5).map(article => (
+                          <div
+                            key={article.id}
+                            className="p-2 hover-elevate cursor-pointer text-sm"
+                            onClick={() => {
+                              const articles = (d.articles as Array<Record<string, unknown>>) || [];
+                              const numLimit = (d.numberOfArticles as number) || 5;
+                              if (articles.length >= numLimit) {
+                                return; // Already at limit
+                              }
+                              updateData('articles', [...articles, {
+                                articleId: article.id,
+                                articleTitle: article.title_en,
+                                articleExcerpt: article.excerpt_en || '',
+                                articleImageUrl: article.featuredImageUrl || '',
+                                articleUrl: `/blog/${article.slug}`,
+                              }]);
+                              setArticleSearchQuery('');
+                            }}
+                          >
+                            {article.title_en}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Selected articles as chips */}
+                    <div className="flex flex-wrap gap-2">
+                      {((d.articles as Array<Record<string, unknown>>) || []).map((article, idx) => (
+                        <Badge key={idx} variant="secondary" className="gap-1 pr-1">
+                          <span className="text-xs truncate max-w-[150px]">{article.articleTitle as string}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-4 w-4 p-0"
+                            onClick={() => {
+                              const articles = [...((d.articles as Array<Record<string, unknown>>) || [])];
+                              articles.splice(idx, 1);
+                              updateData('articles', articles);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                    {((d.articles as Array<Record<string, unknown>>) || []).length >= ((d.numberOfArticles as number) || 5) && (
+                      <p className="text-sm text-amber-600">Maximum articles selected</p>
+                    )}
+                  </div>
+                )}
+
+                {selectionMode === 'latest' && (
+                  <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                    <Label className="text-sm font-medium">Latest Filters</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Category</Label>
+                        <Select
+                          value={(d.latestFilters as Record<string, unknown>)?.category as string || 'all'}
+                          onValueChange={(value) => updateData('latestFilters', { ...(d.latestFilters as Record<string, unknown> || {}), category: value === 'all' ? undefined : value })}
+                        >
+                          <SelectTrigger data-testid="select-category">
+                            <SelectValue placeholder="Any category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Any</SelectItem>
+                            <SelectItem value="markets">Markets</SelectItem>
+                            <SelectItem value="investing">Investing</SelectItem>
+                            <SelectItem value="economy">Economy</SelectItem>
+                            <SelectItem value="tech">Technology</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Locale</Label>
+                        <Select
+                          value={(d.latestFilters as Record<string, unknown>)?.locale as string || 'all'}
+                          onValueChange={(value) => updateData('latestFilters', { ...(d.latestFilters as Record<string, unknown> || {}), locale: value === 'all' ? undefined : value })}
+                        >
+                          <SelectTrigger data-testid="select-locale">
+                            <SelectValue placeholder="Any locale" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Any</SelectItem>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="ar">Arabic</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* External Source UI */}
+            {sourceType === 'external' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>External Articles</Label>
                   <Button
-                    size="icon"
-                    variant="ghost"
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
-                      const articles = [...((d.articles as Array<Record<string, unknown>>) || [])];
-                      articles.splice(idx, 1);
-                      updateData('articles', articles);
+                      const items = (d.externalItems as Array<Record<string, unknown>>) || [];
+                      updateData('externalItems', [...items, { title: '', source: '', url: '', imageUrl: '' }]);
                     }}
+                    data-testid="button-add-external"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Plus className="h-4 w-4 mr-1" /> Add Link
                   </Button>
                 </div>
-              ))}
-            </div>
+                {((d.externalItems as Array<Record<string, unknown>>) || []).map((item, idx) => (
+                  <div key={idx} className="p-3 border rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs text-muted-foreground">Article {idx + 1}</Label>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
+                          items.splice(idx, 1);
+                          updateData('externalItems', items);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={item.title as string || ''}
+                      onChange={(e) => {
+                        const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
+                        items[idx] = { ...items[idx], title: e.target.value };
+                        updateData('externalItems', items);
+                      }}
+                      placeholder="Article title"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={item.source as string || ''}
+                        onChange={(e) => {
+                          const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
+                          items[idx] = { ...items[idx], source: e.target.value };
+                          updateData('externalItems', items);
+                        }}
+                        placeholder="Source (e.g., Bloomberg)"
+                      />
+                      <Input
+                        value={item.url as string || ''}
+                        onChange={(e) => {
+                          const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
+                          items[idx] = { ...items[idx], url: e.target.value };
+                          updateData('externalItems', items);
+                        }}
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
 
       case 'stock_collection':
-      case 'assets_under_500':
-      case 'what_users_picked':
+        const stockMode = (d.mode as string) || 'manual';
         return (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -447,7 +613,7 @@ export default function AdminNewsletterEdit() {
               <Input
                 value={d.title as string || ''}
                 onChange={(e) => updateData('title', e.target.value)}
-                placeholder={blockType === 'stock_collection' ? 'Stock Collection' : blockType === 'assets_under_500' ? 'Assets Under $500' : 'What Users Picked'}
+                placeholder="Stock Collection"
                 data-testid="input-block-title"
               />
             </div>
@@ -460,16 +626,261 @@ export default function AdminNewsletterEdit() {
                 rows={2}
               />
             </div>
+
+            {/* Mode Toggle */}
             <div className="space-y-2">
-              <Label>Stocks</Label>
+              <Label>Mode</Label>
               <div className="flex gap-2">
+                <Button
+                  variant={stockMode === 'manual' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateData('mode', 'manual')}
+                  data-testid="button-mode-manual"
+                >
+                  Manual Selection
+                </Button>
+                <Button
+                  variant={stockMode === 'dynamic' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => updateData('mode', 'dynamic')}
+                  data-testid="button-mode-dynamic"
+                >
+                  Dynamic
+                </Button>
+              </div>
+            </div>
+
+            {/* Limit */}
+            <div className="space-y-2">
+              <Label>Limit</Label>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={d.limit as number || 5}
+                onChange={(e) => updateData('limit', parseInt(e.target.value) || 5)}
+                data-testid="input-limit"
+              />
+            </div>
+
+            {/* Manual Mode - Stock Search */}
+            {stockMode === 'manual' && (
+              <div className="space-y-2">
+                <Label>Select Stocks</Label>
                 <Input
                   placeholder="Search stocks by ticker or name..."
                   value={stockSearchQuery}
                   onChange={(e) => setStockSearchQuery(e.target.value)}
                   data-testid="input-stock-search"
                 />
+                {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
+                  <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                    {filteredStocks.slice(0, 5).map(stock => (
+                      <div
+                        key={stock.id}
+                        className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
+                        onClick={() => {
+                          const stocks = (d.stocks as Array<Record<string, unknown>>) || [];
+                          updateData('stocks', [...stocks, {
+                            stockId: stock.id,
+                            ticker: stock.ticker,
+                            companyName: stock.companyName_en,
+                            note: '',
+                          }]);
+                          setStockSearchQuery('');
+                        }}
+                      >
+                        <span className="font-medium">{stock.ticker}</span>
+                        <span className="text-muted-foreground">{stock.companyName_en}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Selected stocks as chips */}
+                <div className="flex flex-wrap gap-2">
+                  {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
+                    <Badge key={idx} variant="secondary" className="gap-1 pr-1">
+                      <span className="font-medium text-xs">{stock.ticker as string}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-4 w-4 p-0"
+                        onClick={() => {
+                          const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
+                          stocks.splice(idx, 1);
+                          updateData('stocks', stocks);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Dynamic Mode - Type and Filters */}
+            {stockMode === 'dynamic' && (
+              <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                <div className="space-y-2">
+                  <Label>Dynamic Type</Label>
+                  <Select
+                    value={d.dynamicType as string || 'top_traded'}
+                    onValueChange={(value) => updateData('dynamicType', value)}
+                  >
+                    <SelectTrigger data-testid="select-dynamic-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="top_traded">Top Traded</SelectItem>
+                      <SelectItem value="top_gainers">Top Gainers</SelectItem>
+                      <SelectItem value="top_losers">Top Losers</SelectItem>
+                      <SelectItem value="most_viewed">Most Viewed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Market</Label>
+                    <Select
+                      value={(d.filters as Record<string, unknown>)?.market as string || 'all'}
+                      onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), market: value === 'all' ? undefined : value })}
+                    >
+                      <SelectTrigger data-testid="select-market">
+                        <SelectValue placeholder="Any" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Any</SelectItem>
+                        <SelectItem value="US">US</SelectItem>
+                        <SelectItem value="UAE">UAE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Asset Type</Label>
+                    <Select
+                      value={(d.filters as Record<string, unknown>)?.assetType as string || 'all'}
+                      onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), assetType: value === 'all' ? undefined : value })}
+                    >
+                      <SelectTrigger data-testid="select-asset-type">
+                        <SelectValue placeholder="Any" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Any</SelectItem>
+                        <SelectItem value="stock">Stocks</SelectItem>
+                        <SelectItem value="etf">ETFs</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'assets_under_500':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder="Assets Under $500"
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={d.description as string || ''}
+                onChange={(e) => updateData('description', e.target.value)}
+                placeholder="Brief description..."
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Max Price ($)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={d.maxPrice as number || 500}
+                  onChange={(e) => updateData('maxPrice', parseInt(e.target.value) || 500)}
+                  data-testid="input-max-price"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Limit</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={d.limit as number || 5}
+                  onChange={(e) => updateData('limit', parseInt(e.target.value) || 5)}
+                  data-testid="input-limit"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Sort By</Label>
+              <Select
+                value={d.sortBy as string || 'volume'}
+                onValueChange={(value) => updateData('sortBy', value)}
+              >
+                <SelectTrigger data-testid="select-sort-by">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="volume">Volume</SelectItem>
+                  <SelectItem value="performance">Performance</SelectItem>
+                  <SelectItem value="popularity">Popularity</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Market</Label>
+                <Select
+                  value={(d.filters as Record<string, unknown>)?.market as string || 'all'}
+                  onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), market: value === 'all' ? undefined : value })}
+                >
+                  <SelectTrigger data-testid="select-market">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any</SelectItem>
+                    <SelectItem value="US">US</SelectItem>
+                    <SelectItem value="UAE">UAE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Asset Type</Label>
+                <Select
+                  value={(d.filters as Record<string, unknown>)?.assetType as string || 'all'}
+                  onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), assetType: value === 'all' ? undefined : value })}
+                >
+                  <SelectTrigger data-testid="select-asset-type">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any</SelectItem>
+                    <SelectItem value="stock">Stocks</SelectItem>
+                    <SelectItem value="etf">ETFs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {/* Manual stock selection for overrides */}
+            <div className="space-y-2">
+              <Label>Manual Stock Overrides (optional)</Label>
+              <Input
+                placeholder="Search stocks..."
+                value={stockSearchQuery}
+                onChange={(e) => setStockSearchQuery(e.target.value)}
+                data-testid="input-stock-search"
+              />
               {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
                 <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
                   {filteredStocks.slice(0, 5).map(stock => (
@@ -482,7 +893,6 @@ export default function AdminNewsletterEdit() {
                           stockId: stock.id,
                           ticker: stock.ticker,
                           companyName: stock.companyName_en,
-                          note: '',
                         }]);
                         setStockSearchQuery('');
                       }}
@@ -493,23 +903,145 @@ export default function AdminNewsletterEdit() {
                   ))}
                 </div>
               )}
-              {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg">
-                  <span className="font-medium">{stock.ticker as string}</span>
-                  <span className="flex-1 text-sm text-muted-foreground truncate">{stock.companyName as string}</span>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
-                      stocks.splice(idx, 1);
-                      updateData('stocks', stocks);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              <div className="flex flex-wrap gap-2">
+                {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
+                  <Badge key={idx} variant="secondary" className="gap-1 pr-1">
+                    <span className="font-medium text-xs">{stock.ticker as string}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-4 w-4 p-0"
+                      onClick={() => {
+                        const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
+                        stocks.splice(idx, 1);
+                        updateData('stocks', stocks);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'what_users_picked':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder="What Users Picked"
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={d.description as string || ''}
+                onChange={(e) => updateData('description', e.target.value)}
+                placeholder="Brief description..."
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Time Window</Label>
+                <Select
+                  value={d.timeWindow as string || '7d'}
+                  onValueChange={(value) => updateData('timeWindow', value)}
+                >
+                  <SelectTrigger data-testid="select-time-window">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24h">Last 24 Hours</SelectItem>
+                    <SelectItem value="7d">Last 7 Days</SelectItem>
+                    <SelectItem value="30d">Last 30 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Limit</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={d.limit as number || 5}
+                  onChange={(e) => updateData('limit', parseInt(e.target.value) || 5)}
+                  data-testid="input-limit"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Market Filter</Label>
+              <Select
+                value={(d.filters as Record<string, unknown>)?.market as string || 'all'}
+                onValueChange={(value) => updateData('filters', { market: value === 'all' ? undefined : value })}
+              >
+                <SelectTrigger data-testid="select-market">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any</SelectItem>
+                  <SelectItem value="US">US</SelectItem>
+                  <SelectItem value="UAE">UAE</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Manual stock selection for overrides */}
+            <div className="space-y-2">
+              <Label>Manual Stock Overrides (optional)</Label>
+              <Input
+                placeholder="Search stocks..."
+                value={stockSearchQuery}
+                onChange={(e) => setStockSearchQuery(e.target.value)}
+                data-testid="input-stock-search"
+              />
+              {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
+                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                  {filteredStocks.slice(0, 5).map(stock => (
+                    <div
+                      key={stock.id}
+                      className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
+                      onClick={() => {
+                        const stocks = (d.stocks as Array<Record<string, unknown>>) || [];
+                        updateData('stocks', [...stocks, {
+                          stockId: stock.id,
+                          ticker: stock.ticker,
+                          companyName: stock.companyName_en,
+                        }]);
+                        setStockSearchQuery('');
+                      }}
+                    >
+                      <span className="font-medium">{stock.ticker}</span>
+                      <span className="text-muted-foreground">{stock.companyName_en}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              <div className="flex flex-wrap gap-2">
+                {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
+                  <Badge key={idx} variant="secondary" className="gap-1 pr-1">
+                    <span className="font-medium text-xs">{stock.ticker as string}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-4 w-4 p-0"
+                      onClick={() => {
+                        const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
+                        stocks.splice(idx, 1);
+                        updateData('stocks', stocks);
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
         );

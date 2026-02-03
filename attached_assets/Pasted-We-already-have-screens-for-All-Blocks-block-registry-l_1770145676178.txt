@@ -1,0 +1,396 @@
+We already have screens for:
+
+All Blocks (block registry list)
+
+All Templates (reusable block templates list)
+
+Layout Zones (allowed block types per zone)
+But we still cannot actually edit blocks inside a newsletter. Implement the missing system: Newsletter Issue block instances with full editors per block type, including internal/external article selection and stock dropdowns.
+
+1) Architecture
+
+Use:
+
+Next.js (App Router) or React + Express (either is fine)
+
+PostgreSQL (preferred on Replit Core) + Prisma ORM
+
+UI: shadcn/ui (Accordion, Dialog, Select, Command palette for searchable dropdowns), dnd-kit for drag reorder
+
+2) Data model (Prisma required)
+
+BlockTypeDefinition (global registry)
+
+id (string, unique) // e.g. "articles_list", "stock_collection"
+
+name (string)
+
+description (string)
+
+zoneAllowed (string[]) // header/body/footer
+
+schema (jsonb) // schema->form metadata
+
+defaults (jsonb)
+
+BlockTemplate (reusable “pre-filled configurations”)
+
+id
+
+name
+
+blockTypeId (FK)
+
+config (jsonb) // stored configuration for quick insertion
+
+NewsletterTemplate
+
+id
+
+name
+
+TemplateZoneConfig
+
+id
+
+templateId (FK)
+
+zone (enum header/body/footer)
+
+maxBlocks (int)
+
+allowedBlockTypeIds (string[]) // list of BlockTypeDefinition ids
+
+allowedTemplateIds (string[]) // optional templates allowed
+
+NewsletterIssue
+
+id
+
+templateId (FK)
+
+title
+
+status (draft/scheduled/sent)
+
+createdAt
+
+updatedAt
+
+NewsletterIssueBlockInstance
+
+id
+
+issueId (FK)
+
+zone (enum)
+
+order (int)
+
+blockTypeId (FK)
+
+config (jsonb)
+
+createdAt
+
+updatedAt
+
+Article (internal content source)
+
+id
+
+title
+
+excerpt
+
+urlSlug
+
+imageUrl (optional)
+
+category (optional)
+
+tags (string[])
+
+locale (string: en/ar)
+
+publishedAt
+
+createdAt
+
+Stock
+
+id
+
+ticker
+
+name
+
+exchange (optional)
+
+market (US/UAE)
+
+assetType (stock/etf)
+
+createdAt
+
+Seed:
+
+50 articles across categories/locales
+
+200 stocks
+
+5 block templates:
+
+Top Traded Stocks (Stock Collection dynamic preset)
+
+Options to Watch (Options block preset)
+
+Market Snapshot (Market Snapshot preset)
+
+Referral Promo Banner (Promo preset)
+
+“In Other News” preset
+
+3) Critical UI: Newsletter Issue Editor
+
+Add route: /newsletters/[issueId]/edit
+
+For each zone (Header/Body/Footer):
+
+show blocks list (sortable drag/drop)
+
+each block renders as an Accordion item:
+
+header: block name, collapse toggle, duplicate, delete
+
+body: dynamic form fields based on schema
+
+at top of zone: Add a new block button
+
+opens a modal with:
+
+Select Block Type (only those allowed by TemplateZoneConfig for that zone)
+
+If block type supports templates, show “Insert from template” list; selecting it pre-fills config
+
+on confirm: create NewsletterIssueBlockInstance and auto-expand it
+
+Persist:
+
+all edits update config in DB
+
+reorder updates order in DB
+
+duplicate clones config
+
+delete removes row
+
+4) Dynamic Form Renderer (must implement)
+
+Build a schema-driven editor that supports:
+
+text, textarea, number, toggle
+
+select (static enum)
+
+async searchable select (Command palette style)
+
+multi-select with chips
+
+repeatable arrays of objects (add/remove rows)
+
+conditional visibility (showIf)
+
+Schema format example:
+
+fields: [{ key, label, type, ui, required, options, asyncSource, showIf }]
+
+5) Implement block-specific functionality
+A) Articles List (MOST IMPORTANT)
+
+Config schema:
+
+sourceType: "internal" | "external"
+
+numberOfArticles: int (1–20)
+
+selectionMode (internal only): "manual" | "latest"
+
+manualArticleIds (internal/manual): string[]
+
+latestFilters (internal/latest):
+
+category?: string
+
+tag?: string
+
+locale?: string
+
+sortBy: "newest" | "popular" (popular can be mocked)
+
+externalItems (external): array of:
+
+title
+
+source
+
+url
+
+imageUrl? (optional)
+
+UI behavior:
+
+Source Type radio toggle
+
+If Internal:
+
+number input
+
+selection mode toggle
+
+if manual: async multi-select dropdown pulling from Article search endpoint
+
+enforce selected ≤ numberOfArticles (show inline error)
+
+if latest: filter controls
+
+If External:
+
+number input
+
+show repeatable rows with url validation
+
+Endpoints:
+
+GET /api/articles/search?query=...&locale=...&category=...
+
+GET /api/articles/:id
+
+B) Stock Collection
+
+Config:
+
+mode: "manual" | "dynamic"
+
+limit: int
+
+manualTickers: string[]
+
+dynamicType: "top_traded" | "top_gainers" | "top_losers" | "most_viewed"
+
+filters: market, assetType, exchange (optional)
+
+UI:
+
+if manual: async multi-select stocks
+
+if dynamic: choose type + filters + limit
+
+Endpoints:
+
+GET /api/stocks/search?query=...&market=...&assetType=...
+
+C) Assets Under $500
+
+Config:
+
+maxPrice (default 500)
+
+limit
+
+market, assetType
+
+sortBy: volume/performance/popularity (mock ok)
+
+D) What Users Picked
+
+Config:
+
+timeWindow: 24h/7d/30d
+
+limit
+
+market filter
+(Mock ranking ok)
+
+E) Asset Highlight
+
+Config:
+
+ticker (async select)
+
+headline, body
+
+showStats (array)
+
+ctaText, ctaUrl
+
+F) Term of the Day
+
+Config:
+
+term, definition, example?, learnMoreUrl?
+
+G) In Other News
+
+Config same pattern as Articles List but simplified:
+
+sourceType internal/external
+
+limit
+
+internal manual/latest; external items list
+
+H) Promo Banner
+
+Config:
+
+title? (optional)
+
+imageUrl
+
+linkUrl? (optional)
+
+buttonText? (optional)
+
+variant (info/warning/neutral) optional
+
+dismissible optional
+
+I) Introduction / CTA / Footer / Hero Banner
+
+Simple text fields + optional image/button.
+
+6) Fix “All Blocks” and “All Templates”
+
+Currently they are lists only.
+
+All Blocks
+
+clicking edit opens:
+
+edit defaults (simple editor using the schema)
+
+edit schema (advanced JSON editor behind a toggle)
+
+changes to defaults affect newly added blocks, not existing issues unless “reset to defaults” is clicked.
+
+All Templates
+
+edit a block template config with same dynamic form editor
+
+allow using templates during “Add a new block”
+
+7) Acceptance tests
+
+In Newsletter editor:
+
+Add Articles List → Internal → manual → select articles from dropdown → set number → save → refresh keeps it
+
+Switch Articles List → External → add 3 links → save → refresh keeps it
+
+Add Stock Collection → manual → choose tickers → limit → persist
+
+Drag reorder blocks → persist
+
+Duplicate block → persist
