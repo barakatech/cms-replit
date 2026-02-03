@@ -656,15 +656,26 @@ function LivePreviewPanel({ newsletter, blocks }: { newsletter: Newsletter; bloc
       <ScrollArea className="flex-1">
         <div style={{ backgroundColor: '#0a0a0a', minHeight: '100%', padding: '20px' }}>
           <div style={{ maxWidth: '100%', backgroundColor: '#111', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ backgroundColor: '#0a0a0a', padding: '20px', textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#00d4aa' }}>baraka</span>
-              </div>
-              <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', margin: '0 0 8px 0' }}>
-                {newsletter.subject}
+            <div style={{ backgroundColor: '#000', padding: '48px 24px', textAlign: 'center' }}>
+              <h1 style={{ 
+                fontSize: '28px', 
+                fontWeight: 'bold', 
+                color: 'white', 
+                margin: '0 0 16px 0',
+                lineHeight: '1.3',
+                letterSpacing: '-0.5px'
+              }}>
+                {newsletter.subject || 'Markets Surge as S&P 500 Hits New Peak'}
               </h1>
               {newsletter.preheader && (
-                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{newsletter.preheader}</p>
+                <p style={{ 
+                  fontSize: '15px', 
+                  color: '#888', 
+                  margin: 0,
+                  lineHeight: '1.5'
+                }}>
+                  {newsletter.preheader}
+                </p>
               )}
             </div>
 
