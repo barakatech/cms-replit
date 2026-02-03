@@ -1168,7 +1168,17 @@ export interface Story {
 export type InsertStory = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
 
 // Newsletter Template Block Type
-export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews' | 'stock_list_manual' | 'options_ideas_manual' | 'market_snapshot_manual' | 'top_themes_manual' | 'econ_calendar_manual' | 'earnings_watch_manual' | 'education_card' | 'promo_banner';
+export type NewsletterBlockType = 
+  | 'introduction'
+  | 'featured_content'
+  | 'articles_list'
+  | 'stock_collection'
+  | 'assets_under_500'
+  | 'what_users_picked'
+  | 'asset_highlight'
+  | 'term_of_the_day'
+  | 'in_other_news'
+  | 'call_to_action';
 
 // Template Zone Types
 export type TemplateZoneType = 'header' | 'body' | 'footer';
@@ -1233,150 +1243,203 @@ export interface NewsletterContentBlock {
 
 // NEW SCHEMA BLOCKS DATA STRUCTURES
 
-// Stock List Block (Manual Picks)
-export interface StockListManualData {
+// Introduction Block
+export interface IntroductionBlockData {
+  title: string;
+  subtitle?: string;
+  body?: string;
+}
+
+// Featured Content Block (with articles)
+export interface FeaturedContentBlockData {
+  title: string;
+  articles: Array<{
+    articleId: string;
+    articleTitle: string;
+    articleExcerpt?: string;
+    articleImageUrl?: string;
+    articleUrl?: string;
+  }>;
+}
+
+// Articles List Block
+export interface ArticlesListBlockData {
+  title: string;
+  articles: Array<{
+    articleId: string;
+    articleTitle: string;
+    articleExcerpt?: string;
+    articleImageUrl?: string;
+    articleUrl?: string;
+  }>;
+  showExcerpts?: boolean;
+}
+
+// Stock Collection Block
+export interface StockCollectionBlockData {
   title: string;
   description?: string;
-  items: Array<{
+  stocks: Array<{
+    stockId: string;
     ticker: string;
-    note?: string;
-    link?: string;
-  }>;
-}
-
-// Options Ideas Block (Manual Contracts)
-export interface OptionsIdeasManualData {
-  title: string;
-  intro?: string;
-  contracts: Array<{
-    underlying_ticker: string;
-    type: 'CALL' | 'PUT';
-    expiry_date: string;
-    strike: number;
-    premium?: number;
-    rationale?: string;
-    link?: string;
-  }>;
-}
-
-// Market Snapshot Block (Manual)
-export interface MarketSnapshotManualData {
-  title: string;
-  bullets: string[];
-  what_to_watch?: string;
-}
-
-// Top Themes Block (Manual)
-export interface TopThemesManualData {
-  title: string;
-  themes: Array<{
-    theme_name: string;
-    one_liner: string;
-    tickers?: string[];
-    link?: string;
-  }>;
-}
-
-// Economic Calendar Block (Manual)
-export interface EconCalendarManualData {
-  title: string;
-  events: Array<{
-    date: string;
-    event: string;
-    why_it_matters?: string;
-  }>;
-}
-
-// Earnings Watch Block (Manual)
-export interface EarningsWatchManualData {
-  title: string;
-  entries: Array<{
-    ticker: string;
-    company_name?: string;
-    earnings_datetime?: string;
+    companyName: string;
     note?: string;
   }>;
 }
 
-// Education Card Block (Structured)
-export interface EducationCardData {
+// Assets Under $500 Block
+export interface AssetsUnder500BlockData {
   title: string;
-  bullets: string[];
-  cta_text?: string;
-  cta_link?: string;
+  description?: string;
+  stocks: Array<{
+    stockId: string;
+    ticker: string;
+    companyName: string;
+    price?: number;
+    note?: string;
+  }>;
 }
 
-// Promotional Banner Block (Schema)
-export interface PromoBannerData {
-  image_url: string;
-  link_url: string;
-  banner_title?: string;
+// What Users Picked Block
+export interface WhatUsersPickedBlockData {
+  title: string;
+  description?: string;
+  stocks: Array<{
+    stockId: string;
+    ticker: string;
+    companyName: string;
+    pickCount?: number;
+    note?: string;
+  }>;
+}
+
+// Asset Highlight Block (single stock feature)
+export interface AssetHighlightBlockData {
+  title: string;
+  stockId: string;
+  ticker: string;
+  companyName: string;
+  description?: string;
+  whyItMatters?: string;
+  imageUrl?: string;
+}
+
+// Term Of The Day Block
+export interface TermOfTheDayBlockData {
+  term: string;
+  definition: string;
+  example?: string;
+  relatedTerms?: string[];
+}
+
+// In Other News Block
+export interface InOtherNewsBlockData {
+  title: string;
+  newsItems: Array<{
+    headline: string;
+    source?: string;
+    url?: string;
+    summary?: string;
+  }>;
+}
+
+// Call To Action Block
+export interface CallToActionBlockData {
+  title: string;
+  subtitle?: string;
+  buttonText: string;
+  buttonUrl: string;
+  secondaryButtonText?: string;
+  secondaryButtonUrl?: string;
+  imageUrl?: string;
 }
 
 // Union type for all block data
 export type NewsletterBlockData = 
-  | StockListManualData 
-  | OptionsIdeasManualData 
-  | MarketSnapshotManualData 
-  | TopThemesManualData 
-  | EconCalendarManualData 
-  | EarningsWatchManualData 
-  | EducationCardData 
-  | PromoBannerData
+  | IntroductionBlockData 
+  | FeaturedContentBlockData 
+  | ArticlesListBlockData 
+  | StockCollectionBlockData 
+  | AssetsUnder500BlockData 
+  | WhatUsersPickedBlockData 
+  | AssetHighlightBlockData 
+  | TermOfTheDayBlockData 
+  | InOtherNewsBlockData 
+  | CallToActionBlockData 
   | Record<string, unknown>;
 
 // Block Settings Interfaces (configurable defaults/overrides)
-export interface StockListManualSettings {
-  max_items: number;
-  show_notes: boolean;
-  card_style: 'compact' | 'detailed';
-  show_links: boolean;
+export interface IntroductionBlockSettings {
+  showSubtitle: boolean;
+  showBody: boolean;
 }
 
-export interface OptionsIdeasManualSettings {
-  max_contracts: number;
-  show_premium: boolean;
-  show_rationale: boolean;
+export interface FeaturedContentBlockSettings {
+  maxArticles: number;
+  showImages: boolean;
+  showExcerpts: boolean;
 }
 
-export interface MarketSnapshotManualSettings {
-  max_bullets: number;
-  show_what_to_watch: boolean;
+export interface ArticlesListBlockSettings {
+  maxArticles: number;
+  showImages: boolean;
+  showExcerpts: boolean;
+  layout: 'list' | 'grid';
 }
 
-export interface TopThemesManualSettings {
-  max_themes: number;
-  max_tickers_per_theme: number;
+export interface StockCollectionBlockSettings {
+  maxStocks: number;
+  showNotes: boolean;
+  cardStyle: 'compact' | 'detailed';
 }
 
-export interface EconCalendarManualSettings {
-  max_events: number;
-  show_why_it_matters: boolean;
+export interface AssetsUnder500BlockSettings {
+  maxStocks: number;
+  showPrice: boolean;
+  showNotes: boolean;
 }
 
-export interface EarningsWatchManualSettings {
-  max_entries: number;
-  show_company_name: boolean;
+export interface WhatUsersPickedBlockSettings {
+  maxStocks: number;
+  showPickCount: boolean;
+  showNotes: boolean;
 }
 
-export interface EducationCardSettings {
-  bullet_style: 'dots' | 'checks';
-  show_cta: boolean;
+export interface AssetHighlightBlockSettings {
+  showDescription: boolean;
+  showWhyItMatters: boolean;
+  showImage: boolean;
 }
 
-export interface PromoBannerSettings {
-  title_position: 'overlay' | 'below' | 'hidden';
-  height: 'md' | 'lg';
+export interface TermOfTheDayBlockSettings {
+  showExample: boolean;
+  showRelatedTerms: boolean;
+}
+
+export interface InOtherNewsBlockSettings {
+  maxItems: number;
+  showSource: boolean;
+  showSummary: boolean;
+}
+
+export interface CallToActionBlockSettings {
+  showSecondaryButton: boolean;
+  showImage: boolean;
+  buttonStyle: 'primary' | 'secondary' | 'outline';
 }
 
 // Union type for all block settings
 export type NewsletterBlockSettings = 
-  | StockListManualSettings 
-  | OptionsIdeasManualSettings 
-  | MarketSnapshotManualSettings 
-  | TopThemesManualSettings 
-  | EconCalendarManualSettings 
-  | EarningsWatchManualSettings 
+  | IntroductionBlockSettings 
+  | FeaturedContentBlockSettings 
+  | ArticlesListBlockSettings 
+  | StockCollectionBlockSettings 
+  | AssetsUnder500BlockSettings 
+  | WhatUsersPickedBlockSettings
+  | AssetHighlightBlockSettings
+  | TermOfTheDayBlockSettings
+  | InOtherNewsBlockSettings
+  | CallToActionBlockSettings 
   | EducationCardSettings 
   | PromoBannerSettings
   | Record<string, unknown>;

@@ -30,29 +30,35 @@ import {
   BarChart3,
   BookOpen,
   Image,
-  Library
+  Library,
+  FileText,
+  Star,
+  DollarSign,
+  Users,
+  Lightbulb,
+  Newspaper,
+  Search
 } from 'lucide-react';
 import type { 
   Newsletter, 
   NewsletterBlockInstance, 
   NewsletterBlockType, 
   NewsletterBlockData,
-  BlockLibraryTemplate
+  BlockLibraryTemplate,
+  StockPage
 } from '@shared/schema';
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; icon: typeof TrendingUp; category: string }[] = [
-  { type: 'stock_list_manual', label: 'Stock List (Manual)', icon: TrendingUp, category: 'Manual' },
-  { type: 'options_ideas_manual', label: 'Options Ideas', icon: Briefcase, category: 'Manual' },
-  { type: 'market_snapshot_manual', label: 'Market Snapshot', icon: BarChart3, category: 'Manual' },
-  { type: 'top_themes_manual', label: 'Top Themes', icon: TrendingUp, category: 'Manual' },
-  { type: 'econ_calendar_manual', label: 'Economic Calendar', icon: Calendar, category: 'Manual' },
-  { type: 'earnings_watch_manual', label: 'Earnings Watch', icon: BarChart3, category: 'Manual' },
-  { type: 'education_card', label: 'Education Card', icon: BookOpen, category: 'Content' },
-  { type: 'promo_banner', label: 'Promo Banner', icon: Image, category: 'Content' },
-  { type: 'hero', label: 'Hero', icon: Image, category: 'Layout' },
-  { type: 'intro', label: 'Intro', icon: BookOpen, category: 'Layout' },
-  { type: 'cta', label: 'CTA', icon: Send, category: 'Layout' },
-  { type: 'footer', label: 'Footer', icon: BookOpen, category: 'Layout' },
+  { type: 'introduction', label: 'Introduction', icon: FileText, category: 'Content' },
+  { type: 'featured_content', label: 'Featured Content', icon: Star, category: 'Content' },
+  { type: 'articles_list', label: 'Articles List', icon: Newspaper, category: 'Content' },
+  { type: 'stock_collection', label: 'Stock Collection', icon: TrendingUp, category: 'Stocks' },
+  { type: 'assets_under_500', label: 'Assets Under $500', icon: DollarSign, category: 'Stocks' },
+  { type: 'what_users_picked', label: 'What Users Picked', icon: Users, category: 'Stocks' },
+  { type: 'asset_highlight', label: 'Asset Highlight', icon: Star, category: 'Stocks' },
+  { type: 'term_of_the_day', label: 'Term Of The Day', icon: Lightbulb, category: 'Education' },
+  { type: 'in_other_news', label: 'In Other News', icon: Newspaper, category: 'Content' },
+  { type: 'call_to_action', label: 'Call To Action', icon: Send, category: 'Layout' },
 ];
 
 const getBlockTypeLabel = (type: NewsletterBlockType): string => {
@@ -62,22 +68,26 @@ const getBlockTypeLabel = (type: NewsletterBlockType): string => {
 
 const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockData => {
   switch (blockType) {
-    case 'stock_list_manual':
-      return { title: '', description: '', items: [] };
-    case 'options_ideas_manual':
-      return { title: '', intro: '', contracts: [] };
-    case 'market_snapshot_manual':
-      return { title: '', bullets: ['', '', ''], what_to_watch: '' };
-    case 'top_themes_manual':
-      return { title: '', themes: [] };
-    case 'econ_calendar_manual':
-      return { title: '', events: [] };
-    case 'earnings_watch_manual':
-      return { title: '', entries: [] };
-    case 'education_card':
-      return { title: '', bullets: ['', ''], cta_text: '', cta_link: '' };
-    case 'promo_banner':
-      return { image_url: '', link_url: '', banner_title: '' };
+    case 'introduction':
+      return { title: '', subtitle: '', body: '' };
+    case 'featured_content':
+      return { title: '', articles: [] };
+    case 'articles_list':
+      return { title: '', articles: [], showExcerpts: true };
+    case 'stock_collection':
+      return { title: '', description: '', stocks: [] };
+    case 'assets_under_500':
+      return { title: '', description: '', stocks: [] };
+    case 'what_users_picked':
+      return { title: '', description: '', stocks: [] };
+    case 'asset_highlight':
+      return { title: '', stockId: '', ticker: '', companyName: '', description: '', whyItMatters: '' };
+    case 'term_of_the_day':
+      return { term: '', definition: '', example: '', relatedTerms: [] };
+    case 'in_other_news':
+      return { title: '', newsItems: [] };
+    case 'call_to_action':
+      return { title: '', subtitle: '', buttonText: '', buttonUrl: '' };
     default:
       return {};
   }
@@ -91,9 +101,11 @@ export default function AdminNewsletterEdit() {
   const [addBlockDialogOpen, setAddBlockDialogOpen] = useState(false);
   const [editBlockDialogOpen, setEditBlockDialogOpen] = useState(false);
   const [blockEditorData, setBlockEditorData] = useState<NewsletterBlockData>({});
-  const [selectedBlockType, setSelectedBlockType] = useState<NewsletterBlockType>('stock_list_manual');
+  const [selectedBlockType, setSelectedBlockType] = useState<NewsletterBlockType>('introduction');
   const [overrideSettingsString, setOverrideSettingsString] = useState<string>('{}');
   const [showOverrideSettings, setShowOverrideSettings] = useState(false);
+  const [stockSearchQuery, setStockSearchQuery] = useState('');
+  const [articleSearchQuery, setArticleSearchQuery] = useState('');
 
   const newsletterId = params.id;
 
@@ -115,6 +127,27 @@ export default function AdminNewsletterEdit() {
   const { data: libraryTemplates } = useQuery<BlockLibraryTemplate[]>({
     queryKey: ['/api/block-library-templates'],
   });
+
+  const { data: stockPages } = useQuery<StockPage[]>({
+    queryKey: ['/api/stock-pages'],
+  });
+
+  const { data: blogPosts } = useQuery<Array<{ id: string; title_en: string; excerpt_en?: string; featuredImageUrl?: string; slug: string }>>({
+    queryKey: ['/api/blog-posts'],
+  });
+
+  const filteredStocks = stockPages?.filter(stock => 
+    stockSearchQuery.length >= 2 && (
+      stock.ticker.toLowerCase().includes(stockSearchQuery.toLowerCase()) ||
+      stock.companyName.toLowerCase().includes(stockSearchQuery.toLowerCase())
+    )
+  ) || [];
+
+  const filteredArticles = blogPosts?.filter(article =>
+    articleSearchQuery.length >= 2 && (
+      article.title_en.toLowerCase().includes(articleSearchQuery.toLowerCase())
+    )
+  ) || [];
 
   const addBlockMutation = useMutation({
     mutationFn: (data: { blockType: NewsletterBlockType; blockDataJson: NewsletterBlockData }) => 
@@ -222,138 +255,415 @@ export default function AdminNewsletterEdit() {
       setBlockEditorData({ ...data, [key]: value });
     };
 
+    const d = data as Record<string, unknown>;
+
     switch (blockType) {
-      case 'stock_list_manual':
+      case 'introduction':
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Title *</Label>
               <Input
-                value={(data as Record<string, unknown>).title as string || ''}
+                value={d.title as string || ''}
                 onChange={(e) => updateData('title', e.target.value)}
-                placeholder="e.g., Top Traded Stocks"
+                placeholder="Welcome to this week's newsletter"
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Subtitle</Label>
+              <Input
+                value={d.subtitle as string || ''}
+                onChange={(e) => updateData('subtitle', e.target.value)}
+                placeholder="Your weekly market update"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Body</Label>
+              <Textarea
+                value={d.body as string || ''}
+                onChange={(e) => updateData('body', e.target.value)}
+                placeholder="Introduction text..."
+                rows={3}
+              />
+            </div>
+          </div>
+        );
+
+      case 'featured_content':
+      case 'articles_list':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder={blockType === 'featured_content' ? 'Featured This Week' : 'Latest Articles'}
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Articles</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Search articles by title..."
+                  value={articleSearchQuery}
+                  onChange={(e) => setArticleSearchQuery(e.target.value)}
+                  data-testid="input-article-search"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (filteredArticles && filteredArticles.length > 0) {
+                      const article = filteredArticles[0];
+                      const articles = (d.articles as Array<Record<string, unknown>>) || [];
+                      updateData('articles', [...articles, {
+                        articleId: article.id,
+                        articleTitle: article.title_en,
+                        articleExcerpt: article.excerpt_en || '',
+                        articleImageUrl: article.featuredImageUrl || '',
+                        articleUrl: `/blog/${article.slug}`,
+                      }]);
+                      setArticleSearchQuery('');
+                    }
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {articleSearchQuery && filteredArticles && filteredArticles.length > 0 && (
+                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                  {filteredArticles.slice(0, 5).map(article => (
+                    <div
+                      key={article.id}
+                      className="p-2 hover-elevate cursor-pointer text-sm"
+                      onClick={() => {
+                        const articles = (d.articles as Array<Record<string, unknown>>) || [];
+                        updateData('articles', [...articles, {
+                          articleId: article.id,
+                          articleTitle: article.title_en,
+                          articleExcerpt: article.excerpt_en || '',
+                          articleImageUrl: article.featuredImageUrl || '',
+                          articleUrl: `/blog/${article.slug}`,
+                        }]);
+                        setArticleSearchQuery('');
+                      }}
+                    >
+                      {article.title_en}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {((d.articles as Array<Record<string, unknown>>) || []).map((article, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg">
+                  <span className="flex-1 text-sm truncate">{article.articleTitle as string}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      const articles = [...((d.articles as Array<Record<string, unknown>>) || [])];
+                      articles.splice(idx, 1);
+                      updateData('articles', articles);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'stock_collection':
+      case 'assets_under_500':
+      case 'what_users_picked':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder={blockType === 'stock_collection' ? 'Stock Collection' : blockType === 'assets_under_500' ? 'Assets Under $500' : 'What Users Picked'}
                 data-testid="input-block-title"
               />
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea
-                value={(data as Record<string, unknown>).description as string || ''}
+                value={d.description as string || ''}
                 onChange={(e) => updateData('description', e.target.value)}
                 placeholder="Brief description..."
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Stocks</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Search stocks by ticker or name..."
+                  value={stockSearchQuery}
+                  onChange={(e) => setStockSearchQuery(e.target.value)}
+                  data-testid="input-stock-search"
+                />
+              </div>
+              {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
+                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                  {filteredStocks.slice(0, 5).map(stock => (
+                    <div
+                      key={stock.id}
+                      className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
+                      onClick={() => {
+                        const stocks = (d.stocks as Array<Record<string, unknown>>) || [];
+                        updateData('stocks', [...stocks, {
+                          stockId: stock.id,
+                          ticker: stock.ticker,
+                          companyName: stock.companyName,
+                          note: '',
+                        }]);
+                        setStockSearchQuery('');
+                      }}
+                    >
+                      <span className="font-medium">{stock.ticker}</span>
+                      <span className="text-muted-foreground">{stock.companyName}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
+                <div key={idx} className="flex items-center gap-2 p-2 border rounded-lg">
+                  <span className="font-medium">{stock.ticker as string}</span>
+                  <span className="flex-1 text-sm text-muted-foreground truncate">{stock.companyName as string}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
+                      stocks.splice(idx, 1);
+                      updateData('stocks', stocks);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'asset_highlight':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder="Asset Highlight"
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Select Stock</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Search stocks..."
+                  value={stockSearchQuery}
+                  onChange={(e) => setStockSearchQuery(e.target.value)}
+                  data-testid="input-stock-search"
+                />
+              </div>
+              {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
+                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
+                  {filteredStocks.slice(0, 5).map(stock => (
+                    <div
+                      key={stock.id}
+                      className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
+                      onClick={() => {
+                        updateData('stockId', stock.id);
+                        updateData('ticker', stock.ticker);
+                        updateData('companyName', stock.companyName);
+                        setStockSearchQuery('');
+                      }}
+                    >
+                      <span className="font-medium">{stock.ticker}</span>
+                      <span className="text-muted-foreground">{stock.companyName}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {d.ticker && (
+                <div className="p-2 border rounded-lg flex items-center gap-2">
+                  <span className="font-medium">{d.ticker as string}</span>
+                  <span className="text-muted-foreground">{d.companyName as string}</span>
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={d.description as string || ''}
+                onChange={(e) => updateData('description', e.target.value)}
+                placeholder="Why this stock matters..."
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Why It Matters</Label>
+              <Textarea
+                value={d.whyItMatters as string || ''}
+                onChange={(e) => updateData('whyItMatters', e.target.value)}
+                placeholder="Key reasons to watch..."
                 rows={2}
               />
             </div>
           </div>
         );
 
-      case 'market_snapshot_manual':
+      case 'term_of_the_day':
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Title *</Label>
+              <Label>Term *</Label>
               <Input
-                value={(data as Record<string, unknown>).title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="e.g., Market Snapshot"
+                value={d.term as string || ''}
+                onChange={(e) => updateData('term', e.target.value)}
+                placeholder="e.g., Dividend Yield"
+                data-testid="input-block-title"
               />
             </div>
             <div className="space-y-2">
-              <Label>Bullets</Label>
-              {(((data as Record<string, unknown>).bullets as string[]) || ['', '', '']).map((bullet: string, idx: number) => (
-                <Input
-                  key={idx}
-                  value={bullet}
-                  onChange={(e) => {
-                    const bullets = [...(((data as Record<string, unknown>).bullets as string[]) || ['', '', ''])];
-                    bullets[idx] = e.target.value;
-                    updateData('bullets', bullets);
-                  }}
-                  placeholder={`Bullet ${idx + 1}`}
-                />
-              ))}
+              <Label>Definition *</Label>
+              <Textarea
+                value={d.definition as string || ''}
+                onChange={(e) => updateData('definition', e.target.value)}
+                placeholder="Clear definition..."
+                rows={2}
+              />
             </div>
             <div className="space-y-2">
-              <Label>What to Watch</Label>
-              <Input
-                value={(data as Record<string, unknown>).what_to_watch as string || ''}
-                onChange={(e) => updateData('what_to_watch', e.target.value)}
-                placeholder="Key event to watch..."
+              <Label>Example</Label>
+              <Textarea
+                value={d.example as string || ''}
+                onChange={(e) => updateData('example', e.target.value)}
+                placeholder="Real-world example..."
+                rows={2}
               />
             </div>
           </div>
         );
 
-      case 'promo_banner':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Image URL *</Label>
-              <Input
-                value={(data as Record<string, unknown>).image_url as string || ''}
-                onChange={(e) => updateData('image_url', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Link URL *</Label>
-              <Input
-                value={(data as Record<string, unknown>).link_url as string || ''}
-                onChange={(e) => updateData('link_url', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Banner Title</Label>
-              <Input
-                value={(data as Record<string, unknown>).banner_title as string || ''}
-                onChange={(e) => updateData('banner_title', e.target.value)}
-                placeholder="Optional title..."
-              />
-            </div>
-          </div>
-        );
-
-      case 'education_card':
+      case 'in_other_news':
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Title *</Label>
               <Input
-                value={(data as Record<string, unknown>).title as string || ''}
+                value={d.title as string || ''}
                 onChange={(e) => updateData('title', e.target.value)}
-                placeholder="e.g., Did You Know?"
+                placeholder="In Other News"
+                data-testid="input-block-title"
               />
             </div>
             <div className="space-y-2">
-              <Label>Bullets</Label>
-              {(((data as Record<string, unknown>).bullets as string[]) || ['', '']).map((bullet: string, idx: number) => (
-                <Input
-                  key={idx}
-                  value={bullet}
-                  onChange={(e) => {
-                    const bullets = [...(((data as Record<string, unknown>).bullets as string[]) || ['', ''])];
-                    bullets[idx] = e.target.value;
-                    updateData('bullets', bullets);
-                  }}
-                  placeholder={`Bullet ${idx + 1}`}
-                />
+              <Label>News Items</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newsItems = (d.newsItems as Array<Record<string, unknown>>) || [];
+                  updateData('newsItems', [...newsItems, { headline: '', source: '', url: '', summary: '' }]);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add News Item
+              </Button>
+              {((d.newsItems as Array<Record<string, unknown>>) || []).map((item, idx) => (
+                <div key={idx} className="p-3 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Item {idx + 1}</Label>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
+                        newsItems.splice(idx, 1);
+                        updateData('newsItems', newsItems);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={item.headline as string || ''}
+                    onChange={(e) => {
+                      const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
+                      newsItems[idx] = { ...newsItems[idx], headline: e.target.value };
+                      updateData('newsItems', newsItems);
+                    }}
+                    placeholder="Headline"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      value={item.source as string || ''}
+                      onChange={(e) => {
+                        const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
+                        newsItems[idx] = { ...newsItems[idx], source: e.target.value };
+                        updateData('newsItems', newsItems);
+                      }}
+                      placeholder="Source"
+                    />
+                    <Input
+                      value={item.url as string || ''}
+                      onChange={(e) => {
+                        const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
+                        newsItems[idx] = { ...newsItems[idx], url: e.target.value };
+                        updateData('newsItems', newsItems);
+                      }}
+                      placeholder="URL"
+                    />
+                  </div>
+                </div>
               ))}
+            </div>
+          </div>
+        );
+
+      case 'call_to_action':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder="Ready to start investing?"
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Subtitle</Label>
+              <Input
+                value={d.subtitle as string || ''}
+                onChange={(e) => updateData('subtitle', e.target.value)}
+                placeholder="Join thousands of investors..."
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>CTA Text</Label>
+                <Label>Button Text *</Label>
                 <Input
-                  value={(data as Record<string, unknown>).cta_text as string || ''}
-                  onChange={(e) => updateData('cta_text', e.target.value)}
-                  placeholder="Learn More"
+                  value={d.buttonText as string || ''}
+                  onChange={(e) => updateData('buttonText', e.target.value)}
+                  placeholder="Get Started"
                 />
               </div>
               <div className="space-y-2">
-                <Label>CTA Link</Label>
+                <Label>Button URL *</Label>
                 <Input
-                  value={(data as Record<string, unknown>).cta_link as string || ''}
-                  onChange={(e) => updateData('cta_link', e.target.value)}
+                  value={d.buttonUrl as string || ''}
+                  onChange={(e) => updateData('buttonUrl', e.target.value)}
                   placeholder="https://..."
                 />
               </div>
