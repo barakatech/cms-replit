@@ -19,10 +19,21 @@ The CMS provides:
   - Audit logging for all content operations
 - **Newsletter Block System**: Comprehensive block editing for newsletters:
   - Zone-based template architecture (header/body/footer zones with constraints)
-  - 8 manual content block types: stock lists, options ideas, market snapshots, top themes, economic calendar, earnings watch, education cards, promo banners
+  - 10 custom content block types with inline search:
+    - **Introduction**: Title, subtitle, body text for newsletter opening
+    - **Featured Content**: Curated articles with inline article search
+    - **Articles List**: Multiple articles with excerpts and inline search
+    - **Stock Collection**: Multiple stocks with inline stock search
+    - **Assets Under $500**: Affordable stocks with inline search
+    - **What Users Picked**: User-favorite stocks with inline search
+    - **Asset Highlight**: Single featured stock with detailed description
+    - **Term Of The Day**: Financial term with definition and example
+    - **In Other News**: External news items with headlines and sources
+    - **Call To Action**: CTA section with button text and URL
+  - Stock search integrated into block editors (searches StockPage entities)
+  - Article search integrated into content blocks (searches BlogPost entities)
   - SchemaBlocks and BlockLibraryTemplates as reusable entities
   - NewsletterBlockInstances for per-newsletter block editing with add/update/delete/reorder
-  - Ticker Catalog for centralized stock ticker management
   - **Three-Tier Settings Override Architecture**:
     - Schema Defaults: Base settings defined in SchemaBlockDefinition (managed via /admin/schema-block-definitions)
     - Template Overrides: Template-specific settings via NewsletterTemplateBlockOverride (managed in template editor)
