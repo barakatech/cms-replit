@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import {
   ArrowLeft,
   Download,
   Eye,
+  ExternalLink,
   Sparkles,
   GripVertical,
   ArrowUp,
@@ -39,6 +41,7 @@ type ViewMode = 'list' | 'editor';
 
 export default function AdminNewsletters() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -670,6 +673,15 @@ export default function AdminNewsletters() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => setLocation(`/admin/newsletters/${newsletter.id}`)}
+                          data-testid={`button-open-${newsletter.id}`}
+                          title="Open Block Editor"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
                         <Button
                           size="icon"
                           variant="ghost"

@@ -30,6 +30,7 @@ import AdminMarketingPixels from '@/pages/admin-marketing-pixels';
 import AdminCTAPerformance from '@/pages/admin-cta-performance';
 import AdminStocks from '@/pages/admin-stocks';
 import AdminNewsletters from '@/pages/admin-newsletters';
+import AdminNewsletterEdit from '@/pages/admin-newsletter-edit';
 import AdminTemplates from '@/pages/admin-templates';
 import AdminSchemaBlocks from '@/pages/admin-schema-blocks';
 import AdminBlocksLibrary from '@/pages/admin-blocks-library';
@@ -297,6 +298,23 @@ function Router() {
                   <TopBar />
                   <main className="flex-1 overflow-auto">
                     <AdminNewsletters />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/newsletters/:id">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminNewsletterEdit />
                   </main>
                 </div>
               </div>
