@@ -23,6 +23,11 @@ The CMS provides:
   - SchemaBlocks and BlockLibraryTemplates as reusable entities
   - NewsletterBlockInstances for per-newsletter block editing with add/update/delete/reorder
   - Ticker Catalog for centralized stock ticker management
+  - **Three-Tier Settings Override Architecture**:
+    - Schema Defaults: Base settings defined in SchemaBlockDefinition (managed via /admin/schema-block-definitions)
+    - Template Overrides: Template-specific settings via NewsletterTemplateBlockOverride (managed in template editor)
+    - Issue Overrides: Per-newsletter-issue settings via NewsletterBlockInstance.overrideSettingsJson (managed in block edit dialog)
+    - Settings merge API: GET /api/newsletters/:id/blocks/:blockId/merged-settings returns combined settings with layer breakdown
 
 ## User Preferences
 
