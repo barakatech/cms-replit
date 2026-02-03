@@ -12,6 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -37,7 +48,11 @@ import {
   Users,
   Lightbulb,
   Newspaper,
-  Search
+  Search,
+  MoreVertical,
+  Pencil,
+  ChevronDown,
+  Layers
 } from 'lucide-react';
 import type { 
   Newsletter, 
@@ -249,6 +264,22 @@ export default function AdminNewsletterEdit() {
       const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
       setBlockEditorData(defaultData);
     }
+  };
+
+  const handleQuickAddSchemaBlock = (schemaDef: SchemaBlockDefinition) => {
+    const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
+    addBlockMutation.mutate({
+      blockType: schemaDef.blockType,
+      blockDataJson: defaultData,
+    });
+  };
+
+  const handleQuickAddCustomBlock = (blockType: NewsletterBlockType) => {
+    const defaultData = getDefaultBlockData(blockType);
+    addBlockMutation.mutate({
+      blockType,
+      blockDataJson: defaultData,
+    });
   };
 
   const handleSaveBlock = () => {
@@ -789,10 +820,52 @@ export default function AdminNewsletterEdit() {
                 <CardTitle>Content Blocks</CardTitle>
                 <CardDescription>Drag to reorder, click to edit</CardDescription>
               </div>
-              <Button onClick={() => setAddBlockDialogOpen(true)} data-testid="button-add-block">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Block
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button data-testid="button-add-block">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Block
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuLabel>Schema Blocks</DropdownMenuLabel>
+                  {schemaDefinitions && schemaDefinitions.length > 0 ? (
+                    schemaDefinitions.map((def) => (
+                      <DropdownMenuItem
+                        key={def.id}
+                        onClick={() => handleQuickAddSchemaBlock(def)}
+                        data-testid={`dropdown-schema-${def.blockType}`}
+                      >
+                        <Layers className="h-4 w-4 mr-2" />
+                        {def.name}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>No schema blocks available</DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Custom Blocks</DropdownMenuLabel>
+                  {BLOCK_TYPES.map((blockType) => (
+                    <DropdownMenuItem
+                      key={blockType.type}
+                      onClick={() => handleQuickAddCustomBlock(blockType.type)}
+                      data-testid={`dropdown-custom-${blockType.type}`}
+                    >
+                      <blockType.icon className="h-4 w-4 mr-2" />
+                      {blockType.label}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setAddBlockDialogOpen(true)}
+                    data-testid="dropdown-advanced-add"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Advanced Add (Edit Before Adding)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardHeader>
             <CardContent>
               {blocksLoading ? (
@@ -823,34 +896,52 @@ export default function AdminNewsletterEdit() {
                           {(block.blockDataJson as Record<string, unknown>).title as string || 'No title'}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={index === 0}
-                          onClick={() => handleMoveBlock(index, 'up')}
-                          data-testid={`button-move-up-${block.id}`}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          disabled={index === sortedBlocks.length - 1}
-                          onClick={() => handleMoveBlock(index, 'down')}
-                          data-testid={`button-move-down-${block.id}`}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => deleteBlockMutation.mutate(block.id)}
-                          data-testid={`button-delete-${block.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            data-testid={`button-block-menu-${block.id}`}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditBlock(block)}
+                            data-testid={`menu-edit-${block.id}`}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit Block
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            disabled={index === 0}
+                            onClick={() => handleMoveBlock(index, 'up')}
+                            data-testid={`menu-move-up-${block.id}`}
+                          >
+                            <ArrowUp className="h-4 w-4 mr-2" />
+                            Move Up
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={index === sortedBlocks.length - 1}
+                            onClick={() => handleMoveBlock(index, 'down')}
+                            data-testid={`menu-move-down-${block.id}`}
+                          >
+                            <ArrowDown className="h-4 w-4 mr-2" />
+                            Move Down
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => deleteBlockMutation.mutate(block.id)}
+                            className="text-destructive"
+                            data-testid={`menu-delete-${block.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Block
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   ))}
                 </div>
