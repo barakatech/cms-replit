@@ -1395,6 +1395,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/newsletters/:newsletterId/blocks/:blockId/merged-settings", async (req, res) => {
+    try {
+      const block = await storage.getNewsletterBlockInstance(req.params.blockId);
+      if (!block || block.newsletterId !== req.params.newsletterId) {
+        return res.status(404).json({ error: "Block instance not found" });
+      }
+
+      const newsletter = await storage.getNewsletter(req.params.newsletterId);
+      if (!newsletter) {
+        return res.status(404).json({ error: "Newsletter not found" });
+      }
+
+      let mergedSettings: Record<string, unknown> = {};
+
+      const schemaDefinition = await storage.getSchemaBlockDefinitionByType(block.blockType);
+      if (schemaDefinition?.defaultSettingsJson) {
+        mergedSettings = { ...mergedSettings, ...(schemaDefinition.defaultSettingsJson as Record<string, unknown>) };
+      }
+
+      if (newsletter.templateId) {
+        const templateOverride = await storage.getTemplateBlockOverride(newsletter.templateId, block.blockType);
+        if (templateOverride?.overrideSettingsJson) {
+          mergedSettings = { ...mergedSettings, ...(templateOverride.overrideSettingsJson as Record<string, unknown>) };
+        }
+      }
+
+      if (block.overrideSettingsJson) {
+        mergedSettings = { ...mergedSettings, ...(block.overrideSettingsJson as Record<string, unknown>) };
+      }
+
+      res.json({
+        blockId: block.id,
+        blockType: block.blockType,
+        mergedSettings,
+        layers: {
+          schemaDefaults: schemaDefinition?.defaultSettingsJson || {},
+          templateOverrides: newsletter.templateId ? 
+            (await storage.getTemplateBlockOverride(newsletter.templateId, block.blockType))?.overrideSettingsJson || {} : {},
+          issueOverrides: block.overrideSettingsJson || {},
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get merged settings" });
+    }
+  });
+
   app.post("/api/newsletters/:newsletterId/blocks/:blockId/delete", async (req, res) => {
     const block = await storage.getNewsletterBlockInstance(req.params.blockId);
     if (!block || block.newsletterId !== req.params.newsletterId) {
