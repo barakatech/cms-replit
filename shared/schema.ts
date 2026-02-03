@@ -1168,7 +1168,7 @@ export interface Story {
 export type InsertStory = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
 
 // Newsletter Template Block Type
-export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews';
+export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews' | 'stock_list_manual' | 'options_ideas_manual' | 'market_snapshot_manual' | 'top_themes_manual' | 'econ_calendar_manual' | 'earnings_watch_manual' | 'education_card' | 'promo_banner';
 
 // Template Zone Types
 export type TemplateZoneType = 'header' | 'body' | 'footer';
@@ -1230,6 +1230,137 @@ export interface NewsletterContentBlock {
   articles?: Array<{ title: string; excerpt: string; url: string; imageUrl?: string }>;
   tickers?: string[];
 }
+
+// NEW SCHEMA BLOCKS DATA STRUCTURES
+
+// Stock List Block (Manual Picks)
+export interface StockListManualData {
+  title: string;
+  description?: string;
+  items: Array<{
+    ticker: string;
+    note?: string;
+    link?: string;
+  }>;
+}
+
+// Options Ideas Block (Manual Contracts)
+export interface OptionsIdeasManualData {
+  title: string;
+  intro?: string;
+  contracts: Array<{
+    underlying_ticker: string;
+    type: 'CALL' | 'PUT';
+    expiry_date: string;
+    strike: number;
+    premium?: number;
+    rationale?: string;
+    link?: string;
+  }>;
+}
+
+// Market Snapshot Block (Manual)
+export interface MarketSnapshotManualData {
+  title: string;
+  bullets: string[];
+  what_to_watch?: string;
+}
+
+// Top Themes Block (Manual)
+export interface TopThemesManualData {
+  title: string;
+  themes: Array<{
+    theme_name: string;
+    one_liner: string;
+    tickers?: string[];
+    link?: string;
+  }>;
+}
+
+// Economic Calendar Block (Manual)
+export interface EconCalendarManualData {
+  title: string;
+  events: Array<{
+    date: string;
+    event: string;
+    why_it_matters?: string;
+  }>;
+}
+
+// Earnings Watch Block (Manual)
+export interface EarningsWatchManualData {
+  title: string;
+  entries: Array<{
+    ticker: string;
+    company_name?: string;
+    earnings_datetime?: string;
+    note?: string;
+  }>;
+}
+
+// Education Card Block (Structured)
+export interface EducationCardData {
+  title: string;
+  bullets: string[];
+  cta_text?: string;
+  cta_link?: string;
+}
+
+// Promotional Banner Block (Schema)
+export interface PromoBannerData {
+  image_url: string;
+  link_url: string;
+  banner_title?: string;
+}
+
+// Union type for all block data
+export type NewsletterBlockData = 
+  | StockListManualData 
+  | OptionsIdeasManualData 
+  | MarketSnapshotManualData 
+  | TopThemesManualData 
+  | EconCalendarManualData 
+  | EarningsWatchManualData 
+  | EducationCardData 
+  | PromoBannerData
+  | Record<string, unknown>;
+
+// Newsletter Block Instance (per-newsletter)
+export interface NewsletterBlockInstance {
+  id: string;
+  newsletterId: string;
+  blockType: NewsletterBlockType;
+  blockDataJson: NewsletterBlockData;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertNewsletterBlockInstance = Omit<NewsletterBlockInstance, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Block Library Template (reusable)
+export interface BlockLibraryTemplate {
+  id: string;
+  name: string;
+  blockType: NewsletterBlockType;
+  blockDataJson: NewsletterBlockData;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertBlockLibraryTemplate = Omit<BlockLibraryTemplate, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Ticker Catalog (manual)
+export interface TickerCatalogEntry {
+  id: string;
+  ticker: string;
+  displayName?: string;
+  category?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertTickerCatalogEntry = Omit<TickerCatalogEntry, 'id' | 'createdAt' | 'updatedAt'>;
 
 // Newsletter
 export interface Newsletter {
