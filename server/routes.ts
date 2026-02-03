@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -1058,6 +1058,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const success = await storage.deleteNewsletterTemplate(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Newsletter template not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // SCHEMA BLOCKS API (reusable newsletter modules)
+  // ============================================
+
+  app.get("/api/schema-blocks", async (req, res) => {
+    let blocks = await storage.getSchemaBlocks();
+    
+    const locale = req.query.locale as string | undefined;
+    const type = req.query.type as string | undefined;
+    
+    if (locale) {
+      blocks = blocks.filter(b => b.locale === locale || b.locale === 'global');
+    }
+    if (type) {
+      blocks = blocks.filter(b => b.type === type);
+    }
+    
+    res.json(blocks);
+  });
+
+  app.get("/api/schema-blocks/:id", async (req, res) => {
+    const block = await storage.getSchemaBlock(req.params.id);
+    if (!block) {
+      return res.status(404).json({ error: "Schema block not found" });
+    }
+    res.json(block);
+  });
+
+  app.post("/api/schema-blocks", async (req, res) => {
+    try {
+      const data = insertSchemaBlockSchema.parse(req.body);
+      const block = await storage.createSchemaBlock(data);
+      res.status(201).json(block);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create schema block" });
+    }
+  });
+
+  app.put("/api/schema-blocks/:id", async (req, res) => {
+    try {
+      const block = await storage.updateSchemaBlock(req.params.id, req.body);
+      if (!block) {
+        return res.status(404).json({ error: "Schema block not found" });
+      }
+      res.json(block);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update schema block" });
+    }
+  });
+
+  app.delete("/api/schema-blocks/:id", async (req, res) => {
+    const success = await storage.deleteSchemaBlock(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Schema block not found" });
     }
     res.json({ success: true });
   });

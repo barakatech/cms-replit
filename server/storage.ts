@@ -48,6 +48,8 @@ import {
   type InsertNewsletter,
   type NewsletterTemplate,
   type InsertNewsletterTemplate,
+  type SchemaBlock,
+  type InsertSchemaBlock,
   type SpotlightBanner,
   type InsertSpotlightBanner,
   type Subscriber,
@@ -1988,22 +1990,141 @@ const seedLandingPages: LandingPage[] = [
 // NEWSLETTER + SPOTLIGHT + BLOG SYNC SEED DATA
 // ============================================
 
+// Seed Schema Blocks (reusable content modules)
+const seedSchemaBlocks: SchemaBlock[] = [
+  {
+    id: '1',
+    name: 'Hero Banner',
+    description: 'Main hero section with title and image',
+    type: 'hero',
+    locale: 'global',
+    defaultConfig: { label: 'Hero Banner', required: true },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '2',
+    name: 'Introduction',
+    description: 'Text introduction section',
+    type: 'intro',
+    locale: 'global',
+    defaultConfig: { label: 'Introduction', required: true },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '3',
+    name: 'Featured Content',
+    description: 'Highlighted content section',
+    type: 'featured',
+    locale: 'global',
+    defaultConfig: { label: 'Featured Content', required: false },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '4',
+    name: 'Article List',
+    description: 'List of articles with excerpts',
+    type: 'articles',
+    locale: 'global',
+    defaultConfig: { label: 'Article List', required: false },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '5',
+    name: 'Call to Action',
+    description: 'CTA button section',
+    type: 'cta',
+    locale: 'global',
+    defaultConfig: { label: 'Call to Action', required: true },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '6',
+    name: 'Footer',
+    description: 'Newsletter footer with legal text',
+    type: 'footer',
+    locale: 'global',
+    defaultConfig: { label: 'Footer', required: true },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '7',
+    name: 'Stock Collection',
+    description: 'Display a collection of stocks',
+    type: 'stockCollection',
+    locale: 'global',
+    defaultConfig: { label: 'Stock Collection', required: false, tickers: [] },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '8',
+    name: 'Assets Under $500',
+    description: 'Stocks priced under $500',
+    type: 'assetsUnder500',
+    locale: 'global',
+    defaultConfig: { label: 'Assets Under $500', required: false },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '9',
+    name: 'User Picks',
+    description: 'Popular user stock picks',
+    type: 'userPicks',
+    locale: 'global',
+    defaultConfig: { label: 'User Picks', required: false },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '10',
+    name: 'Asset Highlight',
+    description: 'Spotlight on a specific asset',
+    type: 'assetHighlight',
+    locale: 'global',
+    defaultConfig: { label: 'Asset Highlight', required: false, tickers: [] },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '11',
+    name: 'Term of the Day',
+    description: 'Educational term with definition',
+    type: 'termOfTheDay',
+    locale: 'global',
+    defaultConfig: { label: 'Term of the Day', required: false, term: '', termDefinition: '' },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: '12',
+    name: 'In Other News',
+    description: 'Additional news items',
+    type: 'inOtherNews',
+    locale: 'global',
+    defaultConfig: { label: 'In Other News', required: false, newsItems: [] },
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
 const seedNewsletterTemplates: NewsletterTemplate[] = [
   {
     id: '1',
     name: 'Default English Newsletter',
     description: 'Standard newsletter template for English audience',
     locale: 'en',
-    schemaJson: {
-      blocks: [
-        { type: 'hero', label: 'Hero Banner', required: true },
-        { type: 'intro', label: 'Introduction', required: true },
-        { type: 'featured', label: 'Featured Content', required: false },
-        { type: 'articles', label: 'Article List', required: true },
-        { type: 'cta', label: 'Call to Action', required: true },
-        { type: 'footer', label: 'Footer', required: true },
-      ],
-    },
+    zones: [
+      { zone: 'header', allowedBlockTypes: ['hero'], maxBlocks: 1 },
+      { zone: 'body', allowedBlockTypes: ['intro', 'featured', 'articles', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews'], maxBlocks: 10 },
+      { zone: 'footer', allowedBlockTypes: ['cta', 'footer'], maxBlocks: 2 },
+    ],
     htmlWrapper: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family: Arial, sans-serif;">{{content}}</body></html>`,
     defaultValuesJson: {
       heroTitle: 'Weekly Market Update',
@@ -2018,16 +2139,11 @@ const seedNewsletterTemplates: NewsletterTemplate[] = [
     name: 'Default Arabic Newsletter',
     description: 'Standard newsletter template for Arabic audience',
     locale: 'ar',
-    schemaJson: {
-      blocks: [
-        { type: 'hero', label: 'بانر رئيسي', required: true },
-        { type: 'intro', label: 'المقدمة', required: true },
-        { type: 'featured', label: 'المحتوى المميز', required: false },
-        { type: 'articles', label: 'قائمة المقالات', required: true },
-        { type: 'cta', label: 'دعوة للعمل', required: true },
-        { type: 'footer', label: 'التذييل', required: true },
-      ],
-    },
+    zones: [
+      { zone: 'header', allowedBlockTypes: ['hero'], maxBlocks: 1 },
+      { zone: 'body', allowedBlockTypes: ['intro', 'featured', 'articles', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews'], maxBlocks: 10 },
+      { zone: 'footer', allowedBlockTypes: ['cta', 'footer'], maxBlocks: 2 },
+    ],
     htmlWrapper: `<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"></head><body style="font-family: 'Segoe UI', Tahoma, sans-serif;">{{content}}</body></html>`,
     defaultValuesJson: {
       heroTitle: 'تحديث السوق الأسبوعي',
@@ -2042,14 +2158,11 @@ const seedNewsletterTemplates: NewsletterTemplate[] = [
     name: 'Global Promotional Template',
     description: 'Promotional template for special offers in both languages',
     locale: 'global',
-    schemaJson: {
-      blocks: [
-        { type: 'hero', label: 'Promo Hero', required: true },
-        { type: 'featured', label: 'Offer Details', required: true },
-        { type: 'cta', label: 'Claim Offer CTA', required: true },
-        { type: 'footer', label: 'Legal Footer', required: true },
-      ],
-    },
+    zones: [
+      { zone: 'header', allowedBlockTypes: ['hero'], maxBlocks: 1 },
+      { zone: 'body', allowedBlockTypes: ['featured', 'articles'], maxBlocks: 5 },
+      { zone: 'footer', allowedBlockTypes: ['cta', 'footer'], maxBlocks: 2 },
+    ],
     htmlWrapper: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family: Arial, sans-serif; background: #f5f5f5;">{{content}}</body></html>`,
     defaultValuesJson: {
       heroTitle: 'Special Offer',
@@ -2365,6 +2478,13 @@ export interface IStorage {
   updateNewsletterTemplate(id: string, template: Partial<NewsletterTemplate>): Promise<NewsletterTemplate | undefined>;
   deleteNewsletterTemplate(id: string): Promise<boolean>;
   
+  // Schema Blocks (reusable newsletter modules)
+  getSchemaBlocks(): Promise<SchemaBlock[]>;
+  getSchemaBlock(id: string): Promise<SchemaBlock | undefined>;
+  createSchemaBlock(block: InsertSchemaBlock): Promise<SchemaBlock>;
+  updateSchemaBlock(id: string, block: Partial<SchemaBlock>): Promise<SchemaBlock | undefined>;
+  deleteSchemaBlock(id: string): Promise<boolean>;
+  
   // Spotlight Banners
   getSpotlightBanners(): Promise<SpotlightBanner[]>;
   getSpotlightBanner(id: string): Promise<SpotlightBanner | undefined>;
@@ -2599,6 +2719,7 @@ export class MemStorage implements IStorage {
   private mobileInstallBanners: Map<string, MobileInstallBanner>;
   private newsletters: Map<string, Newsletter>;
   private newsletterTemplates: Map<string, NewsletterTemplate>;
+  private schemaBlocks: Map<string, SchemaBlock>;
   private spotlightBanners: Map<string, SpotlightBanner>;
   private subscribers: Map<string, Subscriber>;
   private auditLogs: Map<string, AuditLog>;
@@ -2653,6 +2774,7 @@ export class MemStorage implements IStorage {
     this.stockSeoTemplates = { ...seedStockSeoTemplates };
     this.newsletters = new Map();
     this.newsletterTemplates = new Map();
+    this.schemaBlocks = new Map();
     this.spotlightBanners = new Map();
     this.subscribers = new Map();
     this.auditLogs = new Map();
@@ -2757,6 +2879,7 @@ export class MemStorage implements IStorage {
     seedCallToActions.forEach(cta => this.callToActions.set(cta.id, cta));
     
     // Seed Newsletter + Spotlight + Blog Sync module data
+    seedSchemaBlocks.forEach(block => this.schemaBlocks.set(block.id, block));
     seedNewsletterTemplates.forEach(template => this.newsletterTemplates.set(template.id, template));
     seedNewsletters.forEach(newsletter => this.newsletters.set(newsletter.id, newsletter));
     seedSpotlightBanners.forEach(banner => this.spotlightBanners.set(banner.id, banner));
@@ -3732,6 +3855,47 @@ export class MemStorage implements IStorage {
 
   async deleteNewsletterTemplate(id: string): Promise<boolean> {
     return this.newsletterTemplates.delete(id);
+  }
+
+  // Schema Block Methods
+  async getSchemaBlocks(): Promise<SchemaBlock[]> {
+    return Array.from(this.schemaBlocks.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getSchemaBlock(id: string): Promise<SchemaBlock | undefined> {
+    return this.schemaBlocks.get(id);
+  }
+
+  async createSchemaBlock(block: InsertSchemaBlock): Promise<SchemaBlock> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const newBlock: SchemaBlock = {
+      ...block,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.schemaBlocks.set(id, newBlock);
+    return newBlock;
+  }
+
+  async updateSchemaBlock(id: string, block: Partial<SchemaBlock>): Promise<SchemaBlock | undefined> {
+    const existing = this.schemaBlocks.get(id);
+    if (!existing) return undefined;
+    const updated: SchemaBlock = {
+      ...existing,
+      ...block,
+      id,
+      updatedAt: new Date().toISOString(),
+    };
+    this.schemaBlocks.set(id, updated);
+    return updated;
+  }
+
+  async deleteSchemaBlock(id: string): Promise<boolean> {
+    return this.schemaBlocks.delete(id);
   }
 
   // Spotlight Banner Methods

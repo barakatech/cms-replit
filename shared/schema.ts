@@ -1170,20 +1170,44 @@ export type InsertStory = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'linked
 // Newsletter Template Block Type
 export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews';
 
-// Newsletter Template
+// Template Zone Types
+export type TemplateZoneType = 'header' | 'body' | 'footer';
+
+// Reusable Schema Block (stored independently from templates)
+export interface SchemaBlock {
+  id: string;
+  name: string;
+  description: string;
+  type: NewsletterBlockType;
+  locale: 'en' | 'ar' | 'global';
+  defaultConfig: {
+    label: string;
+    required: boolean;
+    tickers?: string[];
+    newsItems?: Array<{ title: string; url: string; source?: string }>;
+    term?: string;
+    termDefinition?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertSchemaBlock = Omit<SchemaBlock, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Template Zone Configuration
+export interface TemplateZone {
+  zone: TemplateZoneType;
+  allowedBlockTypes: NewsletterBlockType[];
+  maxBlocks?: number;
+}
+
+// Newsletter Template (defines layout + zones, NOT blocks)
 export interface NewsletterTemplate {
   id: string;
   name: string;
   description: string;
   locale: 'en' | 'ar' | 'global';
-  schemaJson: {
-    blocks: Array<{
-      type: NewsletterBlockType;
-      label: string;
-      required: boolean;
-      tickers?: string[];
-    }>;
-  };
+  zones: TemplateZone[];
   htmlWrapper: string;
   defaultValuesJson: Record<string, unknown>;
   createdAt: string;
@@ -1425,25 +1449,34 @@ export const insertNewsletterSettingsSchema = z.object({
   emailSenderEmail: z.string(),
 });
 
+export const insertSchemaBlockSchema = z.object({
+  name: z.string().min(1),
+  description: z.string(),
+  type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews']),
+  locale: z.enum(['en', 'ar', 'global']),
+  defaultConfig: z.object({
+    label: z.string(),
+    required: z.boolean(),
+    tickers: z.array(z.string()).optional(),
+    newsItems: z.array(z.object({
+      title: z.string(),
+      url: z.string(),
+      source: z.string().optional(),
+    })).optional(),
+    term: z.string().optional(),
+    termDefinition: z.string().optional(),
+  }),
+});
+
 export const insertNewsletterTemplateSchema = z.object({
   name: z.string().min(1),
   description: z.string(),
   locale: z.enum(['en', 'ar', 'global']),
-  schemaJson: z.object({
-    blocks: z.array(z.object({
-      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews']),
-      label: z.string(),
-      required: z.boolean(),
-      tickers: z.array(z.string()).optional(),
-      newsItems: z.array(z.object({
-        title: z.string(),
-        url: z.string(),
-        source: z.string().optional(),
-      })).optional(),
-      term: z.string().optional(),
-      termDefinition: z.string().optional(),
-    })),
-  }),
+  zones: z.array(z.object({
+    zone: z.enum(['header', 'body', 'footer']),
+    allowedBlockTypes: z.array(z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews'])),
+    maxBlocks: z.number().optional(),
+  })),
   htmlWrapper: z.string(),
   defaultValuesJson: z.record(z.unknown()),
 });
