@@ -57,8 +57,11 @@ import type {
   NewsletterBlockInstance, 
   NewsletterBlockType, 
   NewsletterBlockData,
-  StockPage
+  StockPage,
+  NewsletterTemplate,
+  NewsletterStatus
 } from '@shared/schema';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: string; icon: typeof TrendingUp; category: string }[] = [
@@ -1065,6 +1068,14 @@ export default function AdminNewsletterEdit() {
   const [stockSearchQuery, setStockSearchQuery] = useState('');
   const [articleSearchQuery, setArticleSearchQuery] = useState('');
   const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
+  const [settingsOpen, setSettingsOpen] = useState(true);
+  const [editingSettings, setEditingSettings] = useState<{
+    subject: string;
+    preheader: string;
+    templateId: string;
+    locale: 'en' | 'ar';
+    status: NewsletterStatus;
+  } | null>(null);
 
   const toggleBlockExpanded = (blockId: string) => {
     setExpandedBlocks(prev => {
@@ -1092,6 +1103,47 @@ export default function AdminNewsletterEdit() {
     queryKey: ['/api/newsletters', newsletterId],
     enabled: !!newsletterId,
   });
+
+  // Fetch all templates for the template selector
+  const { data: templates } = useQuery<NewsletterTemplate[]>({
+    queryKey: ['/api/newsletter-templates'],
+  });
+
+  // Initialize editing settings when newsletter loads
+  useEffect(() => {
+    if (newsletter && !editingSettings) {
+      setEditingSettings({
+        subject: newsletter.subject || '',
+        preheader: newsletter.preheader || '',
+        templateId: newsletter.templateId || '',
+        locale: newsletter.locale || 'en',
+        status: newsletter.status || 'draft',
+      });
+    }
+  }, [newsletter, editingSettings]);
+
+  // Update newsletter settings mutation
+  const updateSettingsMutation = useMutation({
+    mutationFn: (data: Partial<Newsletter>) => 
+      apiRequest('PUT', `/api/newsletters/${newsletterId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/newsletters', newsletterId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/newsletters'] });
+      toast({ title: 'Settings saved' });
+    },
+    onError: () => toast({ title: 'Failed to save settings', variant: 'destructive' }),
+  });
+
+  const handleSaveSettings = () => {
+    if (!editingSettings) return;
+    updateSettingsMutation.mutate({
+      subject: editingSettings.subject,
+      preheader: editingSettings.preheader,
+      templateId: editingSettings.templateId,
+      locale: editingSettings.locale,
+      status: editingSettings.status,
+    });
+  };
 
   // Fetch the newsletter template if available
   const { data: newsletterTemplate } = useQuery<{
@@ -1315,6 +1367,113 @@ export default function AdminNewsletterEdit() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-180px)]">
         <div className="space-y-4 overflow-auto">
+          {/* Newsletter Settings Section */}
+          <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="flex flex-row items-center justify-between gap-2 cursor-pointer hover-elevate">
+                  <div>
+                    <CardTitle>Newsletter Settings</CardTitle>
+                    <CardDescription>Subject, preheader, template, and status</CardDescription>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4 pt-0">
+                  {editingSettings && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="subject">Subject</Label>
+                        <Input
+                          id="subject"
+                          value={editingSettings.subject}
+                          onChange={(e) => setEditingSettings({ ...editingSettings, subject: e.target.value })}
+                          placeholder="Enter email subject..."
+                          data-testid="input-subject"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="preheader">Preheader</Label>
+                        <Input
+                          id="preheader"
+                          value={editingSettings.preheader}
+                          onChange={(e) => setEditingSettings({ ...editingSettings, preheader: e.target.value })}
+                          placeholder="Preview text shown in inbox..."
+                          maxLength={120}
+                          data-testid="input-preheader"
+                        />
+                        <p className="text-xs text-muted-foreground">{editingSettings.preheader.length}/120 characters</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Template</Label>
+                          <Select
+                            value={editingSettings.templateId || 'none'}
+                            onValueChange={(value) => setEditingSettings({ ...editingSettings, templateId: value === 'none' ? '' : value })}
+                          >
+                            <SelectTrigger data-testid="select-template">
+                              <SelectValue placeholder="Select template" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">No template</SelectItem>
+                              {templates?.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Locale</Label>
+                          <Select
+                            value={editingSettings.locale}
+                            onValueChange={(value: 'en' | 'ar') => setEditingSettings({ ...editingSettings, locale: value })}
+                          >
+                            <SelectTrigger data-testid="select-locale">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="en">English</SelectItem>
+                              <SelectItem value="ar">Arabic</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Status</Label>
+                        <Select
+                          value={editingSettings.status}
+                          onValueChange={(value: NewsletterStatus) => setEditingSettings({ ...editingSettings, status: value })}
+                        >
+                          <SelectTrigger data-testid="select-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="ready">Ready</SelectItem>
+                            <SelectItem value="scheduled">Scheduled</SelectItem>
+                            <SelectItem value="sent">Sent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <Button 
+                          onClick={handleSaveSettings}
+                          disabled={updateSettingsMutation.isPending}
+                          data-testid="button-save-settings"
+                        >
+                          <Save className="h-4 w-4 mr-2" />
+                          {updateSettingsMutation.isPending ? 'Saving...' : 'Save Settings'}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          {/* Content Blocks Section */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <div>
