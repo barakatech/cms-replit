@@ -22,21 +22,43 @@ import {
   Briefcase,
   Image,
   BookOpen,
-  BarChart3
+  BarChart3,
+  FileText,
+  Star,
+  DollarSign,
+  Users,
+  Lightbulb,
+  Newspaper,
+  Send
 } from 'lucide-react';
 import type { SchemaBlockDefinition } from '@shared/schema';
 
 type ViewMode = 'list' | 'editor';
 
 const BLOCK_TYPE_ICONS: Record<string, typeof TrendingUp> = {
-  'stock_list_manual': TrendingUp,
-  'options_ideas_manual': Briefcase,
-  'market_snapshot_manual': BarChart3,
-  'top_themes_manual': TrendingUp,
-  'econ_calendar_manual': Calendar,
-  'earnings_watch_manual': BarChart3,
-  'education_card': BookOpen,
-  'promo_banner': Image,
+  'introduction': FileText,
+  'featured_content': Star,
+  'articles_list': Newspaper,
+  'stock_collection': TrendingUp,
+  'assets_under_500': DollarSign,
+  'what_users_picked': Users,
+  'asset_highlight': Star,
+  'term_of_the_day': Lightbulb,
+  'in_other_news': Newspaper,
+  'call_to_action': Send,
+};
+
+const BLOCK_TYPE_LABELS: Record<string, string> = {
+  'introduction': 'Introduction',
+  'featured_content': 'Featured Content',
+  'articles_list': 'Articles List',
+  'stock_collection': 'Stock Collection',
+  'assets_under_500': 'Assets Under $500',
+  'what_users_picked': 'What Users Picked',
+  'asset_highlight': 'Asset Highlight',
+  'term_of_the_day': 'Term Of The Day',
+  'in_other_news': 'In Other News',
+  'call_to_action': 'Call To Action',
 };
 
 interface EditingDefinition {

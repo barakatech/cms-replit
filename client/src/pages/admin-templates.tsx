@@ -29,7 +29,7 @@ import { Settings2 } from 'lucide-react';
 
 type ViewMode = 'list' | 'editor';
 
-type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews';
+type BlockType = 'introduction' | 'featured_content' | 'articles_list' | 'stock_collection' | 'assets_under_500' | 'what_users_picked' | 'asset_highlight' | 'term_of_the_day' | 'in_other_news' | 'call_to_action';
 
 type ZoneName = 'header' | 'body' | 'footer';
 
@@ -49,24 +49,22 @@ interface EditingTemplate {
 }
 
 const BLOCK_TYPES: BlockType[] = [
-  'hero', 'intro', 'featured', 'articles', 'stockCollection', 
-  'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 
-  'inOtherNews', 'cta', 'footer'
+  'introduction', 'featured_content', 'articles_list', 'stock_collection', 
+  'assets_under_500', 'what_users_picked', 'asset_highlight', 'term_of_the_day', 
+  'in_other_news', 'call_to_action'
 ];
 
 const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
-  hero: 'Hero Section',
-  intro: 'Introduction',
-  featured: 'Featured Content',
-  articles: 'Articles List',
-  stockCollection: 'Stock Collection',
-  assetsUnder500: 'Assets Under $500',
-  userPicks: 'What Users Picked',
-  assetHighlight: 'Asset Highlight',
-  termOfTheDay: 'Term of the Day',
-  inOtherNews: 'In Other News',
-  cta: 'Call to Action',
-  footer: 'Footer',
+  introduction: 'Introduction',
+  featured_content: 'Featured Content',
+  articles_list: 'Articles List',
+  stock_collection: 'Stock Collection',
+  assets_under_500: 'Assets Under $500',
+  what_users_picked: 'What Users Picked',
+  asset_highlight: 'Asset Highlight',
+  term_of_the_day: 'Term of the Day',
+  in_other_news: 'In Other News',
+  call_to_action: 'Call to Action',
 };
 
 const ZONE_NAMES: ZoneName[] = ['header', 'body', 'footer'];
@@ -78,9 +76,9 @@ const ZONE_LABELS: Record<ZoneName, string> = {
 };
 
 const DEFAULT_ZONE_BLOCKS: Record<ZoneName, BlockType[]> = {
-  header: ['hero'],
-  body: ['intro', 'featured', 'articles', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews', 'cta'],
-  footer: ['footer', 'cta'],
+  header: ['introduction'],
+  body: ['featured_content', 'articles_list', 'stock_collection', 'assets_under_500', 'what_users_picked', 'asset_highlight', 'term_of_the_day', 'in_other_news'],
+  footer: ['call_to_action'],
 };
 
 function TemplateBlockOverridesSection({ templateId }: { templateId: string }) {

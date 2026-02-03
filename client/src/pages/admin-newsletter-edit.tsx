@@ -136,18 +136,18 @@ export default function AdminNewsletterEdit() {
     queryKey: ['/api/blog-posts'],
   });
 
-  const filteredStocks = stockPages?.filter(stock => 
-    stockSearchQuery.length >= 2 && (
-      stock.ticker.toLowerCase().includes(stockSearchQuery.toLowerCase()) ||
-      stock.companyName.toLowerCase().includes(stockSearchQuery.toLowerCase())
-    )
-  ) || [];
+  const filteredStocks = stockSearchQuery.length >= 2 && stockPages 
+    ? stockPages.filter(stock => 
+        (stock.ticker?.toLowerCase().includes(stockSearchQuery.toLowerCase()) ||
+         stock.companyName?.toLowerCase().includes(stockSearchQuery.toLowerCase()))
+      )
+    : [];
 
-  const filteredArticles = blogPosts?.filter(article =>
-    articleSearchQuery.length >= 2 && (
-      article.title_en.toLowerCase().includes(articleSearchQuery.toLowerCase())
-    )
-  ) || [];
+  const filteredArticles = articleSearchQuery.length >= 2 && blogPosts
+    ? blogPosts.filter(article =>
+        article.title_en?.toLowerCase().includes(articleSearchQuery.toLowerCase())
+      )
+    : [];
 
   const addBlockMutation = useMutation({
     mutationFn: (data: { blockType: NewsletterBlockType; blockDataJson: NewsletterBlockData }) => 
