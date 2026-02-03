@@ -1168,7 +1168,7 @@ export interface Story {
 export type InsertStory = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'linkedSpotlightId' | 'linkedNewsletterId'>;
 
 // Newsletter Template Block Type
-export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews' | 'linkedStories';
+export type NewsletterBlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews';
 
 // Newsletter Template
 export interface NewsletterTemplate {
@@ -1427,11 +1427,10 @@ export const insertNewsletterTemplateSchema = z.object({
   locale: z.enum(['en', 'ar', 'global']),
   schemaJson: z.object({
     blocks: z.array(z.object({
-      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews', 'linkedStories']),
+      type: z.enum(['hero', 'intro', 'featured', 'articles', 'cta', 'footer', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews']),
       label: z.string(),
       required: z.boolean(),
       tickers: z.array(z.string()).optional(),
-      storyIds: z.array(z.string()).optional(),
       newsItems: z.array(z.object({
         title: z.string(),
         url: z.string(),
@@ -1465,7 +1464,7 @@ export const insertStorySchema = z.object({
 // =============================================
 
 export type ComplianceFindingSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type ComplianceContentType = 'blog' | 'newsletter' | 'social' | 'stock_page' | 'story';
+export type ComplianceContentType = 'blog' | 'newsletter' | 'social' | 'stock_page';
 export type EnglishIssueSeverity = 'low' | 'medium' | 'high';
 export type EnglishIssueType = 'grammar' | 'clarity' | 'tone' | 'spelling';
 export type ComplianceLabel = 'compliant' | 'needs_review' | 'high_risk';
@@ -1549,7 +1548,7 @@ export interface InsertComplianceScanRun {
 }
 
 export const insertComplianceScanRunSchema = z.object({
-  contentType: z.enum(['blog', 'newsletter', 'social', 'stock_page', 'story']),
+  contentType: z.enum(['blog', 'newsletter', 'social', 'stock_page']),
   contentId: z.string().min(1),
   contentTitle: z.string().min(1),
   originalText: z.string().min(1),

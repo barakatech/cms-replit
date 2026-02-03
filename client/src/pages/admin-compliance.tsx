@@ -73,7 +73,6 @@ function InboxTab() {
               <SelectItem value="newsletter">Newsletter</SelectItem>
               <SelectItem value="social">Social</SelectItem>
               <SelectItem value="stock_page">Stock Page</SelectItem>
-              <SelectItem value="story">Story</SelectItem>
             </SelectContent>
           </Select>
           

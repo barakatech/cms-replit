@@ -10,14 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Search, Edit, Trash2, Eye, Calendar, User, ArrowLeft, Globe, Image, Sparkles, Mail, Send, Rocket, Loader2, Check, BookOpen, Megaphone, Newspaper } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, Calendar, User, ArrowLeft, Globe, Image, Sparkles, Mail, Send, Rocket, Loader2, Check, Megaphone } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { ContentScorePanel } from '@/components/ContentScorePanel';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost, Story, InsertStory } from '@shared/schema';
+import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost } from '@shared/schema';
 
 type BlogStatus = 'draft' | 'published' | 'archived';
 
@@ -125,10 +125,6 @@ export default function Blog() {
     queryKey: ['/api/newsletters'],
   });
 
-  const { data: stories = [] } = useQuery<Story[]>({
-    queryKey: ['/api/stories'],
-  });
-
   const spotlightsByBlogId = useMemo(() => {
     const map: Record<string, SpotlightBanner> = {};
     spotlights.forEach(s => {
@@ -144,24 +140,6 @@ export default function Blog() {
     });
     return map;
   }, [newsletters]);
-
-  const storiesByBlogId = useMemo(() => {
-    const map: Record<string, Story> = {};
-    stories.forEach(s => {
-      if (s.sourceBlogPostId) map[s.sourceBlogPostId] = s;
-    });
-    blogPosts.forEach(blog => {
-      if (!map[blog.id]) {
-        const matchingStory = stories.find(s => 
-          !s.sourceBlogPostId && s.title_en === blog.title_en
-        );
-        if (matchingStory) {
-          map[blog.id] = matchingStory;
-        }
-      }
-    });
-    return map;
-  }, [stories, blogPosts]);
 
   const createBlogMutation = useMutation({
     mutationFn: async (data: InsertBlogPost) => {
@@ -254,31 +232,6 @@ export default function Blog() {
     },
   });
 
-  const createStoryMutation = useMutation({
-    mutationFn: async ({ blogId, blog }: { blogId: string; blog: EditableBlogPost }) => {
-      const storyData: InsertStory = {
-        title_en: blog.title.en,
-        title_ar: blog.title.ar,
-        snippet_en: blog.excerpt.en,
-        snippet_ar: blog.excerpt.ar,
-        imageUrl: blog.featuredImage || '',
-        content_html_en: blog.content.en,
-        content_html_ar: blog.content.ar,
-        whyItMatters_en: '',
-        whyItMatters_ar: '',
-        tickers: [],
-        status: 'draft',
-        locale: 'both',
-        sourceBlogPostId: blogId,
-      };
-      const response = await apiRequest('POST', '/api/stories', storyData);
-      return response.json() as Promise<Story>;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/stories'] });
-    },
-  });
-
   const [isPublishingEverywhere, setIsPublishingEverywhere] = useState(false);
 
   const handlePublishEverywhere = async () => {
@@ -299,7 +252,6 @@ export default function Blog() {
     const failedItems: string[] = [];
     const existingSpotlight = spotlightsByBlogId[blogId];
     const existingNewsletter = newslettersByBlogId[blogId];
-    const existingStory = storiesByBlogId[blogId];
 
     const updatedPost = { ...selectedBlog, status: 'published' as BlogStatus };
     if (!updatedPost.publishedAt) {
@@ -331,16 +283,6 @@ export default function Blog() {
       author: updatedPost.author,
       status: 'published',
     };
-
-    if (!existingStory) {
-      try {
-        await createStoryMutation.mutateAsync({ blogId, blog: updatedPost });
-        createdItems.push('Story');
-      } catch (e) {
-        console.error('Failed to create story:', e);
-        failedItems.push('Story');
-      }
-    }
 
     if (!existingSpotlight) {
       try {
@@ -478,23 +420,6 @@ export default function Blog() {
     deleteBlogMutation.mutate(id);
   };
 
-  const handleSyncToStory = async (blog: BlogPost) => {
-    const editablePost = toEditablePost(blog);
-    try {
-      await createStoryMutation.mutateAsync({ blogId: blog.id, blog: editablePost });
-      toast({ 
-        title: 'Synced to Stories', 
-        description: `"${blog.title_en}" has been synced to Stories as a draft.` 
-      });
-    } catch (e) {
-      toast({ 
-        title: 'Sync failed', 
-        description: 'Failed to create story from blog post.', 
-        variant: 'destructive' 
-      });
-    }
-  };
-
   const handleCreateNew = () => {
     const newBlog: EditableBlogPost = {
       id: '',
@@ -578,7 +503,7 @@ export default function Blog() {
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                   <p className="font-medium mb-1">One-click publishing</p>
-                  <p className="text-xs text-muted-foreground">Publishes blog and auto-creates Story, Newsletter, and Spotlight in one click</p>
+                  <p className="text-xs text-muted-foreground">Publishes blog and auto-creates Newsletter and Spotlight in one click</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -781,22 +706,7 @@ export default function Blog() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${storiesByBlogId[selectedBlog.id] ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
-                        <BookOpen className={`h-5 w-5 ${storiesByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Story</p>
-                        <p className="text-xs text-muted-foreground">
-                          {storiesByBlogId[selectedBlog.id] ? (
-                            <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                              <Check className="h-3 w-3" /> Created
-                            </span>
-                          ) : 'Will be created'}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
                       <div className={`h-10 w-10 rounded-full flex items-center justify-center ${spotlightsByBlogId[selectedBlog.id] ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
                         <Megaphone className={`h-5 w-5 ${spotlightsByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
@@ -814,7 +724,7 @@ export default function Blog() {
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-background border">
                       <div className={`h-10 w-10 rounded-full flex items-center justify-center ${newslettersByBlogId[selectedBlog.id] ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
-                        <Newspaper className={`h-5 w-5 ${newslettersByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+                        <Mail className={`h-5 w-5 ${newslettersByBlogId[selectedBlog.id] ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
                       </div>
                       <div>
                         <p className="font-medium text-sm">Newsletter</p>
@@ -995,14 +905,6 @@ export default function Blog() {
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <div className="flex items-center gap-1 flex-wrap">
-                        {storiesByBlogId[blog.id] ? (
-                          <Link href="/admin/stories">
-                            <Badge variant="outline" className="cursor-pointer gap-1 text-purple-500 border-purple-500/50">
-                              <BookOpen className="h-3 w-3" />
-                              Story
-                            </Badge>
-                          </Link>
-                        ) : null}
                         {spotlightsByBlogId[blog.id] ? (
                           <Link href="/admin/spotlights">
                             <Badge variant="outline" className="cursor-pointer gap-1 text-amber-500 border-amber-500/50">
@@ -1021,22 +923,6 @@ export default function Blog() {
                         ) : null}
                       </div>
                       <div className="flex items-center gap-1">
-                        {!storiesByBlogId[blog.id] && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => handleSyncToStory(blog)}
-                                disabled={createStoryMutation.isPending}
-                                data-testid={`button-sync-story-${blog.id}`}
-                              >
-                                <Newspaper className="h-4 w-4 text-purple-500" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Sync to Stories</TooltipContent>
-                          </Tooltip>
-                        )}
                         {blog.status !== 'published' && (
                           <Tooltip>
                             <TooltipTrigger asChild>

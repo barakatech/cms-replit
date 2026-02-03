@@ -27,11 +27,11 @@ import {
   Code,
   Eye
 } from 'lucide-react';
-import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage, Story } from '@shared/schema';
+import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage } from '@shared/schema';
 
 type ViewMode = 'list' | 'editor';
 
-type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews' | 'linkedStories';
+type BlockType = 'hero' | 'intro' | 'featured' | 'articles' | 'cta' | 'footer' | 'stockCollection' | 'assetsUnder500' | 'userPicks' | 'assetHighlight' | 'termOfTheDay' | 'inOtherNews';
 
 interface NewsItem {
   title: string;
@@ -47,7 +47,6 @@ interface SchemaBlock {
   term?: string;
   termDefinition?: string;
   newsItems?: NewsItem[];
-  storyIds?: string[];
 }
 
 interface EditingTemplate {
@@ -64,7 +63,7 @@ interface EditingTemplate {
 const BLOCK_TYPES: BlockType[] = [
   'hero', 'intro', 'featured', 'articles', 'stockCollection', 
   'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 
-  'inOtherNews', 'linkedStories', 'cta', 'footer'
+  'inOtherNews', 'cta', 'footer'
 ];
 
 const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
@@ -78,7 +77,6 @@ const DEFAULT_BLOCK_LABELS: Record<BlockType, string> = {
   assetHighlight: 'Asset Highlight',
   termOfTheDay: 'Term of the Day',
   inOtherNews: 'In Other News',
-  linkedStories: 'Linked Stories',
   cta: 'Call to Action',
   footer: 'Footer',
 };
@@ -94,7 +92,6 @@ const DUMMY_PREVIEW_DATA = {
   assetHighlight: { title: 'Featured Stock', ticker: 'AAPL' },
   termOfTheDay: { term: 'P/E Ratio', definition: 'Price-to-Earnings ratio measures a company\'s current share price relative to its earnings per share.' },
   inOtherNews: { newsItems: [{ title: 'Fed announces rate decision', url: '#', source: 'Reuters' }, { title: 'Tech stocks rally', url: '#', source: 'Bloomberg' }] },
-  linkedStories: { storyIds: ['story-1', 'story-2'] },
   cta: { text: 'Get Started', url: '#', description: 'Take action now!' },
   footer: { content: '© 2024 Baraka. All rights reserved.' },
 };
@@ -112,10 +109,6 @@ export default function AdminTemplates() {
 
   const { data: stockPages = [] } = useQuery<StockPage[]>({
     queryKey: ['/api/admin/stocks'],
-  });
-
-  const { data: stories = [] } = useQuery<Story[]>({
-    queryKey: ['/api/stories'],
   });
 
   const createMutation = useMutation({
@@ -358,25 +351,6 @@ export default function AdminTemplates() {
         const updatedItems = [...currentItems];
         updatedItems[itemIndex] = { ...updatedItems[itemIndex], [field]: value };
         blocks[index] = { ...blocks[index], newsItems: updatedItems };
-      }
-      
-      return {
-        ...prev,
-        schemaJson: { blocks },
-      };
-    });
-  };
-
-  const updateBlockStoryIds = (index: number, storyId: string, action: 'add' | 'remove') => {
-    setEditingTemplate(prev => {
-      if (!prev) return prev;
-      const blocks = [...prev.schemaJson.blocks];
-      const currentStoryIds = blocks[index].storyIds || [];
-      
-      if (action === 'add' && currentStoryIds.length < 3 && !currentStoryIds.includes(storyId)) {
-        blocks[index] = { ...blocks[index], storyIds: [...currentStoryIds, storyId] };
-      } else if (action === 'remove') {
-        blocks[index] = { ...blocks[index], storyIds: currentStoryIds.filter(id => id !== storyId) };
       }
       
       return {
@@ -875,80 +849,6 @@ export default function AdminTemplates() {
                         </div>
                       )}
 
-                      {block.type === 'linkedStories' && (
-                        <div className="mt-4 space-y-3 border-t pt-3">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs font-medium">Linked Stories (1-3)</Label>
-                            <span className="text-xs text-muted-foreground">
-                              {(block.storyIds || []).length}/3 selected
-                            </span>
-                          </div>
-                          
-                          {(block.storyIds || []).length > 0 && (
-                            <div className="space-y-2">
-                              {(block.storyIds || []).map((storyId) => {
-                                const story = stories.find(s => s.id === storyId);
-                                return (
-                                  <Badge 
-                                    key={storyId} 
-                                    variant="secondary" 
-                                    className="flex items-center gap-1 w-full justify-between"
-                                  >
-                                    <span className="truncate max-w-[200px]">
-                                      {story?.title_en || storyId}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => updateBlockStoryIds(index, storyId, 'remove')}
-                                      className="ml-1 hover:text-destructive"
-                                      data-testid={`button-remove-story-${index}-${storyId}`}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          )}
-                          
-                          {(block.storyIds || []).length < 3 && (
-                            <Select
-                              value=""
-                              onValueChange={(storyId) => updateBlockStoryIds(index, storyId, 'add')}
-                            >
-                              <SelectTrigger data-testid={`select-add-story-${index}`}>
-                                <SelectValue placeholder="Add a story..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <ScrollArea className="h-[300px]">
-                                  {stories
-                                    .filter(s => s.status === 'published' && !(block.storyIds || []).includes(s.id))
-                                    .map((story) => (
-                                      <SelectItem key={story.id} value={story.id}>
-                                        <div className="flex items-center gap-2">
-                                          <span className="truncate max-w-[200px]">
-                                            {story.title_en}
-                                          </span>
-                                        </div>
-                                      </SelectItem>
-                                    ))}
-                                  {stories.filter(s => s.status === 'published' && !(block.storyIds || []).includes(s.id)).length === 0 && (
-                                    <div className="p-2 text-center text-muted-foreground text-sm">
-                                      No stories available
-                                    </div>
-                                  )}
-                                </ScrollArea>
-                              </SelectContent>
-                            </Select>
-                          )}
-                          
-                          {(block.storyIds || []).length === 0 && (
-                            <p className="text-xs text-amber-600">
-                              Please select at least 1 story
-                            </p>
-                          )}
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -1178,32 +1078,6 @@ export default function AdminTemplates() {
                               ) : (
                                 <p className="text-xs text-gray-400 text-center">
                                   Add news items to display
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {block.type === 'linkedStories' && (
-                            <div className="space-y-2">
-                              <h4 className="font-medium text-gray-800 mb-3">Related Stories</h4>
-                              {(block.storyIds || []).length > 0 ? (
-                                <div className="space-y-2">
-                                  {(block.storyIds || []).map((storyId, i) => {
-                                    const story = stories.find(s => s.id === storyId);
-                                    return (
-                                      <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                        <div className="font-medium text-sm text-gray-800">
-                                          {story?.title_en || 'Story Title'}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                                          {story?.snippet_en || 'Story excerpt...'}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <p className="text-xs text-gray-400 text-center">
-                                  Select 1-3 stories to link
                                 </p>
                               )}
                             </div>

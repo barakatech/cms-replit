@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertStorySchema, insertComplianceScanRunSchema, insertComplianceRuleSchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -1252,115 +1252,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Spotlight banner not found" });
     }
     res.json({ success: true });
-  });
-
-  // ============================================
-  // STORIES API
-  // ============================================
-
-  app.get("/api/stories", async (req, res) => {
-    let stories = await storage.getStories();
-    
-    const locale = req.query.locale as string | undefined;
-    const status = req.query.status as string | undefined;
-    
-    if (locale) {
-      stories = stories.filter(s => s.locale === locale || s.locale === 'both');
-    }
-    if (status) {
-      stories = stories.filter(s => s.status === status);
-    }
-    
-    res.json(stories);
-  });
-
-  app.get("/api/stories/:id", async (req, res) => {
-    const story = await storage.getStory(req.params.id);
-    if (!story) {
-      return res.status(404).json({ error: "Story not found" });
-    }
-    res.json(story);
-  });
-
-  app.post("/api/stories", async (req, res) => {
-    try {
-      const data = insertStorySchema.parse(req.body);
-      const story = await storage.createStory(data);
-      res.status(201).json(story);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ success: false, error: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create story" });
-    }
-  });
-
-  app.put("/api/stories/:id", async (req, res) => {
-    try {
-      const story = await storage.updateStory(req.params.id, req.body);
-      if (!story) {
-        return res.status(404).json({ error: "Story not found" });
-      }
-      res.json(story);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update story" });
-    }
-  });
-
-  app.delete("/api/stories/:id", async (req, res) => {
-    const success = await storage.deleteStory(req.params.id);
-    if (!success) {
-      return res.status(404).json({ error: "Story not found" });
-    }
-    res.json({ success: true });
-  });
-
-  app.post("/api/stories/:id/sync-spotlight", async (req, res) => {
-    try {
-      const story = await storage.getStory(req.params.id);
-      if (!story) {
-        return res.status(404).json({ error: "Story not found" });
-      }
-      
-      // Create spotlight from story
-      const spotlight = await storage.createSpotlightBanner({
-        title: story.title_en,
-        subtitle: story.snippet_en,
-        imageUrl: story.imageUrl,
-        ctaText: 'Read Story',
-        ctaUrl: `/stories/${req.params.id}`,
-        placements: ['home', 'discover'],
-        status: 'active',
-        locale: story.locale === 'both' ? 'en' : story.locale,
-        startAt: new Date().toISOString(),
-        sourceType: 'manual',
-      });
-      
-      // Link story to spotlight
-      const updatedStory = await storage.linkStoryToSpotlight(req.params.id, spotlight.id);
-      
-      res.json({ story: updatedStory, spotlight });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to sync story to spotlight" });
-    }
-  });
-
-  app.post("/api/stories/:id/link-newsletter", async (req, res) => {
-    try {
-      const { newsletterId } = req.body;
-      if (!newsletterId) {
-        return res.status(400).json({ error: "Newsletter ID required" });
-      }
-      
-      const story = await storage.linkStoryToNewsletter(req.params.id, newsletterId);
-      if (!story) {
-        return res.status(404).json({ error: "Story not found" });
-      }
-      
-      res.json(story);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to link story to newsletter" });
-    }
   });
 
   // ============================================
