@@ -65,16 +65,25 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: string; icon: typeof TrendingUp; category: string }[] = [
+  { type: 'newsletter_header', label: 'Header', description: 'Logo, issue number, date', icon: Layers, category: 'Layout' },
   { type: 'hero', label: 'Hero', description: 'Main hero banner', icon: Image, category: 'Layout' },
+  { type: 'main_article', label: 'Main Article', description: 'Personalized greeting + body', icon: FileText, category: 'Content' },
   { type: 'introduction', label: 'Introduction', description: 'Introduction paragraph', icon: FileText, category: 'Content' },
   { type: 'featured_content', label: 'Featured', description: 'Featured content section', icon: Star, category: 'Content' },
+  { type: 'featured_story', label: 'Featured Story', description: 'Story with image + excerpt', icon: BookOpen, category: 'Content' },
   { type: 'articles_list', label: 'Articles', description: 'List of articles', icon: Newspaper, category: 'Content' },
+  { type: 'market_overview', label: 'Market Overview', description: 'Stock indices grid', icon: BarChart3, category: 'Markets' },
   { type: 'stock_collection', label: 'Stocks', description: 'Stock collection grid', icon: TrendingUp, category: 'Stocks' },
   { type: 'assets_under_500', label: 'Under $500', description: 'Affordable assets list', icon: DollarSign, category: 'Stocks' },
   { type: 'what_users_picked', label: 'User Picks', description: 'Popular user picks', icon: Users, category: 'Stocks' },
   { type: 'asset_highlight', label: 'Highlight', description: 'Single asset spotlight', icon: Star, category: 'Stocks' },
+  { type: 'why_it_matters', label: 'Why It Matters', description: 'Key insight callout', icon: Star, category: 'Content' },
   { type: 'term_of_the_day', label: 'Term', description: 'Financial term education', icon: Lightbulb, category: 'Education' },
   { type: 'in_other_news', label: 'News', description: 'External news links', icon: Newspaper, category: 'Content' },
+  { type: 'promo_banner', label: 'Promo Banner', description: 'Promotional banner with CTA', icon: Image, category: 'Marketing' },
+  { type: 'premium_cta', label: 'Premium CTA', description: 'Premium membership promo', icon: Star, category: 'Marketing' },
+  { type: 'feedback', label: 'Feedback', description: 'Emoji rating section', icon: Users, category: 'Engagement' },
+  { type: 'referral', label: 'Referral', description: 'Refer a friend block', icon: Users, category: 'Engagement' },
   { type: 'call_to_action', label: 'CTA', description: 'Call to action button', icon: Send, category: 'Layout' },
   { type: 'footer', label: 'Footer', description: 'Newsletter footer', icon: Library, category: 'Layout' },
 ];
@@ -91,7 +100,7 @@ interface BlockData {
   example?: string;
   buttonText?: string;
   buttonUrl?: string;
-  newsItems?: Array<{ headline?: string; source?: string; url?: string }>;
+  newsItems?: Array<{ headline?: string; source?: string; url?: string; icon?: string }>;
   stockId?: string;
   ticker?: string;
   companyName?: string;
@@ -104,6 +113,31 @@ interface BlockData {
   limit?: number;
   maxPrice?: number;
   sortBy?: string;
+  // Newsletter header fields
+  logoUrl?: string;
+  issueNumber?: number;
+  issueDate?: string;
+  // Main article fields
+  greeting?: string;
+  // Market overview fields
+  indices?: Array<{ name?: string; value?: number; change?: number; changePercent?: number }>;
+  marketDate?: string;
+  // Promo/Featured story fields
+  categoryTags?: string[];
+  ctaText?: string;
+  ctaUrl?: string;
+  termsText?: string;
+  // Feedback fields
+  feedbackQuestion?: string;
+  feedbackSubtext?: string;
+  // Referral fields
+  referralTitle?: string;
+  referralBody?: string;
+  referralCtaText?: string;
+  referralCtaUrl?: string;
+  // Footer fields
+  contactEmail?: string;
+  unsubscribeUrl?: string;
 }
 
 function renderBlockPreview(block: NewsletterBlockInstance) {
@@ -284,10 +318,269 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
     case 'footer':
       return (
         <div style={{ marginTop: '24px', padding: '20px', backgroundColor: '#0a0a0a', borderTop: '1px solid #222', textAlign: 'center' }}>
+          {data.title && <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>{data.title}</h3>}
           {data.body && <p style={{ fontSize: '11px', color: '#666', lineHeight: '1.6' }}>{data.body}</p>}
+          {data.contactEmail && (
+            <p style={{ marginTop: '8px' }}>
+              <a href={`mailto:${data.contactEmail}`} style={{ color: '#00d4aa', fontSize: '12px', textDecoration: 'underline' }}>
+                {data.contactEmail}
+              </a>
+            </p>
+          )}
           <div style={{ marginTop: '12px' }}>
             <a href="#" style={{ color: '#00d4aa', fontSize: '11px', marginRight: '16px' }}>Unsubscribe</a>
             <a href="#" style={{ color: '#00d4aa', fontSize: '11px' }}>Preferences</a>
+          </div>
+        </div>
+      );
+
+    case 'newsletter_header':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#0a0a0a', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            {data.logoUrl ? (
+              <img src={data.logoUrl} alt="Logo" style={{ height: '32px' }} />
+            ) : (
+              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#00d4aa' }}>akhbaraka</span>
+            )}
+          </div>
+          <p style={{ fontSize: '11px', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            Issue #{data.issueNumber || '---'} · {data.issueDate || 'Date not set'}
+          </p>
+        </div>
+      );
+
+    case 'main_article':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
+          {data.greeting && (
+            <p style={{ fontSize: '16px', color: 'white', marginBottom: '16px' }}>
+              {data.greeting.replace(/\{\{first_name\}\}/g, 'Hala Omar')},
+            </p>
+          )}
+          {data.body && (
+            <div style={{ color: '#ccc', lineHeight: '1.7', fontSize: '14px' }}>
+              {data.body.split('\n').map((paragraph, idx) => (
+                <p key={idx} style={{ marginBottom: '12px' }}>{paragraph}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+
+    case 'market_overview':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00d4aa' }} />
+            <h3 style={{ fontSize: '12px', color: 'white', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>
+              Market Overview
+            </h3>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            {(data.indices && data.indices.length > 0 ? data.indices : [
+              { name: 'DOW JONES', value: 37386.97, changePercent: -0.92 },
+              { name: 'S&P 500', value: 4769.83, changePercent: 1.03 },
+              { name: 'NASDAQ', value: 15056.97, changePercent: -0.56 },
+              { name: 'FTSE 100', value: 7638.03, changePercent: -0.21 },
+              { name: 'DAX', value: 17026.47, changePercent: 0.65 },
+              { name: 'NIKKEI 225', value: 33836.87, changePercent: 0.95 },
+            ]).map((index, idx) => (
+              <div key={idx}>
+                <p style={{ fontSize: '10px', color: '#888', marginBottom: '4px' }}>{index.name}</p>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#00d4aa' }}>
+                  {typeof index.value === 'number' ? index.value.toLocaleString() : index.value}
+                </p>
+                <p style={{ 
+                  fontSize: '12px', 
+                  color: (index.changePercent ?? 0) >= 0 ? '#00d4aa' : '#ef4444',
+                  fontWeight: '500'
+                }}>
+                  {(index.changePercent ?? 0) >= 0 ? '↑' : '↓'} {(index.changePercent ?? 0) >= 0 ? '+' : ''}{index.changePercent}%
+                </p>
+              </div>
+            ))}
+          </div>
+          {data.marketDate && (
+            <p style={{ fontSize: '10px', color: '#666', marginTop: '16px', textAlign: 'center' }}>
+              Data as of market close · {data.marketDate}
+            </p>
+          )}
+        </div>
+      );
+
+    case 'promo_banner':
+      return (
+        <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
+          {data.imageUrl ? (
+            <img src={data.imageUrl} alt="" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '180px', background: 'linear-gradient(135deg, #1a3a5c 0%, #0a1929 100%)' }} />
+          )}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            {data.title && <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>{data.title}</h3>}
+            {data.subtitle && <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '16px' }}>{data.subtitle}</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {data.ctaText && (
+                <span style={{ padding: '10px 20px', backgroundColor: 'white', color: 'black', fontWeight: 'bold', borderRadius: '20px', fontSize: '13px' }}>
+                  {data.ctaText}
+                </span>
+              )}
+              {data.termsText && <span style={{ fontSize: '11px', color: '#999' }}>{data.termsText}</span>}
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'featured_story':
+      return (
+        <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#1a1a1a' }}>
+          {data.imageUrl && (
+            <div style={{ position: 'relative' }}>
+              <img src={data.imageUrl} alt="" style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+              <span style={{ 
+                position: 'absolute', 
+                top: '12px', 
+                left: '12px', 
+                padding: '4px 12px', 
+                backgroundColor: '#ef4444', 
+                color: 'white', 
+                fontSize: '10px', 
+                fontWeight: 'bold',
+                borderRadius: '4px',
+                textTransform: 'uppercase'
+              }}>
+                Featured Story
+              </span>
+              {data.subtitle && (
+                <div style={{ 
+                  position: 'absolute', 
+                  bottom: '12px', 
+                  left: '12px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px',
+                  color: 'white'
+                }}>
+                  <span style={{ color: '#00d4aa', fontSize: '20px' }}>↘</span>
+                  <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{data.subtitle}</span>
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ padding: '20px' }}>
+            {data.categoryTags && data.categoryTags.length > 0 && (
+              <p style={{ fontSize: '11px', color: '#00d4aa', marginBottom: '8px', textTransform: 'uppercase' }}>
+                {data.categoryTags.join(' · ')}
+              </p>
+            )}
+            {data.title && <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>{data.title}</h3>}
+            {data.body && <p style={{ fontSize: '14px', color: '#999', lineHeight: '1.6', marginBottom: '16px' }}>{data.body}</p>}
+            {data.ctaText && (
+              <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '600' }}>
+                {data.ctaText} →
+              </p>
+            )}
+          </div>
+        </div>
+      );
+
+    case 'why_it_matters':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <span style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '6px', 
+              backgroundColor: '#fbbf24', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              color: 'black',
+              fontSize: '16px'
+            }}>
+              ★
+            </span>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'white', margin: 0 }}>
+              {data.title || 'Why it Matters'}
+            </h3>
+          </div>
+          {data.body && <p style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.6' }}>{data.body}</p>}
+        </div>
+      );
+
+    case 'premium_cta':
+      return (
+        <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ 
+            width: '100%', 
+            height: '200px', 
+            background: 'linear-gradient(135deg, #2d1f4e 0%, #1a1a2e 50%, #16213e 100%)',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}>
+            <p style={{ fontSize: '11px', color: '#a78bfa', letterSpacing: '2px', marginBottom: '8px' }}>PREMIUM</p>
+            <p style={{ fontSize: '10px', color: '#666', marginBottom: '12px' }}>MEMBERSHIP</p>
+            {data.title && <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>{data.title}</h3>}
+            {data.body && <p style={{ fontSize: '13px', color: '#999', marginBottom: '16px' }}>{data.body}</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {data.ctaText && (
+                <span style={{ padding: '10px 20px', backgroundColor: 'white', color: 'black', fontWeight: 'bold', borderRadius: '20px', fontSize: '13px' }}>
+                  {data.ctaText}
+                </span>
+              )}
+              {data.termsText && <span style={{ fontSize: '11px', color: '#666' }}>{data.termsText}</span>}
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'feedback':
+      return (
+        <div style={{ marginBottom: '24px', padding: '24px', backgroundColor: '#1a1a1a', borderRadius: '12px', textAlign: 'center' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
+            {data.feedbackQuestion || "How was today's newsletter?"}
+          </h3>
+          <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>
+            {data.feedbackSubtext || 'Your feedback helps us improve'}
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '32px' }}>
+            <span style={{ cursor: 'pointer' }}>🤩</span>
+            <span style={{ cursor: 'pointer' }}>😊</span>
+            <span style={{ cursor: 'pointer' }}>🙂</span>
+            <span style={{ cursor: 'pointer' }}>😐</span>
+          </div>
+        </div>
+      );
+
+    case 'referral':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#0d4a42', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ 
+            width: '48px', 
+            height: '48px', 
+            borderRadius: '12px', 
+            backgroundColor: 'rgba(239, 68, 68, 0.2)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <span style={{ fontSize: '24px' }}>👥</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'white', marginBottom: '4px' }}>
+              {data.referralTitle || 'Refer a Friend, Earn Rewards'}
+            </h3>
+            <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '8px' }}>
+              {data.referralBody || 'Share baraka with friends and earn up to $50 in free stocks for each successful referral.'}
+            </p>
+            <p style={{ color: '#00d4aa', fontSize: '13px', fontWeight: '600' }}>
+              {data.referralCtaText || 'Get Your Referral Link'} →
+            </p>
           </div>
         </div>
       );
@@ -978,33 +1271,442 @@ function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlo
       return (
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Legal Text</Label>
-            <Textarea
-              value={data.legalText as string || ''}
-              onChange={(e) => updateField('legalText', e.target.value)}
-              placeholder="Securities trading involves risk..."
-              rows={3}
-              data-testid="inline-input-legalText"
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Let's Stay in Touch"
+              data-testid="inline-input-title"
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Company Info</Label>
+            <Label className="text-xs text-muted-foreground">Body Text</Label>
             <Textarea
               value={data.body as string || ''}
               onChange={(e) => updateField('body', e.target.value)}
-              placeholder="You're receiving this email because..."
+              placeholder="Questions or suggestions? Reach us at..."
               rows={2}
               data-testid="inline-input-body"
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Unsubscribe Text</Label>
+            <Label className="text-xs text-muted-foreground">Contact Email</Label>
             <Input
-              value={data.unsubscribeText as string || 'Unsubscribe'}
-              onChange={(e) => updateField('unsubscribeText', e.target.value)}
-              placeholder="Unsubscribe"
-              data-testid="inline-input-unsubscribeText"
+              value={data.contactEmail as string || ''}
+              onChange={(e) => updateField('contactEmail', e.target.value)}
+              placeholder="support@getbaraka.com"
+              data-testid="inline-input-contactEmail"
             />
+          </div>
+        </div>
+      );
+
+    case 'newsletter_header':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Logo URL (optional)</Label>
+            <Input
+              value={data.logoUrl as string || ''}
+              onChange={(e) => updateField('logoUrl', e.target.value)}
+              placeholder="Leave empty for default logo"
+              data-testid="inline-input-logoUrl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Issue Number</Label>
+              <Input
+                type="number"
+                value={data.issueNumber as number || ''}
+                onChange={(e) => updateField('issueNumber', parseInt(e.target.value) || 0)}
+                placeholder="147"
+                data-testid="inline-input-issueNumber"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Issue Date</Label>
+              <Input
+                value={data.issueDate as string || ''}
+                onChange={(e) => updateField('issueDate', e.target.value)}
+                placeholder="Wednesday, Feb 4, 2026"
+                data-testid="inline-input-issueDate"
+              />
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'main_article':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Greeting (use {'{{first_name}}'} for personalization)</Label>
+            <Input
+              value={data.greeting as string || ''}
+              onChange={(e) => updateField('greeting', e.target.value)}
+              placeholder="{{first_name}}"
+              data-testid="inline-input-greeting"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Article Body</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="Stocks surged on Tuesday, propelling Wall Street to a higher close..."
+              rows={6}
+              data-testid="inline-input-body"
+            />
+          </div>
+        </div>
+      );
+
+    case 'market_overview':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Market Date</Label>
+            <Input
+              value={data.marketDate as string || ''}
+              onChange={(e) => updateField('marketDate', e.target.value)}
+              placeholder="Dec 25, 2023 · 4:00 PM EST"
+              data-testid="inline-input-marketDate"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Market indices are fetched automatically. Add custom indices below:</p>
+          <div className="space-y-2">
+            {((data.indices as Array<{name?: string; value?: number; changePercent?: number}>) || []).map((index, idx) => (
+              <div key={idx} className="grid grid-cols-3 gap-2">
+                <Input
+                  value={index.name || ''}
+                  onChange={(e) => {
+                    const indices = [...((data.indices as Array<{name?: string; value?: number; changePercent?: number}>) || [])];
+                    indices[idx] = { ...indices[idx], name: e.target.value };
+                    updateField('indices', indices);
+                  }}
+                  placeholder="Index name"
+                  className="text-xs"
+                />
+                <Input
+                  type="number"
+                  value={index.value || ''}
+                  onChange={(e) => {
+                    const indices = [...((data.indices as Array<{name?: string; value?: number; changePercent?: number}>) || [])];
+                    indices[idx] = { ...indices[idx], value: parseFloat(e.target.value) };
+                    updateField('indices', indices);
+                  }}
+                  placeholder="Value"
+                  className="text-xs"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={index.changePercent || ''}
+                  onChange={(e) => {
+                    const indices = [...((data.indices as Array<{name?: string; value?: number; changePercent?: number}>) || [])];
+                    indices[idx] = { ...indices[idx], changePercent: parseFloat(e.target.value) };
+                    updateField('indices', indices);
+                  }}
+                  placeholder="% Change"
+                  className="text-xs"
+                />
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const indices = [...((data.indices as Array<{name?: string; value?: number; changePercent?: number}>) || [])];
+                indices.push({ name: '', value: 0, changePercent: 0 });
+                updateField('indices', indices);
+              }}
+              data-testid="button-add-index"
+            >
+              <Plus className="h-3 w-3 mr-1" /> Add Index
+            </Button>
+          </div>
+        </div>
+      );
+
+    case 'promo_banner':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Bitcoin ETFs are available on baraka"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Subtitle</Label>
+            <Input
+              value={data.subtitle as string || ''}
+              onChange={(e) => updateField('subtitle', e.target.value)}
+              placeholder="11 different Bitcoin ETFs available for you to buy and sell."
+              data-testid="inline-input-subtitle"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Background Image URL</Label>
+            <Input
+              value={data.imageUrl as string || ''}
+              onChange={(e) => updateField('imageUrl', e.target.value)}
+              placeholder="/attached_assets/..."
+              data-testid="inline-input-imageUrl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA Button Text</Label>
+              <Input
+                value={data.ctaText as string || ''}
+                onChange={(e) => updateField('ctaText', e.target.value)}
+                placeholder="Discover Bitcoin ETFs"
+                data-testid="inline-input-ctaText"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA URL</Label>
+              <Input
+                value={data.ctaUrl as string || ''}
+                onChange={(e) => updateField('ctaUrl', e.target.value)}
+                placeholder="https://..."
+                data-testid="inline-input-ctaUrl"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Terms Text</Label>
+            <Input
+              value={data.termsText as string || ''}
+              onChange={(e) => updateField('termsText', e.target.value)}
+              placeholder="T&Cs apply."
+              data-testid="inline-input-termsText"
+            />
+          </div>
+        </div>
+      );
+
+    case 'featured_story':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Story Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Saudi Aramco boosts dividend despite a 25% drop in 2023 profit"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Headline / Tagline</Label>
+            <Input
+              value={data.subtitle as string || ''}
+              onChange={(e) => updateField('subtitle', e.target.value)}
+              placeholder="Oil Profits Dive"
+              data-testid="inline-input-subtitle"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Category Tags (comma-separated)</Label>
+            <Input
+              value={((data.categoryTags as string[]) || []).join(', ')}
+              onChange={(e) => updateField('categoryTags', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
+              placeholder="SAUDI ARAMCO, ENERGY MARKETS"
+              data-testid="inline-input-categoryTags"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Story Body / Excerpt</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="A unit of Saudi Arabia's sovereign investor has entered private credit..."
+              rows={4}
+              data-testid="inline-input-body"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Featured Image URL</Label>
+            <Input
+              value={data.imageUrl as string || ''}
+              onChange={(e) => updateField('imageUrl', e.target.value)}
+              placeholder="/attached_assets/..."
+              data-testid="inline-input-imageUrl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA Text</Label>
+              <Input
+                value={data.ctaText as string || ''}
+                onChange={(e) => updateField('ctaText', e.target.value)}
+                placeholder="Read Full Story"
+                data-testid="inline-input-ctaText"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA URL</Label>
+              <Input
+                value={data.ctaUrl as string || ''}
+                onChange={(e) => updateField('ctaUrl', e.target.value)}
+                placeholder="https://..."
+                data-testid="inline-input-ctaUrl"
+              />
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'why_it_matters':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || 'Why it Matters'}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Why it Matters"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Insight Text</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="Broadcom's move shows that AI exposure alone is no longer enough to impress investors..."
+              rows={4}
+              data-testid="inline-input-body"
+            />
+          </div>
+        </div>
+      );
+
+    case 'premium_cta':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Introducing Premium+"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="Access exclusive investment perks and lifestyle memberships all in one app."
+              rows={2}
+              data-testid="inline-input-body"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA Button Text</Label>
+              <Input
+                value={data.ctaText as string || ''}
+                onChange={(e) => updateField('ctaText', e.target.value)}
+                placeholder="Get Premium+"
+                data-testid="inline-input-ctaText"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA URL</Label>
+              <Input
+                value={data.ctaUrl as string || ''}
+                onChange={(e) => updateField('ctaUrl', e.target.value)}
+                placeholder="https://..."
+                data-testid="inline-input-ctaUrl"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Terms Text</Label>
+            <Input
+              value={data.termsText as string || ''}
+              onChange={(e) => updateField('termsText', e.target.value)}
+              placeholder="T&Cs apply."
+              data-testid="inline-input-termsText"
+            />
+          </div>
+        </div>
+      );
+
+    case 'feedback':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Question</Label>
+            <Input
+              value={data.feedbackQuestion as string || ''}
+              onChange={(e) => updateField('feedbackQuestion', e.target.value)}
+              placeholder="How was today's newsletter?"
+              data-testid="inline-input-feedbackQuestion"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Subtext</Label>
+            <Input
+              value={data.feedbackSubtext as string || ''}
+              onChange={(e) => updateField('feedbackSubtext', e.target.value)}
+              placeholder="Your feedback helps us improve"
+              data-testid="inline-input-feedbackSubtext"
+            />
+          </div>
+        </div>
+      );
+
+    case 'referral':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.referralTitle as string || ''}
+              onChange={(e) => updateField('referralTitle', e.target.value)}
+              placeholder="Refer a Friend, Earn Rewards"
+              data-testid="inline-input-referralTitle"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Textarea
+              value={data.referralBody as string || ''}
+              onChange={(e) => updateField('referralBody', e.target.value)}
+              placeholder="Share baraka with friends and earn up to $50 in free stocks for each successful referral."
+              rows={2}
+              data-testid="inline-input-referralBody"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA Text</Label>
+              <Input
+                value={data.referralCtaText as string || ''}
+                onChange={(e) => updateField('referralCtaText', e.target.value)}
+                placeholder="Get Your Referral Link"
+                data-testid="inline-input-referralCtaText"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA URL</Label>
+              <Input
+                value={data.referralCtaUrl as string || ''}
+                onChange={(e) => updateField('referralCtaUrl', e.target.value)}
+                placeholder="https://..."
+                data-testid="inline-input-referralCtaUrl"
+              />
+            </div>
           </div>
         </div>
       );
@@ -1050,11 +1752,29 @@ const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockDat
     case 'term_of_the_day':
       return { term: '', definition: '', example: '', relatedTerms: [] };
     case 'in_other_news':
-      return { title: '', sourceType: 'external', newsItems: [] };
+      return { title: 'In Other News', sourceType: 'external', newsItems: [] };
     case 'call_to_action':
       return { title: '', subtitle: '', buttonText: '', buttonUrl: '' };
     case 'footer':
-      return { body: '', legalText: '', unsubscribeText: 'Unsubscribe' };
+      return { title: "Let's Stay in Touch", body: 'Questions or suggestions? Reach us at', contactEmail: 'support@getbaraka.com' };
+    case 'newsletter_header':
+      return { logoUrl: '', issueNumber: 1, issueDate: '' };
+    case 'main_article':
+      return { greeting: '{{first_name}}', body: '' };
+    case 'market_overview':
+      return { marketDate: '', indices: [] };
+    case 'promo_banner':
+      return { title: '', subtitle: '', imageUrl: '', ctaText: '', ctaUrl: '', termsText: 'T&Cs apply.' };
+    case 'featured_story':
+      return { title: '', subtitle: '', body: '', imageUrl: '', categoryTags: [], ctaText: 'Read Full Story', ctaUrl: '' };
+    case 'why_it_matters':
+      return { title: 'Why it Matters', body: '' };
+    case 'premium_cta':
+      return { title: 'Introducing Premium+', body: '', ctaText: 'Get Premium+', ctaUrl: '', termsText: 'T&Cs apply.' };
+    case 'feedback':
+      return { feedbackQuestion: "How was today's newsletter?", feedbackSubtext: 'Your feedback helps us improve' };
+    case 'referral':
+      return { referralTitle: 'Refer a Friend, Earn Rewards', referralBody: 'Share baraka with friends and earn up to $50 in free stocks for each successful referral.', referralCtaText: 'Get Your Referral Link', referralCtaUrl: '' };
     default:
       return {};
   }

@@ -1180,7 +1180,16 @@ export type NewsletterBlockType =
   | 'term_of_the_day'
   | 'in_other_news'
   | 'call_to_action'
-  | 'footer';
+  | 'footer'
+  | 'newsletter_header'
+  | 'main_article'
+  | 'market_overview'
+  | 'promo_banner'
+  | 'featured_story'
+  | 'why_it_matters'
+  | 'premium_cta'
+  | 'feedback'
+  | 'referral';
 
 // Template Zone Types
 export type TemplateZoneType = 'header' | 'body' | 'footer';
@@ -1620,6 +1629,8 @@ export type SubscriberStatus = 'active' | 'unsubscribed';
 export interface Subscriber {
   id: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   locale: 'en' | 'ar';
   status: SubscriberStatus;
   tags: string[];
@@ -1742,6 +1753,8 @@ export const insertSpotlightBannerSchema = z.object({
 
 export const insertSubscriberSchema = z.object({
   email: z.string().email(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   locale: z.enum(['en', 'ar']),
   status: z.enum(['active', 'unsubscribed']),
   tags: z.array(z.string()),
