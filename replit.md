@@ -17,6 +17,12 @@ The CMS provides:
   - Subscriber management with CSV import
   - Public API endpoints for content consumption
   - Audit logging for all content operations
+- **Newsletter Block System**: Comprehensive block editing for newsletters:
+  - Zone-based template architecture (header/body/footer zones with constraints)
+  - 8 manual content block types: stock lists, options ideas, market snapshots, top themes, economic calendar, earnings watch, education cards, promo banners
+  - SchemaBlocks and BlockLibraryTemplates as reusable entities
+  - NewsletterBlockInstances for per-newsletter block editing with add/update/delete/reorder
+  - Ticker Catalog for centralized stock ticker management
 
 ## User Preferences
 
