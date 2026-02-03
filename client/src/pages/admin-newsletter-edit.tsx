@@ -68,6 +68,7 @@ import type {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: string; icon: typeof TrendingUp; category: string }[] = [
+  { type: 'hero', label: 'Hero', description: 'Main hero banner', icon: Image, category: 'Layout' },
   { type: 'introduction', label: 'Introduction', description: 'Introduction paragraph', icon: FileText, category: 'Content' },
   { type: 'featured_content', label: 'Featured', description: 'Featured content section', icon: Star, category: 'Content' },
   { type: 'articles_list', label: 'Articles', description: 'List of articles', icon: Newspaper, category: 'Content' },
@@ -78,6 +79,7 @@ const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: stri
   { type: 'term_of_the_day', label: 'Term', description: 'Financial term education', icon: Lightbulb, category: 'Education' },
   { type: 'in_other_news', label: 'News', description: 'External news links', icon: Newspaper, category: 'Content' },
   { type: 'call_to_action', label: 'CTA', description: 'Call to action button', icon: Send, category: 'Layout' },
+  { type: 'footer', label: 'Footer', description: 'Newsletter footer', icon: Library, category: 'Layout' },
 ];
 
 interface BlockData {
@@ -112,6 +114,21 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
   const blockType = block.blockType;
 
   switch (blockType) {
+    case 'hero':
+      return (
+        <div style={{ marginBottom: '24px', position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+          {data.imageUrl ? (
+            <img src={data.imageUrl} alt="" style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '200px', background: 'linear-gradient(135deg, #00d4aa 0%, #0a5a4a 100%)' }} />
+          )}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px', background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)' }}>
+            {data.title && <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', margin: 0 }}>{data.title}</h1>}
+            {data.subtitle && <p style={{ fontSize: '14px', color: '#ccc', margin: '4px 0 0 0' }}>{data.subtitle}</p>}
+          </div>
+        </div>
+      );
+
     case 'introduction':
       return (
         <div style={{ marginBottom: '24px' }}>
@@ -264,6 +281,17 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
               {data.buttonText}
             </span>
           )}
+        </div>
+      );
+
+    case 'footer':
+      return (
+        <div style={{ marginTop: '24px', padding: '20px', backgroundColor: '#0a0a0a', borderTop: '1px solid #222', textAlign: 'center' }}>
+          {data.body && <p style={{ fontSize: '11px', color: '#666', lineHeight: '1.6' }}>{data.body}</p>}
+          <div style={{ marginTop: '12px' }}>
+            <a href="#" style={{ color: '#00d4aa', fontSize: '11px', marginRight: '16px' }}>Unsubscribe</a>
+            <a href="#" style={{ color: '#00d4aa', fontSize: '11px' }}>Preferences</a>
+          </div>
         </div>
       );
 
@@ -918,6 +946,8 @@ function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlo
 
 const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockData => {
   switch (blockType) {
+    case 'hero':
+      return { title: '', subtitle: '', imageUrl: '', ctaText: '', ctaUrl: '' };
     case 'introduction':
       return { title: '', subtitle: '', body: '' };
     case 'featured_content':
@@ -938,6 +968,8 @@ const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockDat
       return { title: '', sourceType: 'external', newsItems: [] };
     case 'call_to_action':
       return { title: '', subtitle: '', buttonText: '', buttonUrl: '' };
+    case 'footer':
+      return { body: '', legalText: '', unsubscribeText: 'Unsubscribe' };
     default:
       return {};
   }
@@ -973,6 +1005,63 @@ export default function AdminNewsletterEdit() {
     queryKey: ['/api/newsletters', newsletterId],
     enabled: !!newsletterId,
   });
+
+  // Fetch the newsletter template if available
+  const { data: newsletterTemplate } = useQuery<{
+    id: string;
+    name: string;
+    description?: string;
+    zones: Record<string, { enabled: boolean; blockTypes: Record<string, { enabled: boolean; defaults?: Record<string, unknown> }> }>;
+  }>({
+    queryKey: ['/api/newsletter-templates', newsletter?.templateId],
+    enabled: !!newsletter?.templateId,
+  });
+
+  // Determine which block types are available based on template (if any)
+  const getAvailableBlockTypes = () => {
+    if (!newsletterTemplate?.zones) {
+      // No template or zones - return all block types
+      return BLOCK_TYPES;
+    }
+    
+    const enabledBlockTypes = new Set<NewsletterBlockType>();
+    Object.values(newsletterTemplate.zones).forEach(zone => {
+      if (zone.enabled && zone.blockTypes) {
+        Object.entries(zone.blockTypes).forEach(([blockType, config]) => {
+          if (config.enabled) {
+            enabledBlockTypes.add(blockType as NewsletterBlockType);
+          }
+        });
+      }
+    });
+    
+    // If no blocks enabled, return all (fallback)
+    if (enabledBlockTypes.size === 0) {
+      return BLOCK_TYPES;
+    }
+    
+    return BLOCK_TYPES.filter(bt => enabledBlockTypes.has(bt.type));
+  };
+
+  const availableBlockTypes = getAvailableBlockTypes();
+
+  // Get template defaults for a block type (merges base defaults with template defaults)
+  const getBlockDataWithTemplateDefaults = (blockType: NewsletterBlockType): NewsletterBlockData => {
+    const baseDefaults = getDefaultBlockData(blockType);
+    
+    if (!newsletterTemplate?.zones) {
+      return baseDefaults;
+    }
+    
+    // Find template defaults for this block type across all zones
+    for (const zone of Object.values(newsletterTemplate.zones)) {
+      if (zone.enabled && zone.blockTypes?.[blockType]?.enabled && zone.blockTypes[blockType].defaults) {
+        return { ...baseDefaults, ...zone.blockTypes[blockType].defaults };
+      }
+    }
+    
+    return baseDefaults;
+  };
 
   const { data: blockInstances, isLoading: blocksLoading, refetch: refetchBlocks } = useQuery<NewsletterBlockInstance[]>({
     queryKey: ['/api/newsletters', newsletterId, 'blocks'],
@@ -1157,7 +1246,7 @@ export default function AdminNewsletterEdit() {
   };
 
   const handleQuickAddCustomBlock = (blockType: NewsletterBlockType) => {
-    const defaultData = getDefaultBlockData(blockType);
+    const defaultData = getBlockDataWithTemplateDefaults(blockType);
     addBlockMutation.mutate({
       blockType,
       blockDataJson: defaultData,
@@ -2146,6 +2235,87 @@ export default function AdminNewsletterEdit() {
           </div>
         );
 
+      case 'hero':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={d.title as string || ''}
+                onChange={(e) => updateData('title', e.target.value)}
+                placeholder="Weekly Market Update"
+                data-testid="input-block-title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Subtitle</Label>
+              <Input
+                value={d.subtitle as string || ''}
+                onChange={(e) => updateData('subtitle', e.target.value)}
+                placeholder="Your essential market insights"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Image URL</Label>
+              <Input
+                value={d.imageUrl as string || ''}
+                onChange={(e) => updateData('imageUrl', e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>CTA Text</Label>
+                <Input
+                  value={d.ctaText as string || ''}
+                  onChange={(e) => updateData('ctaText', e.target.value)}
+                  placeholder="Learn More"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>CTA URL</Label>
+                <Input
+                  value={d.ctaUrl as string || ''}
+                  onChange={(e) => updateData('ctaUrl', e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'footer':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Legal Text</Label>
+              <Textarea
+                value={d.legalText as string || ''}
+                onChange={(e) => updateData('legalText', e.target.value)}
+                placeholder="Securities trading involves risk..."
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Company Info</Label>
+              <Textarea
+                value={d.body as string || ''}
+                onChange={(e) => updateData('body', e.target.value)}
+                placeholder="You're receiving this email because you subscribed..."
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Unsubscribe Text</Label>
+              <Input
+                value={d.unsubscribeText as string || 'Unsubscribe'}
+                onChange={(e) => updateData('unsubscribeText', e.target.value)}
+                placeholder="Unsubscribe"
+              />
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="text-sm text-muted-foreground p-4 border rounded-lg">
@@ -2249,8 +2419,8 @@ export default function AdminNewsletterEdit() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-72">
-                  <DropdownMenuLabel>Content Block Types</DropdownMenuLabel>
-                  {BLOCK_TYPES.map((blockType) => (
+                  <DropdownMenuLabel>Content Block Types {newsletterTemplate ? `(${newsletterTemplate.name})` : ''}</DropdownMenuLabel>
+                  {availableBlockTypes.map((blockType) => (
                     <DropdownMenuItem
                       key={blockType.type}
                       onClick={() => handleQuickAddCustomBlock(blockType.type)}
@@ -2601,14 +2771,14 @@ export default function AdminNewsletterEdit() {
                   value={selectedBlockType}
                   onValueChange={(value: NewsletterBlockType) => {
                     setSelectedBlockType(value);
-                    setBlockEditorData(getDefaultBlockData(value));
+                    setBlockEditorData(getBlockDataWithTemplateDefaults(value));
                   }}
                 >
                   <SelectTrigger data-testid="select-block-type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {BLOCK_TYPES.map((bt) => (
+                    {availableBlockTypes.map((bt) => (
                       <SelectItem key={bt.type} value={bt.type}>
                         {bt.label}
                       </SelectItem>

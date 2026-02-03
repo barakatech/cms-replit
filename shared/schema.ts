@@ -1169,6 +1169,7 @@ export type InsertStory = Omit<Story, 'id' | 'createdAt' | 'updatedAt' | 'linked
 
 // Newsletter Template Block Type
 export type NewsletterBlockType = 
+  | 'hero'
   | 'introduction'
   | 'featured_content'
   | 'articles_list'
@@ -1178,7 +1179,8 @@ export type NewsletterBlockType =
   | 'asset_highlight'
   | 'term_of_the_day'
   | 'in_other_news'
-  | 'call_to_action';
+  | 'call_to_action'
+  | 'footer';
 
 // Template Zone Types
 export type TemplateZoneType = 'header' | 'body' | 'footer';

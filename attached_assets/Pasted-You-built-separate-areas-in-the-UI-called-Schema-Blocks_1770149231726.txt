@@ -1,0 +1,385 @@
+You built separate areas in the UI called Schema Blocks, Blocks Library, and Blocks Definition. Remove them completely. I do NOT want block management anywhere outside newsletters.
+
+0) New rule (must follow)
+
+There will be ONLY TWO places to manage blocks:
+
+Newsletter Template Editor
+
+Defines which block types can be used
+
+Defines default configuration (defaults) for each block type
+
+Defines per-zone rules (header/body/footer, max blocks)
+
+Individual Newsletter Editor
+
+Lets me add blocks, reorder, remove
+
+Lets me edit each block inline with its specific fields
+
+Lets me override template defaults for that newsletter only
+
+Everything that previously existed in Schema Blocks / Blocks Library / Blocks Definition must be moved into these two places.
+
+1) UI changes (remove + consolidate)
+Remove these menu items/pages entirely
+
+Schema Blocks
+
+Blocks Library
+
+Blocks Definition
+
+“All Blocks”
+
+Any “Block Edit” pages
+
+Replace with these pages only
+A) Newsletter Templates
+
+Route: /newsletter-templates
+
+List templates
+
+Create new template
+
+Edit template
+
+B) Template Editor (includes zones + block configs)
+
+Route: /newsletter-templates/:id/edit
+This page must have:
+
+Layout Zones (Header / Body / Footer)
+
+Allowed block types selection for each zone
+
+For each allowed block type: an expandable inline editor to configure default values for that block type (schema-driven form)
+
+C) Newsletters
+
+Route: /newsletters
+
+List newsletters (issues)
+
+Create new newsletter from a template
+
+Edit newsletter
+
+D) Newsletter Editor (Content Blocks)
+
+Route: /newsletters/:id/edit
+This page must have:
+
+Zones (header/body/footer) with current blocks
+
+A CTA button Add Block per zone
+
+Add Block opens a dropdown of allowed block types from the chosen template
+
+Selecting a block adds it and expands inline
+
+Edit the block fields inline (schema-driven)
+
+Reorder blocks in-zone (drag/drop)
+
+Delete block from that newsletter only
+
+Toggle per block: “Use template defaults” vs “Override for this newsletter”
+
+2) Data model (single source of truth = template + newsletter)
+
+We no longer have global block definitions. Block definitions live inside templates.
+
+Tables / collections
+NewsletterTemplate
+
+id
+
+name
+
+createdAt
+
+TemplateZone
+
+id
+
+templateId
+
+zone (header/body/footer)
+
+maxBlocks (int)
+
+TemplateBlockType
+
+This replaces Blocks Library / Block Definitions.
+
+id
+
+templateId
+
+zone (header/body/footer)
+
+typeKey (string, e.g. "hero", "introduction", "articles", "stock_collection")
+
+displayName (string)
+
+description (string)
+
+schema (JSON) // schema for editor UI
+
+defaultValues (JSON) // template default config
+
+isRequired (boolean) // optional
+
+isEnabled (boolean)
+
+NewsletterIssue
+
+id
+
+templateId
+
+title
+
+status (draft/scheduled/sent)
+
+createdAt
+
+NewsletterBlockInstance
+
+id
+
+newsletterId
+
+zone
+
+orderIndex
+
+typeKey
+
+values (JSON) // override values OR resolved values
+
+useTemplateDefaults (boolean)
+
+Content sources (for dropdowns)
+
+We still need:
+
+Article
+
+id, title, excerpt, url, imageUrl, category, tags, locale, publishedAt
+
+Stock
+
+id, ticker, name, market, assetType
+
+(These are content sources, not block definitions.)
+
+3) Block type functionality (must work in newsletter editor)
+
+Implement the following block types with schema + editor behavior. These schemas should live in TemplateBlockType.schema and be editable in Template Editor.
+
+Hero block
+
+Fields:
+
+title, content, imageUrl
+
+ctaText, ctaUrl (optional)
+
+Introduction
+
+Fields:
+
+text
+
+Featured
+
+Fields:
+
+headline, body, imageUrl, linkUrl
+
+Articles List (required behavior)
+
+Fields:
+
+sourceType: internal | external
+
+numberOfArticles (1–20)
+
+internalMode: manual | latest
+
+manualArticleIds (multi-select dropdown/search)
+
+latestFilters: category/tag/locale + sortBy
+
+externalItems: repeatable rows (title, source, url, imageUrl optional)
+
+UI requirements inside Newsletter Editor:
+
+Dropdown/search for internal articles
+
+External mode allows adding links
+
+Stock Collection
+
+Fields:
+
+mode: manual | dynamic
+
+limit
+
+manualTickers (multi-select dropdown/search)
+
+dynamicType (top traded / gainers / losers / most viewed)
+
+market filter
+
+Assets Under $500
+
+Fields:
+
+maxPrice (default 500)
+
+limit
+
+market, assetType
+
+sortBy
+
+User Picks
+
+Fields:
+
+timeWindow (24h/7d/30d)
+
+limit
+
+market
+
+Asset Highlight
+
+Fields:
+
+ticker (dropdown/search)
+
+headline, body
+
+showStats (checkboxes)
+
+ctaText, ctaUrl
+
+Term of the Day
+
+Fields:
+
+term, definition, example (optional), learnMoreUrl (optional)
+
+In Other News
+
+Fields like Articles List but simplified:
+
+sourceType internal/external
+
+limit
+
+internal manual/latest
+
+external items (title + url)
+
+Call to Action
+
+Fields:
+
+title, body, buttonText, buttonUrl
+
+Footer
+
+Fields:
+
+legalText, unsubscribeText (optional), links (optional list)
+
+4) Dynamic form rendering
+
+Implement a schema-driven form renderer used by:
+
+Template Editor (editing defaultValues)
+
+Newsletter Editor (editing instance values)
+
+Support:
+
+text, textarea, number, toggle
+
+select enum
+
+async searchable select (articles and stocks)
+
+multi-select with chips
+
+repeatable arrays of objects
+
+conditional show/hide (sourceType = internal/external)
+
+5) Migration requirements (IMPORTANT)
+
+Since we are removing pages:
+
+migrate any existing “blocks definitions / schema blocks / block library” data into TemplateBlockType rows under a default template
+
+ensure existing newsletters still render and can be edited
+
+remove routes, nav links, and any API endpoints tied to old pages
+
+6) API endpoints
+Template
+
+GET/PUT /api/templates/:id
+
+GET/PUT /api/templates/:id/zones
+
+GET/POST/PUT/DELETE /api/templates/:id/block-types
+
+Newsletter
+
+GET/POST /api/newsletters
+
+GET/PUT /api/newsletters/:id
+
+GET/POST /api/newsletters/:id/blocks
+
+PATCH /api/newsletters/:id/blocks/:blockId
+
+PATCH /api/newsletters/:id/blocks/reorder
+
+DELETE /api/newsletters/:id/blocks/:blockId
+
+Content sources
+
+GET /api/articles/search?query=...
+
+GET /api/stocks/search?query=...
+
+7) Acceptance tests (must pass)
+
+The left menu has NO Schema Blocks / Blocks Library / Blocks Definition
+
+In Template Editor:
+
+I select block types per zone
+
+I can expand each selected block and edit its default fields right there
+
+In Newsletter Editor:
+
+Add Block dropdown shows only the block types allowed by the template for that zone
+
+When added, block expands and I can edit fields (articles dropdown + external links)
+
+Refresh persists
+
+“Use template defaults” resets values
+
+Deliver the working implementation.

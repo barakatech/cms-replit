@@ -18,8 +18,13 @@ The CMS provides:
   - Public API endpoints for content consumption
   - Audit logging for all content operations
 - **Newsletter Block System**: Comprehensive block editing for newsletters:
-  - Zone-based template architecture (header/body/footer zones with constraints)
-  - 10 custom content block types with inline search:
+  - **Template-Based Architecture**: Templates define which block types are available per zone
+    - Templates managed at `/admin/newsletter-templates`
+    - Zone-based configuration (header/body/footer zones with constraints)
+    - Per-block-type enabling/disabling with default value configuration
+    - Newsletter editor automatically filters available blocks based on assigned template
+  - **12 custom content block types** with inline search:
+    - **Hero**: Main header with title, subtitle, image and CTA
     - **Introduction**: Title, subtitle, body text for newsletter opening
     - **Featured Content**: Curated articles with inline article search
     - **Articles List**: Multiple articles with excerpts and inline search
@@ -30,15 +35,11 @@ The CMS provides:
     - **Term Of The Day**: Financial term with definition and example
     - **In Other News**: External news items with headlines and sources
     - **Call To Action**: CTA section with button text and URL
+    - **Footer**: Legal text, company info, unsubscribe link
   - Stock search integrated into block editors (searches StockPage entities)
   - Article search integrated into content blocks (searches BlogPost entities)
-  - SchemaBlocks and BlockLibraryTemplates as reusable entities
   - NewsletterBlockInstances for per-newsletter block editing with add/update/delete/reorder
-  - **Three-Tier Settings Override Architecture**:
-    - Schema Defaults: Base settings defined in SchemaBlockDefinition (managed via /admin/schema-block-definitions)
-    - Template Overrides: Template-specific settings via NewsletterTemplateBlockOverride (managed in template editor)
-    - Issue Overrides: Per-newsletter-issue settings via NewsletterBlockInstance.overrideSettingsJson (managed in block edit dialog)
-    - Settings merge API: GET /api/newsletters/:id/blocks/:blockId/merged-settings returns combined settings with layer breakdown
+  - **Template Default Merging**: When adding blocks, template defaults are merged with base block defaults
 
 ## User Preferences
 

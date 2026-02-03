@@ -28,11 +28,8 @@ const menuItems = [
 const blogSubItems = [
   { title: 'Blog Posts', url: '/admin/blog', icon: BookOpen, testId: 'link-blog-posts' },
   { title: 'Newsletters', url: '/admin/newsletters', icon: Mail, testId: 'link-newsletters' },
+  { title: 'Newsletter Templates', url: '/admin/newsletter-templates', icon: LayoutTemplate, testId: 'link-newsletter-templates' },
   { title: 'Spotlights', url: '/admin/spotlights', icon: Sparkles, testId: 'link-spotlights' },
-  { title: 'Templates', url: '/admin/templates', icon: LayoutTemplate, testId: 'link-templates' },
-  { title: 'Schema Blocks', url: '/admin/schema-blocks', icon: Layers, testId: 'link-schema-blocks' },
-  { title: 'Blocks Library', url: '/admin/blocks-library', icon: Layers, testId: 'link-blocks-library' },
-  { title: 'Block Definitions', url: '/admin/schema-block-definitions', icon: Layers, testId: 'link-block-definitions' },
   { title: 'Subscribers', url: '/admin/subscribers', icon: Users, testId: 'link-subscribers' },
 ];
 
