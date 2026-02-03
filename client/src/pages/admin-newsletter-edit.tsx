@@ -269,15 +269,37 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 
     case 'term_of_the_day':
       return (
-        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px', borderLeft: '4px solid #00d4aa' }}>
-          <h3 style={{ fontSize: '12px', color: '#00d4aa', marginBottom: '8px', textTransform: 'uppercase' }}>Term of the Day</h3>
-          {data.term && <p style={{ fontSize: '18px', fontWeight: '600', color: 'white' }}>{data.term}</p>}
-          {data.definition && <p style={{ marginTop: '8px', color: '#ccc', lineHeight: '1.6' }}>{data.definition}</p>}
-          {data.example && (
-            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#0a0a0a', borderRadius: '4px' }}>
-              <p style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Example:</p>
-              <p style={{ color: '#999', fontStyle: 'italic', fontSize: '13px' }}>{data.example}</p>
-            </div>
+        <div style={{ marginBottom: '24px', padding: '24px', backgroundColor: '#1a1a1a', borderRadius: '12px' }}>
+          <p style={{ 
+            fontSize: '11px', 
+            color: '#00d4aa', 
+            marginBottom: '12px', 
+            textTransform: 'uppercase',
+            fontWeight: '600',
+            letterSpacing: '0.5px'
+          }}>
+            TERM OF THE DAY
+          </p>
+          {data.term && (
+            <h3 style={{ 
+              fontSize: '24px', 
+              fontWeight: '700', 
+              color: 'white', 
+              marginBottom: '12px',
+              lineHeight: '1.2'
+            }}>
+              {data.term}
+            </h3>
+          )}
+          {data.definition && (
+            <p style={{ 
+              fontSize: '15px', 
+              color: '#a0a0a0', 
+              lineHeight: '1.6',
+              margin: 0
+            }}>
+              {data.definition}
+            </p>
           )}
         </div>
       );
@@ -484,26 +506,36 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 
     case 'why_it_matters':
       return (
-        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ marginBottom: '24px', padding: '24px', backgroundColor: '#1a1a1a', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
             <span style={{ 
-              width: '32px', 
-              height: '32px', 
+              width: '28px', 
+              height: '28px', 
               borderRadius: '6px', 
-              backgroundColor: '#fbbf24', 
+              backgroundColor: '#b8860b', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              color: 'black',
-              fontSize: '16px'
+              color: '#ffd700',
+              fontSize: '14px',
+              flexShrink: 0
             }}>
               ★
             </span>
-            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'white', margin: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'white', margin: 0, lineHeight: '1.7' }}>
               {data.title || 'Why it Matters'}
             </h3>
           </div>
-          {data.body && <p style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.6' }}>{data.body}</p>}
+          {data.body && (
+            <p style={{ 
+              fontSize: '15px', 
+              color: '#a0a0a0', 
+              lineHeight: '1.7',
+              margin: 0
+            }}>
+              {data.body}
+            </p>
+          )}
         </div>
       );
 
