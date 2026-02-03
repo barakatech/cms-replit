@@ -73,6 +73,12 @@ import {
   type WritingAssistantIntegration,
   type InsertWritingAssistantIntegration,
   type ComplianceFinding,
+  type BlockLibraryTemplate,
+  type InsertBlockLibraryTemplate,
+  type TickerCatalogEntry,
+  type InsertTickerCatalogEntry,
+  type NewsletterBlockInstance,
+  type InsertNewsletterBlockInstance,
   BARAKA_STORE_URLS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -2114,6 +2120,77 @@ const seedSchemaBlocks: SchemaBlock[] = [
   },
 ];
 
+// Seed data for Ticker Catalog
+const seedTickerCatalog: TickerCatalogEntry[] = [
+  { id: 't1', ticker: 'AAPL', displayName: 'Apple Inc.', category: 'Technology', createdAt: now, updatedAt: now },
+  { id: 't2', ticker: 'TSLA', displayName: 'Tesla Inc.', category: 'Automotive', createdAt: now, updatedAt: now },
+  { id: 't3', ticker: 'NVDA', displayName: 'NVIDIA Corporation', category: 'Technology', createdAt: now, updatedAt: now },
+  { id: 't4', ticker: 'MSFT', displayName: 'Microsoft Corporation', category: 'Technology', createdAt: now, updatedAt: now },
+  { id: 't5', ticker: 'AMZN', displayName: 'Amazon.com Inc.', category: 'E-Commerce', createdAt: now, updatedAt: now },
+];
+
+// Seed data for Block Library Templates
+const seedBlockLibraryTemplates: BlockLibraryTemplate[] = [
+  {
+    id: 'bl1',
+    name: 'Top Traded Stocks',
+    blockType: 'stock_list_manual',
+    blockDataJson: {
+      title: 'Top Traded Stocks',
+      description: 'The most actively traded stocks this week',
+      items: [
+        { ticker: 'AAPL', note: 'Strong earnings beat' },
+        { ticker: 'TSLA', note: 'EV market leader' },
+        { ticker: 'NVDA', note: 'AI chip demand surge' },
+      ],
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 'bl2',
+    name: 'Options to Watch',
+    blockType: 'options_ideas_manual',
+    blockDataJson: {
+      title: 'Options Ideas',
+      intro: 'Interesting option contracts to consider',
+      contracts: [
+        { underlying_ticker: 'AAPL', type: 'CALL' as const, expiry_date: '2026-03-21', strike: 200, rationale: 'Bullish on iPhone sales' },
+      ],
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 'bl3',
+    name: 'Market Snapshot',
+    blockType: 'market_snapshot_manual',
+    blockDataJson: {
+      title: 'Market Snapshot',
+      bullets: [
+        'S&P 500 up 0.5% on strong tech earnings',
+        'Treasury yields holding steady at 4.2%',
+        'Oil prices stable amid OPEC discussions',
+      ],
+      what_to_watch: 'Fed meeting minutes release on Wednesday',
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 'bl4',
+    name: 'Referral Promo Banner',
+    blockType: 'promo_banner',
+    blockDataJson: {
+      image_url: 'https://example.com/referral-banner.jpg',
+      link_url: 'https://baraka.com/refer',
+      banner_title: '',
+    },
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
 const seedNewsletterTemplates: NewsletterTemplate[] = [
   {
     id: '1',
@@ -2561,6 +2638,29 @@ export interface IStorage {
   createWritingAssistantIntegration(integration: InsertWritingAssistantIntegration): Promise<WritingAssistantIntegration>;
   updateWritingAssistantIntegration(id: string, updates: Partial<WritingAssistantIntegration>): Promise<WritingAssistantIntegration | undefined>;
   deleteWritingAssistantIntegration(id: string): Promise<boolean>;
+  
+  // Block Library Templates (reusable block templates)
+  getBlockLibraryTemplates(): Promise<BlockLibraryTemplate[]>;
+  getBlockLibraryTemplate(id: string): Promise<BlockLibraryTemplate | undefined>;
+  createBlockLibraryTemplate(template: InsertBlockLibraryTemplate): Promise<BlockLibraryTemplate>;
+  updateBlockLibraryTemplate(id: string, template: Partial<BlockLibraryTemplate>): Promise<BlockLibraryTemplate | undefined>;
+  deleteBlockLibraryTemplate(id: string): Promise<boolean>;
+  
+  // Ticker Catalog (manual ticker entries)
+  getTickerCatalog(): Promise<TickerCatalogEntry[]>;
+  getTickerCatalogEntry(id: string): Promise<TickerCatalogEntry | undefined>;
+  getTickerCatalogByTicker(ticker: string): Promise<TickerCatalogEntry | undefined>;
+  createTickerCatalogEntry(entry: InsertTickerCatalogEntry): Promise<TickerCatalogEntry>;
+  updateTickerCatalogEntry(id: string, entry: Partial<TickerCatalogEntry>): Promise<TickerCatalogEntry | undefined>;
+  deleteTickerCatalogEntry(id: string): Promise<boolean>;
+  
+  // Newsletter Block Instances (per-newsletter blocks)
+  getNewsletterBlockInstances(newsletterId: string): Promise<NewsletterBlockInstance[]>;
+  getNewsletterBlockInstance(id: string): Promise<NewsletterBlockInstance | undefined>;
+  createNewsletterBlockInstance(instance: InsertNewsletterBlockInstance): Promise<NewsletterBlockInstance>;
+  updateNewsletterBlockInstance(id: string, instance: Partial<NewsletterBlockInstance>): Promise<NewsletterBlockInstance | undefined>;
+  deleteNewsletterBlockInstance(id: string): Promise<boolean>;
+  reorderNewsletterBlockInstances(newsletterId: string, orderedIds: string[]): Promise<boolean>;
 }
 
 // Dashboard Summary Types
@@ -2741,6 +2841,9 @@ export class MemStorage implements IStorage {
   private complianceRules: Map<string, ComplianceRule>;
   private complianceCheckerSettings: ComplianceCheckerSettings;
   private writingAssistantIntegrations: Map<string, WritingAssistantIntegration>;
+  private blockLibraryTemplates: Map<string, BlockLibraryTemplate>;
+  private tickerCatalog: Map<string, TickerCatalogEntry>;
+  private newsletterBlockInstances: Map<string, NewsletterBlockInstance>;
 
   constructor() {
     this.users = new Map();
@@ -2791,6 +2894,15 @@ export class MemStorage implements IStorage {
       englishThresholds: { excellent: 90, good: 70 },
     };
     this.writingAssistantIntegrations = new Map();
+    this.blockLibraryTemplates = new Map();
+    this.tickerCatalog = new Map();
+    this.newsletterBlockInstances = new Map();
+    
+    // Seed ticker catalog
+    seedTickerCatalog.forEach(entry => this.tickerCatalog.set(entry.id, entry));
+    
+    // Seed block library templates
+    seedBlockLibraryTemplates.forEach(template => this.blockLibraryTemplates.set(template.id, template));
     
     // Seed default DFSA compliance rules
     const defaultComplianceRules: ComplianceRule[] = [
@@ -4365,6 +4477,126 @@ export class MemStorage implements IStorage {
 
   async deleteWritingAssistantIntegration(id: string): Promise<boolean> {
     return this.writingAssistantIntegrations.delete(id);
+  }
+
+  // Block Library Templates
+  async getBlockLibraryTemplates(): Promise<BlockLibraryTemplate[]> {
+    return Array.from(this.blockLibraryTemplates.values());
+  }
+
+  async getBlockLibraryTemplate(id: string): Promise<BlockLibraryTemplate | undefined> {
+    return this.blockLibraryTemplates.get(id);
+  }
+
+  async createBlockLibraryTemplate(template: InsertBlockLibraryTemplate): Promise<BlockLibraryTemplate> {
+    const now = new Date().toISOString();
+    const newTemplate: BlockLibraryTemplate = {
+      ...template,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.blockLibraryTemplates.set(newTemplate.id, newTemplate);
+    return newTemplate;
+  }
+
+  async updateBlockLibraryTemplate(id: string, updates: Partial<BlockLibraryTemplate>): Promise<BlockLibraryTemplate | undefined> {
+    const template = this.blockLibraryTemplates.get(id);
+    if (!template) return undefined;
+    const updated: BlockLibraryTemplate = { ...template, ...updates, updatedAt: new Date().toISOString() };
+    this.blockLibraryTemplates.set(id, updated);
+    return updated;
+  }
+
+  async deleteBlockLibraryTemplate(id: string): Promise<boolean> {
+    return this.blockLibraryTemplates.delete(id);
+  }
+
+  // Ticker Catalog
+  async getTickerCatalog(): Promise<TickerCatalogEntry[]> {
+    return Array.from(this.tickerCatalog.values());
+  }
+
+  async getTickerCatalogEntry(id: string): Promise<TickerCatalogEntry | undefined> {
+    return this.tickerCatalog.get(id);
+  }
+
+  async getTickerCatalogByTicker(ticker: string): Promise<TickerCatalogEntry | undefined> {
+    return Array.from(this.tickerCatalog.values()).find(e => e.ticker.toUpperCase() === ticker.toUpperCase());
+  }
+
+  async createTickerCatalogEntry(entry: InsertTickerCatalogEntry): Promise<TickerCatalogEntry> {
+    const now = new Date().toISOString();
+    const newEntry: TickerCatalogEntry = {
+      ...entry,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.tickerCatalog.set(newEntry.id, newEntry);
+    return newEntry;
+  }
+
+  async updateTickerCatalogEntry(id: string, updates: Partial<TickerCatalogEntry>): Promise<TickerCatalogEntry | undefined> {
+    const entry = this.tickerCatalog.get(id);
+    if (!entry) return undefined;
+    const updated: TickerCatalogEntry = { ...entry, ...updates, updatedAt: new Date().toISOString() };
+    this.tickerCatalog.set(id, updated);
+    return updated;
+  }
+
+  async deleteTickerCatalogEntry(id: string): Promise<boolean> {
+    return this.tickerCatalog.delete(id);
+  }
+
+  // Newsletter Block Instances
+  async getNewsletterBlockInstances(newsletterId: string): Promise<NewsletterBlockInstance[]> {
+    return Array.from(this.newsletterBlockInstances.values())
+      .filter(instance => instance.newsletterId === newsletterId)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  async getNewsletterBlockInstance(id: string): Promise<NewsletterBlockInstance | undefined> {
+    return this.newsletterBlockInstances.get(id);
+  }
+
+  async createNewsletterBlockInstance(instance: InsertNewsletterBlockInstance): Promise<NewsletterBlockInstance> {
+    const now = new Date().toISOString();
+    const newInstance: NewsletterBlockInstance = {
+      ...instance,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.newsletterBlockInstances.set(newInstance.id, newInstance);
+    return newInstance;
+  }
+
+  async updateNewsletterBlockInstance(id: string, updates: Partial<NewsletterBlockInstance>): Promise<NewsletterBlockInstance | undefined> {
+    const instance = this.newsletterBlockInstances.get(id);
+    if (!instance) return undefined;
+    const updated: NewsletterBlockInstance = { ...instance, ...updates, updatedAt: new Date().toISOString() };
+    this.newsletterBlockInstances.set(id, updated);
+    return updated;
+  }
+
+  async deleteNewsletterBlockInstance(id: string): Promise<boolean> {
+    return this.newsletterBlockInstances.delete(id);
+  }
+
+  async reorderNewsletterBlockInstances(newsletterId: string, orderedIds: string[]): Promise<boolean> {
+    const instances = await this.getNewsletterBlockInstances(newsletterId);
+    if (instances.length !== orderedIds.length) return false;
+    
+    for (let i = 0; i < orderedIds.length; i++) {
+      const instance = this.newsletterBlockInstances.get(orderedIds[i]);
+      if (instance && instance.newsletterId === newsletterId) {
+        instance.sortOrder = i;
+        instance.updatedAt = new Date().toISOString();
+        this.newsletterBlockInstances.set(orderedIds[i], instance);
+      }
+    }
+    return true;
   }
 }
 
