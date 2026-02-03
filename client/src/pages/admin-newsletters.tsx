@@ -32,7 +32,6 @@ import {
   Mail,
   ArrowLeft,
   Eye,
-  ExternalLink,
   Sparkles,
   GripVertical,
   ArrowUp,
@@ -189,12 +188,6 @@ export default function AdminNewsletters() {
     };
     setEditingNewsletter(newNewsletter);
     setSelectedNewsletter(null);
-    setViewMode('editor');
-  };
-
-  const handleEdit = (newsletter: Newsletter) => {
-    setSelectedNewsletter(newsletter);
-    setEditingNewsletter({ ...newsletter });
     setViewMode('editor');
   };
 
@@ -652,7 +645,7 @@ export default function AdminNewsletters() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>All Newsletters</CardTitle>
-              <CardDescription>Click on a newsletter to edit it</CardDescription>
+              <CardDescription>Click on a newsletter to manage its blocks</CardDescription>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative w-full sm:w-64">
@@ -712,7 +705,7 @@ export default function AdminNewsletters() {
                   <TableRow 
                     key={newsletter.id}
                     className="cursor-pointer hover-elevate"
-                    onClick={() => handleEdit(newsletter)}
+                    onClick={() => setLocation(`/admin/newsletters/${newsletter.id}`)}
                     data-testid={`row-newsletter-${newsletter.id}`}
                   >
                     <TableCell className="font-medium" data-testid={`text-subject-${newsletter.id}`}>
@@ -765,17 +758,8 @@ export default function AdminNewsletters() {
                           size="icon"
                           variant="ghost"
                           onClick={() => setLocation(`/admin/newsletters/${newsletter.id}`)}
-                          data-testid={`button-open-${newsletter.id}`}
-                          title="Open Block Editor"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleEdit(newsletter)}
                           data-testid={`button-edit-${newsletter.id}`}
-                          title="Edit"
+                          title="Edit Blocks"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
