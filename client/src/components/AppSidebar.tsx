@@ -28,6 +28,7 @@ const menuItems = [
 const blogSubItems = [
   { title: 'Blog Posts', url: '/admin/blog', icon: BookOpen, testId: 'link-blog-posts' },
   { title: 'Newsletters', url: '/admin/newsletters', icon: Mail, testId: 'link-newsletters' },
+  { title: 'Newsletter Templates', url: '/admin/newsletter-templates', icon: Layers, testId: 'link-newsletter-templates' },
   { title: 'Spotlights', url: '/admin/spotlights', icon: Sparkles, testId: 'link-spotlights' },
   { title: 'Subscribers', url: '/admin/subscribers', icon: Users, testId: 'link-subscribers' },
 ];
