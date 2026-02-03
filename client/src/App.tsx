@@ -32,6 +32,8 @@ import AdminStocks from '@/pages/admin-stocks';
 import AdminNewsletters from '@/pages/admin-newsletters';
 import AdminTemplates from '@/pages/admin-templates';
 import AdminSchemaBlocks from '@/pages/admin-schema-blocks';
+import AdminBlocksLibrary from '@/pages/admin-blocks-library';
+import AdminTickerCatalog from '@/pages/admin-ticker-catalog';
 import AdminSpotlights from '@/pages/admin-spotlights';
 import AdminSubscribers from '@/pages/admin-subscribers';
 import AdminSettings from '@/pages/admin-settings';
@@ -346,6 +348,40 @@ function Router() {
                   <TopBar />
                   <main className="flex-1 overflow-auto">
                     <AdminSchemaBlocks />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/blocks-library">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminBlocksLibrary />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/ticker-catalog">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminTickerCatalog />
                   </main>
                 </div>
               </div>
