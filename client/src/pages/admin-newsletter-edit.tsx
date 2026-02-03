@@ -52,7 +52,8 @@ import {
   MoreVertical,
   Pencil,
   ChevronDown,
-  Layers
+  Layers,
+  Settings
 } from 'lucide-react';
 import type { 
   Newsletter, 
@@ -713,6 +714,14 @@ export default function AdminNewsletterEdit() {
   const [articleSearchQuery, setArticleSearchQuery] = useState('');
   const [addBlockMode, setAddBlockMode] = useState<'schema' | 'custom'>('schema');
   const [selectedSchemaDefinition, setSelectedSchemaDefinition] = useState<string>('');
+  const [editingSchemaDefinition, setEditingSchemaDefinition] = useState<SchemaBlockDefinition | null>(null);
+  const [schemaDefEditDialogOpen, setSchemaDefEditDialogOpen] = useState(false);
+  const [schemaDefFormData, setSchemaDefFormData] = useState({
+    name: '',
+    description: '',
+    defaultSchemaJson: '{}',
+    defaultSettingsJson: '{}',
+  });
 
   const newsletterId = params.id;
 
@@ -804,6 +813,48 @@ export default function AdminNewsletterEdit() {
     },
     onError: () => toast({ title: 'Failed to reorder blocks', variant: 'destructive' }),
   });
+
+  const updateSchemaDefMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { name: string; description: string; defaultSchemaJson: Record<string, unknown>; defaultSettingsJson: Record<string, unknown> } }) =>
+      apiRequest('PUT', `/api/schema-block-definitions/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/schema-block-definitions'] });
+      toast({ title: 'Schema definition updated' });
+      setSchemaDefEditDialogOpen(false);
+      setEditingSchemaDefinition(null);
+    },
+    onError: () => toast({ title: 'Failed to update schema definition', variant: 'destructive' }),
+  });
+
+  const handleEditSchemaDefinition = (def: SchemaBlockDefinition) => {
+    setEditingSchemaDefinition(def);
+    setSchemaDefFormData({
+      name: def.name,
+      description: def.description || '',
+      defaultSchemaJson: JSON.stringify(def.defaultSchemaJson || {}, null, 2),
+      defaultSettingsJson: JSON.stringify(def.defaultSettingsJson || {}, null, 2),
+    });
+    setSchemaDefEditDialogOpen(true);
+  };
+
+  const handleSaveSchemaDefinition = () => {
+    if (!editingSchemaDefinition) return;
+    try {
+      const schemaJson = JSON.parse(schemaDefFormData.defaultSchemaJson);
+      const settingsJson = JSON.parse(schemaDefFormData.defaultSettingsJson);
+      updateSchemaDefMutation.mutate({
+        id: editingSchemaDefinition.id,
+        data: {
+          name: schemaDefFormData.name,
+          description: schemaDefFormData.description,
+          defaultSchemaJson: schemaJson,
+          defaultSettingsJson: settingsJson,
+        },
+      });
+    } catch {
+      toast({ title: 'Invalid JSON format', variant: 'destructive' });
+    }
+  };
 
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
     if (!blockInstances) return;
@@ -2167,8 +2218,136 @@ export default function AdminNewsletterEdit() {
               </ScrollArea>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Schema Block Definitions
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Edit default settings for each block type
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[280px]">
+                {schemaDefinitions && schemaDefinitions.length > 0 ? (
+                  <div className="space-y-2">
+                    {schemaDefinitions.map((def) => {
+                      const blockType = BLOCK_TYPES.find(b => b.type === def.blockType);
+                      const Icon = blockType?.icon || FileText;
+                      return (
+                        <div
+                          key={def.id}
+                          className="flex items-center gap-2 p-2 rounded-md border bg-card hover-elevate"
+                          data-testid={`schema-def-${def.id}`}
+                        >
+                          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{def.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {def.blockType}
+                            </p>
+                          </div>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleEditSchemaDefinition(def)}
+                            data-testid={`button-edit-schema-${def.id}`}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No schema definitions available
+                  </p>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      <Dialog open={schemaDefEditDialogOpen} onOpenChange={(open) => {
+        setSchemaDefEditDialogOpen(open);
+        if (!open) {
+          setEditingSchemaDefinition(null);
+        }
+      }}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Schema Block Definition</DialogTitle>
+            <DialogDescription>
+              Modify the default settings for {editingSchemaDefinition?.blockType}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="schema-name">Name</Label>
+              <Input
+                id="schema-name"
+                value={schemaDefFormData.name}
+                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, name: e.target.value }))}
+                data-testid="input-schema-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="schema-description">Description</Label>
+              <Textarea
+                id="schema-description"
+                value={schemaDefFormData.description}
+                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, description: e.target.value }))}
+                rows={2}
+                data-testid="input-schema-description"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="schema-defaults">Default Schema JSON</Label>
+              <Textarea
+                id="schema-defaults"
+                value={schemaDefFormData.defaultSchemaJson}
+                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, defaultSchemaJson: e.target.value }))}
+                className="font-mono text-xs"
+                rows={6}
+                data-testid="input-schema-defaults"
+              />
+              <p className="text-xs text-muted-foreground">Default content/data for this block type</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="schema-settings">Default Settings JSON</Label>
+              <Textarea
+                id="schema-settings"
+                value={schemaDefFormData.defaultSettingsJson}
+                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, defaultSettingsJson: e.target.value }))}
+                className="font-mono text-xs"
+                rows={6}
+                data-testid="input-schema-settings"
+              />
+              <p className="text-xs text-muted-foreground">Display/behavior settings for this block type</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSchemaDefEditDialogOpen(false)}
+              data-testid="button-cancel-schema"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveSchemaDefinition}
+              disabled={updateSchemaDefMutation.isPending}
+              data-testid="button-save-schema"
+            >
+              {updateSchemaDefMutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addBlockDialogOpen} onOpenChange={(open) => {
         setAddBlockDialogOpen(open);
