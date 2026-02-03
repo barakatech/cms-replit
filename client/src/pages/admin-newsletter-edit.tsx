@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,6 +83,593 @@ const getBlockTypeLabel = (type: NewsletterBlockType): string => {
   const found = BLOCK_TYPES.find(b => b.type === type);
   return found?.label || type;
 };
+
+interface InlineBlockEditorProps {
+  block: NewsletterBlockInstance;
+  onUpdate: (data: NewsletterBlockData) => void;
+  stockPages?: StockPage[];
+  blogPosts?: Array<{ id: string; title_en: string; excerpt_en?: string; featuredImageUrl?: string; slug: string }>;
+}
+
+function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlockEditorProps) {
+  const [data, setData] = useState<Record<string, unknown>>(block.blockDataJson as Record<string, unknown> || {});
+  const [stockSearchQuery, setStockSearchQuery] = useState('');
+  const [articleSearchQuery, setArticleSearchQuery] = useState('');
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const updateField = useCallback((field: string, value: unknown) => {
+    const newData = { ...data, [field]: value };
+    setData(newData);
+    
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      onUpdate(newData as NewsletterBlockData);
+    }, 800);
+  }, [data, onUpdate]);
+  
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  const filteredStocks = stockSearchQuery.length >= 2 && stockPages 
+    ? stockPages.filter(stock => 
+        (stock.ticker?.toLowerCase().includes(stockSearchQuery.toLowerCase()) ||
+         stock.companyName_en?.toLowerCase().includes(stockSearchQuery.toLowerCase()))
+      ).slice(0, 5)
+    : [];
+
+  const filteredArticles = articleSearchQuery.length >= 2 && blogPosts
+    ? blogPosts.filter(article =>
+        article.title_en?.toLowerCase().includes(articleSearchQuery.toLowerCase())
+      ).slice(0, 5)
+    : [];
+
+  switch (block.blockType) {
+    case 'introduction':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Newsletter title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Subtitle</Label>
+            <Input
+              value={data.subtitle as string || ''}
+              onChange={(e) => updateField('subtitle', e.target.value)}
+              placeholder="Brief subtitle"
+              data-testid="inline-input-subtitle"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Content</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="Introduction content..."
+              rows={3}
+              data-testid="inline-input-body"
+            />
+          </div>
+        </div>
+      );
+
+    case 'featured_content':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Featured section title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Image URL</Label>
+            <Input
+              value={data.imageUrl as string || ''}
+              onChange={(e) => updateField('imageUrl', e.target.value)}
+              placeholder="/attached_assets/..."
+              data-testid="inline-input-imageUrl"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Textarea
+              value={data.description as string || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+              placeholder="Description..."
+              rows={2}
+              data-testid="inline-input-description"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Articles (search to add)</Label>
+            <Input
+              value={articleSearchQuery}
+              onChange={(e) => setArticleSearchQuery(e.target.value)}
+              placeholder="Search articles..."
+            />
+            {filteredArticles.length > 0 && (
+              <div className="border rounded max-h-32 overflow-y-auto">
+                {filteredArticles.map(article => (
+                  <div
+                    key={article.id}
+                    className="p-2 hover-elevate cursor-pointer text-sm"
+                    onClick={() => {
+                      const articles = (data.articles as Array<Record<string, unknown>>) || [];
+                      updateField('articles', [...articles, { articleId: article.id, title: article.title_en }]);
+                      setArticleSearchQuery('');
+                    }}
+                  >
+                    {article.title_en}
+                  </div>
+                ))}
+              </div>
+            )}
+            {((data.articles as Array<Record<string, unknown>>) || []).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {((data.articles as Array<Record<string, unknown>>) || []).map((a, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {a.title as string}
+                    <button onClick={() => {
+                      const articles = [...((data.articles as Array<Record<string, unknown>>) || [])];
+                      articles.splice(i, 1);
+                      updateField('articles', articles);
+                    }} className="ml-1">&times;</button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+    case 'articles_list':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Articles section title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Articles (search to add)</Label>
+            <Input
+              value={articleSearchQuery}
+              onChange={(e) => setArticleSearchQuery(e.target.value)}
+              placeholder="Search articles..."
+            />
+            {filteredArticles.length > 0 && (
+              <div className="border rounded max-h-32 overflow-y-auto">
+                {filteredArticles.map(article => (
+                  <div
+                    key={article.id}
+                    className="p-2 hover-elevate cursor-pointer text-sm"
+                    onClick={() => {
+                      const articles = (data.articles as Array<Record<string, unknown>>) || [];
+                      updateField('articles', [...articles, { articleId: article.id, title: article.title_en }]);
+                      setArticleSearchQuery('');
+                    }}
+                  >
+                    {article.title_en}
+                  </div>
+                ))}
+              </div>
+            )}
+            {((data.articles as Array<Record<string, unknown>>) || []).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {((data.articles as Array<Record<string, unknown>>) || []).map((a, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {a.title as string}
+                    <button onClick={() => {
+                      const articles = [...((data.articles as Array<Record<string, unknown>>) || [])];
+                      articles.splice(i, 1);
+                      updateField('articles', articles);
+                    }} className="ml-1">&times;</button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+    case 'stock_collection':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Stock collection title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Textarea
+              value={data.description as string || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+              placeholder="Description..."
+              rows={2}
+              data-testid="inline-input-description"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Stocks (search to add)</Label>
+            <Input
+              value={stockSearchQuery}
+              onChange={(e) => setStockSearchQuery(e.target.value)}
+              placeholder="Search stocks..."
+            />
+            {filteredStocks.length > 0 && (
+              <div className="border rounded max-h-32 overflow-y-auto">
+                {filteredStocks.map(stock => (
+                  <div
+                    key={stock.id}
+                    className="p-2 hover-elevate cursor-pointer text-sm"
+                    onClick={() => {
+                      const stocks = (data.stocks as Array<Record<string, unknown>>) || [];
+                      updateField('stocks', [...stocks, { stockId: stock.id, ticker: stock.ticker, companyName: stock.companyName_en }]);
+                      setStockSearchQuery('');
+                    }}
+                  >
+                    <span className="font-medium text-primary">{stock.ticker}</span> - {stock.companyName_en}
+                  </div>
+                ))}
+              </div>
+            )}
+            {((data.stocks as Array<Record<string, unknown>>) || []).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {((data.stocks as Array<Record<string, unknown>>) || []).map((s, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {s.ticker as string}
+                    <button onClick={() => {
+                      const stocks = [...((data.stocks as Array<Record<string, unknown>>) || [])];
+                      stocks.splice(i, 1);
+                      updateField('stocks', stocks);
+                    }} className="ml-1">&times;</button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+    case 'asset_highlight':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Highlight title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Stock (search)</Label>
+            <Input
+              value={stockSearchQuery || data.ticker as string || ''}
+              onChange={(e) => setStockSearchQuery(e.target.value)}
+              placeholder="Search for a stock..."
+            />
+            {filteredStocks.length > 0 && (
+              <div className="border rounded max-h-32 overflow-y-auto">
+                {filteredStocks.map(stock => (
+                  <div
+                    key={stock.id}
+                    className="p-2 hover-elevate cursor-pointer text-sm"
+                    onClick={() => {
+                      updateField('stockId', stock.id);
+                      updateField('ticker', stock.ticker);
+                      updateField('companyName', stock.companyName_en);
+                      setStockSearchQuery('');
+                    }}
+                  >
+                    <span className="font-medium text-primary">{stock.ticker}</span> - {stock.companyName_en}
+                  </div>
+                ))}
+              </div>
+            )}
+            {data.ticker && (
+              <div className="text-sm text-muted-foreground">
+                Selected: <span className="font-medium text-primary">{String(data.ticker || '')}</span> - {String(data.companyName || '')}
+              </div>
+            )}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Textarea
+              value={data.description as string || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+              placeholder="Why this asset is highlighted..."
+              rows={3}
+              data-testid="inline-input-description"
+            />
+          </div>
+        </div>
+      );
+
+    case 'term_of_the_day':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="e.g., Term of the Day"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Term</Label>
+            <Input
+              value={data.term as string || ''}
+              onChange={(e) => updateField('term', e.target.value)}
+              placeholder="Financial term"
+              data-testid="inline-input-term"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Definition</Label>
+            <Textarea
+              value={data.definition as string || ''}
+              onChange={(e) => updateField('definition', e.target.value)}
+              placeholder="Term definition..."
+              rows={2}
+              data-testid="inline-input-definition"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Example</Label>
+            <Textarea
+              value={data.example as string || ''}
+              onChange={(e) => updateField('example', e.target.value)}
+              placeholder="Example usage..."
+              rows={2}
+              data-testid="inline-input-example"
+            />
+          </div>
+        </div>
+      );
+
+    case 'in_other_news':
+      const newsItems = (data.newsItems as Array<Record<string, unknown>>) || [];
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="In Other News"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">News Items</Label>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => updateField('newsItems', [...newsItems, { headline: '', source: '', url: '' }])}
+              >
+                <Plus className="h-3 w-3 mr-1" /> Add
+              </Button>
+            </div>
+            {newsItems.map((item, idx) => (
+              <div key={idx} className="p-2 border rounded space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Item {idx + 1}</span>
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => {
+                    const items = [...newsItems];
+                    items.splice(idx, 1);
+                    updateField('newsItems', items);
+                  }}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                <Input
+                  value={item.headline as string || ''}
+                  onChange={(e) => {
+                    const items = [...newsItems];
+                    items[idx] = { ...items[idx], headline: e.target.value };
+                    updateField('newsItems', items);
+                  }}
+                  placeholder="Headline"
+                  className="text-sm"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    value={item.source as string || ''}
+                    onChange={(e) => {
+                      const items = [...newsItems];
+                      items[idx] = { ...items[idx], source: e.target.value };
+                      updateField('newsItems', items);
+                    }}
+                    placeholder="Source"
+                    className="text-sm"
+                  />
+                  <Input
+                    value={item.url as string || ''}
+                    onChange={(e) => {
+                      const items = [...newsItems];
+                      items[idx] = { ...items[idx], url: e.target.value };
+                      updateField('newsItems', items);
+                    }}
+                    placeholder="URL"
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+
+    case 'call_to_action':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="CTA heading"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Content</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="CTA description..."
+              rows={2}
+              data-testid="inline-input-body"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA Text</Label>
+              <Input
+                value={data.buttonText as string || ''}
+                onChange={(e) => updateField('buttonText', e.target.value)}
+                placeholder="Button text"
+                data-testid="inline-input-buttonText"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA URL</Label>
+              <Input
+                value={data.buttonUrl as string || ''}
+                onChange={(e) => updateField('buttonUrl', e.target.value)}
+                placeholder="https://..."
+                data-testid="inline-input-buttonUrl"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Image URL</Label>
+            <Input
+              value={data.imageUrl as string || ''}
+              onChange={(e) => updateField('imageUrl', e.target.value)}
+              placeholder="/attached_assets/..."
+              data-testid="inline-input-imageUrl"
+            />
+          </div>
+        </div>
+      );
+
+    case 'assets_under_500':
+    case 'what_users_picked':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Section title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Description</Label>
+            <Textarea
+              value={data.description as string || ''}
+              onChange={(e) => updateField('description', e.target.value)}
+              placeholder="Description..."
+              rows={2}
+              data-testid="inline-input-description"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Limit</Label>
+              <Input
+                type="number"
+                value={data.limit as number || 5}
+                onChange={(e) => updateField('limit', parseInt(e.target.value) || 5)}
+                min={1}
+                max={20}
+              />
+            </div>
+            {block.blockType === 'assets_under_500' && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Max Price ($)</Label>
+                <Input
+                  type="number"
+                  value={data.maxPrice as number || 500}
+                  onChange={(e) => updateField('maxPrice', parseInt(e.target.value) || 500)}
+                  min={1}
+                />
+              </div>
+            )}
+            {block.blockType === 'what_users_picked' && (
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Time Window</Label>
+                <Select
+                  value={data.timeWindow as string || '7d'}
+                  onValueChange={(v) => updateField('timeWindow', v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="24h">Last 24 Hours</SelectItem>
+                    <SelectItem value="7d">Last 7 Days</SelectItem>
+                    <SelectItem value="30d">Last 30 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+    default:
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Block title"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Block type: {block.blockType}
+          </div>
+        </div>
+      );
+  }
+}
 
 const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockData => {
   switch (blockType) {
@@ -1337,7 +1924,7 @@ export default function AdminNewsletterEdit() {
             variant="outline" 
             data-testid="button-preview"
             onClick={() => {
-              window.open(`/newsletter-preview/${id}`, '_blank', 'width=700,height=900');
+              window.open(`/newsletter-preview/${newsletterId}`, '_blank', 'width=700,height=900');
             }}
           >
             <Eye className="h-4 w-4 mr-2" />
@@ -1413,73 +2000,80 @@ export default function AdminNewsletterEdit() {
                   ))}
                 </div>
               ) : sortedBlocks.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {sortedBlocks.map((block, index) => (
                     <div
                       key={block.id}
-                      className="flex items-center gap-2 p-3 border rounded-lg bg-card hover-elevate cursor-pointer"
+                      className="p-4 border rounded-lg bg-card"
                       data-testid={`block-instance-${block.id}`}
                     >
-                      <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                      <div className="flex-1" onClick={() => handleEditBlock(block)} data-testid={`button-edit-block-${block.id}`}>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {getBlockTypeLabel(block.blockType)}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            #{block.sortOrder + 1}
-                          </span>
-                        </div>
-                        <p className="text-sm truncate mt-1">
-                          {(block.blockDataJson as Record<string, unknown>).title as string || 'No title'}
-                        </p>
+                      <div className="flex items-center gap-2 mb-3">
+                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                        <Badge variant="secondary" className="text-xs">
+                          {getBlockTypeLabel(block.blockType)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          #{block.sortOrder + 1}
+                        </span>
+                        <div className="flex-1" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              data-testid={`button-block-menu-${block.id}`}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleEditBlock(block)}
+                              data-testid={`menu-edit-${block.id}`}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit in Dialog
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              disabled={index === 0}
+                              onClick={() => handleMoveBlock(index, 'up')}
+                              data-testid={`menu-move-up-${block.id}`}
+                            >
+                              <ArrowUp className="h-4 w-4 mr-2" />
+                              Move Up
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={index === sortedBlocks.length - 1}
+                              onClick={() => handleMoveBlock(index, 'down')}
+                              data-testid={`menu-move-down-${block.id}`}
+                            >
+                              <ArrowDown className="h-4 w-4 mr-2" />
+                              Move Down
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => deleteBlockMutation.mutate(block.id)}
+                              className="text-destructive"
+                              data-testid={`menu-delete-${block.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Block
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            data-testid={`button-block-menu-${block.id}`}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEditBlock(block)}
-                            data-testid={`menu-edit-${block.id}`}
-                          >
-                            <Pencil className="h-4 w-4 mr-2" />
-                            Edit Block
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            disabled={index === 0}
-                            onClick={() => handleMoveBlock(index, 'up')}
-                            data-testid={`menu-move-up-${block.id}`}
-                          >
-                            <ArrowUp className="h-4 w-4 mr-2" />
-                            Move Up
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            disabled={index === sortedBlocks.length - 1}
-                            onClick={() => handleMoveBlock(index, 'down')}
-                            data-testid={`menu-move-down-${block.id}`}
-                          >
-                            <ArrowDown className="h-4 w-4 mr-2" />
-                            Move Down
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => deleteBlockMutation.mutate(block.id)}
-                            className="text-destructive"
-                            data-testid={`menu-delete-${block.id}`}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Block
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <InlineBlockEditor
+                        block={block}
+                        stockPages={stockPages}
+                        blogPosts={blogPosts}
+                        onUpdate={(newData) => {
+                          updateBlockMutation.mutate({
+                            blockId: block.id,
+                            data: { blockDataJson: newData }
+                          });
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
