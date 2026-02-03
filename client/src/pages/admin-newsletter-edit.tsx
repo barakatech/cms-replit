@@ -92,6 +92,8 @@ export default function AdminNewsletterEdit() {
   const [editBlockDialogOpen, setEditBlockDialogOpen] = useState(false);
   const [blockEditorData, setBlockEditorData] = useState<NewsletterBlockData>({});
   const [selectedBlockType, setSelectedBlockType] = useState<NewsletterBlockType>('stock_list_manual');
+  const [overrideSettingsString, setOverrideSettingsString] = useState<string>('{}');
+  const [showOverrideSettings, setShowOverrideSettings] = useState(false);
 
   const newsletterId = params.id;
 
@@ -174,6 +176,8 @@ export default function AdminNewsletterEdit() {
   const handleEditBlock = (block: NewsletterBlockInstance) => {
     setEditingBlock(block);
     setBlockEditorData(block.blockDataJson);
+    setOverrideSettingsString(JSON.stringify(block.overrideSettingsJson || {}, null, 2));
+    setShowOverrideSettings(Object.keys(block.overrideSettingsJson || {}).length > 0);
     setEditBlockDialogOpen(true);
   };
 
@@ -186,9 +190,23 @@ export default function AdminNewsletterEdit() {
 
   const handleSaveBlock = () => {
     if (!editingBlock) return;
+    
+    let parsedOverrides: Record<string, unknown> = {};
+    if (showOverrideSettings && overrideSettingsString.trim()) {
+      try {
+        parsedOverrides = JSON.parse(overrideSettingsString);
+      } catch {
+        toast({ title: 'Invalid JSON in override settings', variant: 'destructive' });
+        return;
+      }
+    }
+    
     updateBlockMutation.mutate({
       blockId: editingBlock.id,
-      data: { blockDataJson: blockEditorData },
+      data: { 
+        blockDataJson: blockEditorData,
+        overrideSettingsJson: parsedOverrides,
+      },
     });
   };
 
@@ -638,15 +656,44 @@ export default function AdminNewsletterEdit() {
       </Dialog>
 
       <Dialog open={editBlockDialogOpen} onOpenChange={setEditBlockDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Block</DialogTitle>
             <DialogDescription>
               {editingBlock && getBlockTypeLabel(editingBlock.blockType)}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
             {editingBlock && renderBlockEditor(editingBlock.blockType, blockEditorData, false)}
+            
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Issue-Level Settings Override</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowOverrideSettings(!showOverrideSettings)}
+                  data-testid="button-toggle-overrides"
+                >
+                  {showOverrideSettings ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              {showOverrideSettings && (
+                <div className="mt-2 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Override default/template settings for this specific newsletter issue
+                  </p>
+                  <Textarea
+                    value={overrideSettingsString}
+                    onChange={(e) => setOverrideSettingsString(e.target.value)}
+                    placeholder='{"max_items": 15}'
+                    rows={4}
+                    className="font-mono text-sm"
+                    data-testid="textarea-override-settings"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditBlockDialogOpen(false)}>
