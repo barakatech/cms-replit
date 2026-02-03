@@ -1124,6 +1124,188 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // BLOCK LIBRARY TEMPLATES API
+  // ============================================
+
+  app.get("/api/block-library-templates", async (req, res) => {
+    const templates = await storage.getBlockLibraryTemplates();
+    res.json(templates);
+  });
+
+  app.get("/api/block-library-templates/:id", async (req, res) => {
+    const template = await storage.getBlockLibraryTemplate(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: "Block library template not found" });
+    }
+    res.json(template);
+  });
+
+  app.post("/api/block-library-templates", async (req, res) => {
+    try {
+      const { name, blockType, blockDataJson } = req.body;
+      if (!name || !blockType) {
+        return res.status(400).json({ error: "Name and blockType are required" });
+      }
+      const template = await storage.createBlockLibraryTemplate({
+        name,
+        blockType,
+        blockDataJson: blockDataJson || {},
+      });
+      res.status(201).json(template);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create block library template" });
+    }
+  });
+
+  app.put("/api/block-library-templates/:id", async (req, res) => {
+    try {
+      const template = await storage.updateBlockLibraryTemplate(req.params.id, req.body);
+      if (!template) {
+        return res.status(404).json({ error: "Block library template not found" });
+      }
+      res.json(template);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update block library template" });
+    }
+  });
+
+  app.delete("/api/block-library-templates/:id", async (req, res) => {
+    const success = await storage.deleteBlockLibraryTemplate(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Block library template not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // TICKER CATALOG API
+  // ============================================
+
+  app.get("/api/ticker-catalog", async (req, res) => {
+    const entries = await storage.getTickerCatalog();
+    res.json(entries);
+  });
+
+  app.get("/api/ticker-catalog/:id", async (req, res) => {
+    const entry = await storage.getTickerCatalogEntry(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ error: "Ticker catalog entry not found" });
+    }
+    res.json(entry);
+  });
+
+  app.post("/api/ticker-catalog", async (req, res) => {
+    try {
+      const { ticker, displayName, category } = req.body;
+      if (!ticker || !/^[A-Za-z.]{1,6}$/.test(ticker)) {
+        return res.status(400).json({ error: "Invalid ticker format (1-6 characters A-Z, optional dot)" });
+      }
+      const existing = await storage.getTickerCatalogByTicker(ticker);
+      if (existing) {
+        return res.status(409).json({ error: "Ticker already exists" });
+      }
+      const entry = await storage.createTickerCatalogEntry({
+        ticker: ticker.toUpperCase(),
+        displayName,
+        category,
+      });
+      res.status(201).json(entry);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create ticker catalog entry" });
+    }
+  });
+
+  app.put("/api/ticker-catalog/:id", async (req, res) => {
+    try {
+      const entry = await storage.updateTickerCatalogEntry(req.params.id, req.body);
+      if (!entry) {
+        return res.status(404).json({ error: "Ticker catalog entry not found" });
+      }
+      res.json(entry);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update ticker catalog entry" });
+    }
+  });
+
+  app.delete("/api/ticker-catalog/:id", async (req, res) => {
+    const success = await storage.deleteTickerCatalogEntry(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Ticker catalog entry not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // NEWSLETTER BLOCK INSTANCES API
+  // ============================================
+
+  app.get("/api/newsletters/:id/blocks", async (req, res) => {
+    const blocks = await storage.getNewsletterBlockInstances(req.params.id);
+    res.json(blocks);
+  });
+
+  app.post("/api/newsletters/:id/blocks/add", async (req, res) => {
+    try {
+      const { blockType, blockDataJson, sortOrder } = req.body;
+      if (!blockType) {
+        return res.status(400).json({ error: "blockType is required" });
+      }
+      const blocks = await storage.getNewsletterBlockInstances(req.params.id);
+      const newSortOrder = sortOrder ?? blocks.length;
+      const instance = await storage.createNewsletterBlockInstance({
+        newsletterId: req.params.id,
+        blockType,
+        blockDataJson: blockDataJson || {},
+        sortOrder: newSortOrder,
+      });
+      res.status(201).json(instance);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to add block instance" });
+    }
+  });
+
+  app.post("/api/newsletters/:newsletterId/blocks/:blockId/update", async (req, res) => {
+    try {
+      const block = await storage.getNewsletterBlockInstance(req.params.blockId);
+      if (!block || block.newsletterId !== req.params.newsletterId) {
+        return res.status(404).json({ error: "Block instance not found" });
+      }
+      const updated = await storage.updateNewsletterBlockInstance(req.params.blockId, req.body);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update block instance" });
+    }
+  });
+
+  app.post("/api/newsletters/:newsletterId/blocks/:blockId/delete", async (req, res) => {
+    const block = await storage.getNewsletterBlockInstance(req.params.blockId);
+    if (!block || block.newsletterId !== req.params.newsletterId) {
+      return res.status(404).json({ error: "Block instance not found" });
+    }
+    const success = await storage.deleteNewsletterBlockInstance(req.params.blockId);
+    if (!success) {
+      return res.status(500).json({ error: "Failed to delete block instance" });
+    }
+    res.json({ success: true });
+  });
+
+  app.post("/api/newsletters/:id/blocks/reorder", async (req, res) => {
+    try {
+      const { orderedIds } = req.body;
+      if (!Array.isArray(orderedIds)) {
+        return res.status(400).json({ error: "orderedIds must be an array" });
+      }
+      const success = await storage.reorderNewsletterBlockInstances(req.params.id, orderedIds);
+      if (!success) {
+        return res.status(400).json({ error: "Failed to reorder blocks" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to reorder block instances" });
+    }
+  });
+
+  // ============================================
   // NEWSLETTERS API
   // ============================================
 
