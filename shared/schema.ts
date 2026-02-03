@@ -1488,6 +1488,16 @@ export interface CallToActionBlockSettings {
   buttonStyle: 'primary' | 'secondary' | 'outline';
 }
 
+export interface EducationCardSettings {
+  showExample: boolean;
+  showRelatedTerms: boolean;
+}
+
+export interface PromoBannerSettings {
+  showTermsText: boolean;
+  backgroundStyle: 'gradient' | 'image' | 'solid';
+}
+
 // Union type for all block settings
 export type NewsletterBlockSettings = 
   | IntroductionBlockSettings 
@@ -1573,6 +1583,8 @@ export interface Newsletter {
   id: string;
   subject: string;
   preheader: string;
+  issueNumber?: number;
+  issueDate?: string;
   templateId: string;
   contentBlocks: NewsletterContentBlock[];
   htmlOutput: string;

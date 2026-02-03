@@ -647,11 +647,11 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 function LivePreviewPanel({ newsletter, blocks }: { newsletter: Newsletter; blocks: NewsletterBlockInstance[] }) {
   const sortedBlocks = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
   
-  // Get issue info from newsletter_header block if exists
+  // Get issue info from newsletter or header block
   const headerBlock = sortedBlocks.find(b => b.blockType === 'newsletter_header');
-  const headerData = headerBlock?.data || {};
-  const issueNumber = headerData.issueNumber || 147;
-  const issueDate = headerData.issueDate || 'WEDNESDAY, FEB 4, 2026';
+  const headerData = headerBlock?.blockDataJson as { issueNumber?: number; issueDate?: string } || {};
+  const issueNumber = newsletter.issueNumber || headerData.issueNumber || 147;
+  const issueDate = newsletter.issueDate || headerData.issueDate || 'WEDNESDAY, FEB 4, 2026';
   
   return (
     <div className="bg-background rounded-lg overflow-hidden h-full flex flex-col">
@@ -1904,6 +1904,8 @@ export default function AdminNewsletterEdit() {
   const [editingSettings, setEditingSettings] = useState<{
     subject: string;
     preheader: string;
+    issueNumber: number;
+    issueDate: string;
     templateId: string;
     locale: 'en' | 'ar';
     status: NewsletterStatus;
@@ -1947,6 +1949,8 @@ export default function AdminNewsletterEdit() {
       setEditingSettings({
         subject: newsletter.subject || '',
         preheader: newsletter.preheader || '',
+        issueNumber: newsletter.issueNumber || 147,
+        issueDate: newsletter.issueDate || 'Wednesday, Feb 4, 2026',
         templateId: newsletter.templateId || '',
         locale: newsletter.locale || 'en',
         status: newsletter.status || 'draft',
@@ -1971,11 +1975,14 @@ export default function AdminNewsletterEdit() {
     updateSettingsMutation.mutate({
       subject: editingSettings.subject,
       preheader: editingSettings.preheader,
+      issueNumber: editingSettings.issueNumber,
+      issueDate: editingSettings.issueDate,
       templateId: editingSettings.templateId,
       locale: editingSettings.locale,
       status: editingSettings.status,
     });
   };
+
 
   // Fetch the newsletter template if available
   const { data: newsletterTemplate } = useQuery<{
@@ -2236,6 +2243,29 @@ export default function AdminNewsletterEdit() {
                           data-testid="input-preheader"
                         />
                         <p className="text-xs text-muted-foreground">{editingSettings.preheader.length}/120 characters</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="issueNumber">Issue Number</Label>
+                          <Input
+                            id="issueNumber"
+                            type="number"
+                            value={editingSettings.issueNumber}
+                            onChange={(e) => setEditingSettings({ ...editingSettings, issueNumber: parseInt(e.target.value) || 0 })}
+                            placeholder="147"
+                            data-testid="input-issue-number"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="issueDate">Issue Date</Label>
+                          <Input
+                            id="issueDate"
+                            value={editingSettings.issueDate}
+                            onChange={(e) => setEditingSettings({ ...editingSettings, issueDate: e.target.value })}
+                            placeholder="Wednesday, Feb 4, 2026"
+                            data-testid="input-issue-date"
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
