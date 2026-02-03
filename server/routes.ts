@@ -1296,64 +1296,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
-  // TICKER CATALOG API
-  // ============================================
-
-  app.get("/api/ticker-catalog", async (req, res) => {
-    const entries = await storage.getTickerCatalog();
-    res.json(entries);
-  });
-
-  app.get("/api/ticker-catalog/:id", async (req, res) => {
-    const entry = await storage.getTickerCatalogEntry(req.params.id);
-    if (!entry) {
-      return res.status(404).json({ error: "Ticker catalog entry not found" });
-    }
-    res.json(entry);
-  });
-
-  app.post("/api/ticker-catalog", async (req, res) => {
-    try {
-      const { ticker, displayName, category } = req.body;
-      if (!ticker || !/^[A-Za-z.]{1,6}$/.test(ticker)) {
-        return res.status(400).json({ error: "Invalid ticker format (1-6 characters A-Z, optional dot)" });
-      }
-      const existing = await storage.getTickerCatalogByTicker(ticker);
-      if (existing) {
-        return res.status(409).json({ error: "Ticker already exists" });
-      }
-      const entry = await storage.createTickerCatalogEntry({
-        ticker: ticker.toUpperCase(),
-        displayName,
-        category,
-      });
-      res.status(201).json(entry);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create ticker catalog entry" });
-    }
-  });
-
-  app.put("/api/ticker-catalog/:id", async (req, res) => {
-    try {
-      const entry = await storage.updateTickerCatalogEntry(req.params.id, req.body);
-      if (!entry) {
-        return res.status(404).json({ error: "Ticker catalog entry not found" });
-      }
-      res.json(entry);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update ticker catalog entry" });
-    }
-  });
-
-  app.delete("/api/ticker-catalog/:id", async (req, res) => {
-    const success = await storage.deleteTickerCatalogEntry(req.params.id);
-    if (!success) {
-      return res.status(404).json({ error: "Ticker catalog entry not found" });
-    }
-    res.json({ success: true });
-  });
-
-  // ============================================
   // NEWSLETTER BLOCK INSTANCES API
   // ============================================
 
