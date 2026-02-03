@@ -1,0 +1,185 @@
+You are over-engineering block management by introducing separate schema blocks / block editors / block libraries. Remove that approach.
+
+NON-NEGOTIABLE RULE
+
+All schema blocks must live under “Content Block Types” and must be editable ONLY inside the Newsletter Edit screen.
+There must be no standalone Block Editor, Schema Editor, or Block Library UI anywhere in the app.
+
+What to build
+1) Content Block Types (source of truth)
+
+Inside Newsletter Edit → Content Blocks:
+
+The Add Block dropdown must list all schema blocks:
+
+Hero
+
+Introduction
+
+Featured Content
+
+Articles List
+
+Stock Collection
+
+Assets Under $500
+
+What Users Picked
+
+Asset Highlight
+
+Term of the Day
+
+In Other News
+
+Call to Action
+
+Footer
+
+This list replaces all previous block libraries and schema editors.
+
+2) Editing behavior (CRITICAL)
+
+When I add a block from Content Block Types:
+
+The block is added to the newsletter immediately
+
+The block auto-expands
+
+I can edit all its schema fields inline
+
+This is the only place block fields can be edited
+
+There must be:
+
+No separate “Edit Block” screen
+
+No block configuration anywhere else in the app
+
+3) Schema-driven editing (inside newsletter only)
+
+Each block type has its schema rendered directly inside the newsletter edit page.
+
+Examples:
+
+Articles List block
+
+When added inside newsletter edit:
+
+Source Type: Internal | External
+
+Number of articles
+
+If Internal:
+
+Article selector dropdown (searchable)
+
+Manual or Latest
+
+If External:
+
+Repeating rows: title + URL + source
+
+Stock Collection block
+
+Mode: Manual | Dynamic
+
+Manual → stock picker dropdown + limit
+
+Dynamic → collection type + limit
+
+Hero block
+
+Title
+
+Content
+
+Image URL
+
+CTA text + URL
+
+CTA block
+
+Button text
+
+Button URL
+
+Same pattern applies to all blocks listed above.
+
+4) Architecture (important for implementation)
+
+Do NOT create a Block Editor
+
+Do NOT create Schema Blocks pages
+
+Do NOT create Block Library pages
+
+Instead:
+
+Store schema definitions in code (or DB) as Content Block Types
+
+Store actual values as Newsletter Block Instances
+
+Render schemas only inside Newsletter Edit
+
+5) Data model (simplified and correct)
+Newsletter
+
+id
+
+title
+
+status
+
+NewsletterBlock
+
+id
+
+newsletterId
+
+blockType (string)
+
+orderIndex
+
+values (JSON)
+
+Schema definitions:
+
+Live alongside code or DB as CONTENT_BLOCK_TYPES
+
+Used only to render forms inside newsletter edit
+
+6) UX requirements
+
+“Add Block” button at top of Content Blocks
+
+Drag-and-drop reorder
+
+Collapse / expand each block
+
+Delete block
+
+Autosave on change (or explicit Save)
+
+7) Acceptance test (must pass)
+
+I open Newsletter Edit
+
+I click Add Block
+
+I see all schema blocks
+
+I add Articles List
+
+It expands immediately
+
+I can select internal articles OR add external links
+
+I refresh the page — everything persists
+
+There is no other place in the app where blocks are edited
+
+Final instruction
+
+If you build any standalone block editor, schema editor, or block library page, that is incorrect.
+All block management must happen inside the Newsletter Edit screen only and within that also i do not want to edit my blocks via the block editor in the newsletter instead directly from the edit newsletter section itself.

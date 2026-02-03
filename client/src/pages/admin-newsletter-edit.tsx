@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -50,22 +49,17 @@ import {
   Newspaper,
   Search,
   MoreVertical,
-  Pencil,
   ChevronDown,
-  Layers,
-  Settings
+  Layers
 } from 'lucide-react';
 import type { 
   Newsletter, 
   NewsletterBlockInstance, 
   NewsletterBlockType, 
   NewsletterBlockData,
-  BlockLibraryTemplate,
-  StockPage,
-  SchemaBlockDefinition
+  StockPage
 } from '@shared/schema';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: string; icon: typeof TrendingUp; category: string }[] = [
   { type: 'hero', label: 'Hero', description: 'Main hero banner', icon: Image, category: 'Layout' },
@@ -757,7 +751,7 @@ function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlo
               <div key={idx} className="p-2 border rounded space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-muted-foreground">Item {idx + 1}</span>
-                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => {
+                  <Button size="sm" variant="ghost" onClick={() => {
                     const items = [...newsItems];
                     items.splice(idx, 1);
                     updateField('newsItems', items);
@@ -924,6 +918,94 @@ function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlo
         </div>
       );
 
+    case 'hero':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Title</Label>
+            <Input
+              value={data.title as string || ''}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="Newsletter headline"
+              data-testid="inline-input-title"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Subtitle</Label>
+            <Input
+              value={data.subtitle as string || ''}
+              onChange={(e) => updateField('subtitle', e.target.value)}
+              placeholder="Brief subtitle"
+              data-testid="inline-input-subtitle"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Image URL</Label>
+            <Input
+              value={data.imageUrl as string || ''}
+              onChange={(e) => updateField('imageUrl', e.target.value)}
+              placeholder="/attached_assets/..."
+              data-testid="inline-input-imageUrl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA Text</Label>
+              <Input
+                value={data.ctaText as string || ''}
+                onChange={(e) => updateField('ctaText', e.target.value)}
+                placeholder="Button text"
+                data-testid="inline-input-ctaText"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">CTA URL</Label>
+              <Input
+                value={data.ctaUrl as string || ''}
+                onChange={(e) => updateField('ctaUrl', e.target.value)}
+                placeholder="https://..."
+                data-testid="inline-input-ctaUrl"
+              />
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'footer':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Legal Text</Label>
+            <Textarea
+              value={data.legalText as string || ''}
+              onChange={(e) => updateField('legalText', e.target.value)}
+              placeholder="Securities trading involves risk..."
+              rows={3}
+              data-testid="inline-input-legalText"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Company Info</Label>
+            <Textarea
+              value={data.body as string || ''}
+              onChange={(e) => updateField('body', e.target.value)}
+              placeholder="You're receiving this email because..."
+              rows={2}
+              data-testid="inline-input-body"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Unsubscribe Text</Label>
+            <Input
+              value={data.unsubscribeText as string || 'Unsubscribe'}
+              onChange={(e) => updateField('unsubscribeText', e.target.value)}
+              placeholder="Unsubscribe"
+              data-testid="inline-input-unsubscribeText"
+            />
+          </div>
+        </div>
+      );
+
     default:
       return (
         <div className="space-y-3">
@@ -979,25 +1061,30 @@ export default function AdminNewsletterEdit() {
   const { toast } = useToast();
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
-  const [editingBlock, setEditingBlock] = useState<NewsletterBlockInstance | null>(null);
-  const [addBlockDialogOpen, setAddBlockDialogOpen] = useState(false);
-  const [editBlockDialogOpen, setEditBlockDialogOpen] = useState(false);
-  const [blockEditorData, setBlockEditorData] = useState<NewsletterBlockData>({});
   const [selectedBlockType, setSelectedBlockType] = useState<NewsletterBlockType>('introduction');
-  const [overrideSettingsString, setOverrideSettingsString] = useState<string>('{}');
-  const [showOverrideSettings, setShowOverrideSettings] = useState(false);
   const [stockSearchQuery, setStockSearchQuery] = useState('');
   const [articleSearchQuery, setArticleSearchQuery] = useState('');
-  const [addBlockMode, setAddBlockMode] = useState<'schema' | 'custom'>('schema');
-  const [selectedSchemaDefinition, setSelectedSchemaDefinition] = useState<string>('');
-  const [editingSchemaDefinition, setEditingSchemaDefinition] = useState<SchemaBlockDefinition | null>(null);
-  const [schemaDefEditDialogOpen, setSchemaDefEditDialogOpen] = useState(false);
-  const [schemaDefFormData, setSchemaDefFormData] = useState({
-    name: '',
-    description: '',
-    defaultSchemaJson: '{}',
-    defaultSettingsJson: '{}',
-  });
+  const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
+
+  const toggleBlockExpanded = (blockId: string) => {
+    setExpandedBlocks(prev => {
+      const next = new Set(prev);
+      if (next.has(blockId)) {
+        next.delete(blockId);
+      } else {
+        next.add(blockId);
+      }
+      return next;
+    });
+  };
+
+  const expandBlock = (blockId: string) => {
+    setExpandedBlocks(prev => {
+      const next = new Set(prev);
+      next.add(blockId);
+      return next;
+    });
+  };
 
   const newsletterId = params.id;
 
@@ -1073,20 +1160,12 @@ export default function AdminNewsletterEdit() {
     enabled: !!newsletterId,
   });
 
-  const { data: libraryTemplates } = useQuery<BlockLibraryTemplate[]>({
-    queryKey: ['/api/block-library-templates'],
-  });
-
   const { data: stockPages } = useQuery<StockPage[]>({
     queryKey: ['/api/stock-pages'],
   });
 
   const { data: blogPosts } = useQuery<Array<{ id: string; title_en: string; excerpt_en?: string; featuredImageUrl?: string; slug: string }>>({
     queryKey: ['/api/blog-posts'],
-  });
-
-  const { data: schemaDefinitions } = useQuery<SchemaBlockDefinition[]>({
-    queryKey: ['/api/schema-block-definitions'],
   });
 
   const filteredStocks = stockSearchQuery.length >= 2 && stockPages 
@@ -1105,11 +1184,16 @@ export default function AdminNewsletterEdit() {
   const addBlockMutation = useMutation({
     mutationFn: (data: { blockType: NewsletterBlockType; blockDataJson: NewsletterBlockData }) => 
       apiRequest('POST', `/api/newsletters/${newsletterId}/blocks/add`, data),
-    onSuccess: () => {
-      refetchBlocks();
+    onSuccess: async (response) => {
+      const result = await refetchBlocks();
+      // Auto-expand the newly added block (it will be at the end)
+      if (result.data && result.data.length > 0) {
+        const newBlock = result.data[result.data.length - 1];
+        if (newBlock?.id) {
+          expandBlock(newBlock.id);
+        }
+      }
       toast({ title: 'Block added' });
-      setAddBlockDialogOpen(false);
-      setBlockEditorData({});
     },
     onError: () => toast({ title: 'Failed to add block', variant: 'destructive' }),
   });
@@ -1119,10 +1203,6 @@ export default function AdminNewsletterEdit() {
       apiRequest('POST', `/api/newsletters/${newsletterId}/blocks/${blockId}/update`, data),
     onSuccess: () => {
       refetchBlocks();
-      toast({ title: 'Block updated' });
-      setEditBlockDialogOpen(false);
-      setEditingBlock(null);
-      setBlockEditorData({});
     },
     onError: () => toast({ title: 'Failed to update block', variant: 'destructive' }),
   });
@@ -1147,48 +1227,6 @@ export default function AdminNewsletterEdit() {
     onError: () => toast({ title: 'Failed to reorder blocks', variant: 'destructive' }),
   });
 
-  const updateSchemaDefMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name: string; description: string; defaultSchemaJson: Record<string, unknown>; defaultSettingsJson: Record<string, unknown> } }) =>
-      apiRequest('PUT', `/api/schema-block-definitions/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/schema-block-definitions'] });
-      toast({ title: 'Schema definition updated' });
-      setSchemaDefEditDialogOpen(false);
-      setEditingSchemaDefinition(null);
-    },
-    onError: () => toast({ title: 'Failed to update schema definition', variant: 'destructive' }),
-  });
-
-  const handleEditSchemaDefinition = (def: SchemaBlockDefinition) => {
-    setEditingSchemaDefinition(def);
-    setSchemaDefFormData({
-      name: def.name,
-      description: def.description || '',
-      defaultSchemaJson: JSON.stringify(def.defaultSchemaJson || {}, null, 2),
-      defaultSettingsJson: JSON.stringify(def.defaultSettingsJson || {}, null, 2),
-    });
-    setSchemaDefEditDialogOpen(true);
-  };
-
-  const handleSaveSchemaDefinition = () => {
-    if (!editingSchemaDefinition) return;
-    try {
-      const schemaJson = JSON.parse(schemaDefFormData.defaultSchemaJson);
-      const settingsJson = JSON.parse(schemaDefFormData.defaultSettingsJson);
-      updateSchemaDefMutation.mutate({
-        id: editingSchemaDefinition.id,
-        data: {
-          name: schemaDefFormData.name,
-          description: schemaDefFormData.description,
-          defaultSchemaJson: schemaJson,
-          defaultSettingsJson: settingsJson,
-        },
-      });
-    } catch {
-      toast({ title: 'Invalid JSON format', variant: 'destructive' });
-    }
-  };
-
   const handleMoveBlock = (index: number, direction: 'up' | 'down') => {
     if (!blockInstances) return;
     const newIndex = direction === 'up' ? index - 1 : index + 1;
@@ -1201,50 +1239,6 @@ export default function AdminNewsletterEdit() {
     reorderBlocksMutation.mutate(sortedBlocks.map(b => b.id));
   };
 
-  const handleEditBlock = (block: NewsletterBlockInstance) => {
-    setEditingBlock(block);
-    setBlockEditorData(block.blockDataJson);
-    setOverrideSettingsString(JSON.stringify(block.overrideSettingsJson || {}, null, 2));
-    setShowOverrideSettings(Object.keys(block.overrideSettingsJson || {}).length > 0);
-    setEditBlockDialogOpen(true);
-  };
-
-  const handleAddBlock = () => {
-    if (addBlockMode === 'schema' && selectedSchemaDefinition) {
-      const schemaDef = schemaDefinitions?.find(s => s.id === selectedSchemaDefinition);
-      if (schemaDef) {
-        const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
-        addBlockMutation.mutate({
-          blockType: schemaDef.blockType,
-          blockDataJson: { ...defaultData, ...blockEditorData },
-        });
-      }
-    } else {
-      addBlockMutation.mutate({
-        blockType: selectedBlockType,
-        blockDataJson: blockEditorData,
-      });
-    }
-  };
-
-  const handleSchemaDefinitionSelect = (definitionId: string) => {
-    setSelectedSchemaDefinition(definitionId);
-    const schemaDef = schemaDefinitions?.find(s => s.id === definitionId);
-    if (schemaDef) {
-      setSelectedBlockType(schemaDef.blockType);
-      const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
-      setBlockEditorData(defaultData);
-    }
-  };
-
-  const handleQuickAddSchemaBlock = (schemaDef: SchemaBlockDefinition) => {
-    const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
-    addBlockMutation.mutate({
-      blockType: schemaDef.blockType,
-      blockDataJson: defaultData,
-    });
-  };
-
   const handleQuickAddCustomBlock = (blockType: NewsletterBlockType) => {
     const defaultData = getBlockDataWithTemplateDefaults(blockType);
     addBlockMutation.mutate({
@@ -1253,1089 +1247,6 @@ export default function AdminNewsletterEdit() {
     });
   };
 
-  const handleSaveBlock = () => {
-    if (!editingBlock) return;
-    
-    let parsedOverrides: Record<string, unknown> = {};
-    if (showOverrideSettings && overrideSettingsString.trim()) {
-      try {
-        parsedOverrides = JSON.parse(overrideSettingsString);
-      } catch {
-        toast({ title: 'Invalid JSON in override settings', variant: 'destructive' });
-        return;
-      }
-    }
-    
-    updateBlockMutation.mutate({
-      blockId: editingBlock.id,
-      data: { 
-        blockDataJson: blockEditorData,
-        overrideSettingsJson: parsedOverrides,
-      },
-    });
-  };
-
-  const handleInsertFromLibrary = (template: BlockLibraryTemplate) => {
-    addBlockMutation.mutate({
-      blockType: template.blockType,
-      blockDataJson: template.blockDataJson,
-    });
-  };
-
-  const renderBlockEditor = (blockType: NewsletterBlockType, data: NewsletterBlockData, isNew: boolean) => {
-    const updateData = (key: string, value: unknown) => {
-      setBlockEditorData({ ...data, [key]: value });
-    };
-
-    const d = data as Record<string, unknown>;
-
-    switch (blockType) {
-      case 'introduction':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="Welcome to this week's newsletter"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Input
-                value={d.subtitle as string || ''}
-                onChange={(e) => updateData('subtitle', e.target.value)}
-                placeholder="Your weekly market update"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Body</Label>
-              <Textarea
-                value={d.body as string || ''}
-                onChange={(e) => updateData('body', e.target.value)}
-                placeholder="Introduction text..."
-                rows={3}
-              />
-            </div>
-          </div>
-        );
-
-      case 'featured_content':
-      case 'articles_list':
-        const sourceType = (d.sourceType as string) || 'internal';
-        const selectionMode = (d.selectionMode as string) || 'manual';
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder={blockType === 'featured_content' ? 'Featured This Week' : 'Latest Articles'}
-                data-testid="input-block-title"
-              />
-            </div>
-
-            {/* Source Type Toggle */}
-            <div className="space-y-2">
-              <Label>Source Type</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant={sourceType === 'internal' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateData('sourceType', 'internal')}
-                  data-testid="button-source-internal"
-                >
-                  Internal Articles
-                </Button>
-                <Button
-                  variant={sourceType === 'external' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateData('sourceType', 'external')}
-                  data-testid="button-source-external"
-                >
-                  External Links
-                </Button>
-              </div>
-            </div>
-
-            {/* Number of Articles */}
-            <div className="space-y-2">
-              <Label>Number of Articles</Label>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={d.numberOfArticles as number || 5}
-                onChange={(e) => updateData('numberOfArticles', parseInt(e.target.value) || 5)}
-                data-testid="input-number-articles"
-              />
-            </div>
-
-            {/* Internal Source UI */}
-            {sourceType === 'internal' && (
-              <>
-                <div className="space-y-2">
-                  <Label>Selection Mode</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={selectionMode === 'manual' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => updateData('selectionMode', 'manual')}
-                      data-testid="button-selection-manual"
-                    >
-                      Manual Selection
-                    </Button>
-                    <Button
-                      variant={selectionMode === 'latest' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => updateData('selectionMode', 'latest')}
-                      data-testid="button-selection-latest"
-                    >
-                      Latest Articles
-                    </Button>
-                  </div>
-                </div>
-
-                {selectionMode === 'manual' && (
-                  <div className="space-y-2">
-                    <Label>Select Articles</Label>
-                    <Input
-                      placeholder="Search articles by title..."
-                      value={articleSearchQuery}
-                      onChange={(e) => setArticleSearchQuery(e.target.value)}
-                      data-testid="input-article-search"
-                    />
-                    {articleSearchQuery && filteredArticles && filteredArticles.length > 0 && (
-                      <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
-                        {filteredArticles.slice(0, 5).map(article => (
-                          <div
-                            key={article.id}
-                            className="p-2 hover-elevate cursor-pointer text-sm"
-                            onClick={() => {
-                              const articles = (d.articles as Array<Record<string, unknown>>) || [];
-                              const numLimit = (d.numberOfArticles as number) || 5;
-                              if (articles.length >= numLimit) {
-                                return; // Already at limit
-                              }
-                              updateData('articles', [...articles, {
-                                articleId: article.id,
-                                articleTitle: article.title_en,
-                                articleExcerpt: article.excerpt_en || '',
-                                articleImageUrl: article.featuredImageUrl || '',
-                                articleUrl: `/blog/${article.slug}`,
-                              }]);
-                              setArticleSearchQuery('');
-                            }}
-                          >
-                            {article.title_en}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {/* Selected articles as chips */}
-                    <div className="flex flex-wrap gap-2">
-                      {((d.articles as Array<Record<string, unknown>>) || []).map((article, idx) => (
-                        <Badge key={idx} variant="secondary" className="gap-1 pr-1">
-                          <span className="text-xs truncate max-w-[150px]">{article.articleTitle as string}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-4 w-4 p-0"
-                            onClick={() => {
-                              const articles = [...((d.articles as Array<Record<string, unknown>>) || [])];
-                              articles.splice(idx, 1);
-                              updateData('articles', articles);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                    {((d.articles as Array<Record<string, unknown>>) || []).length >= ((d.numberOfArticles as number) || 5) && (
-                      <p className="text-sm text-amber-600">Maximum articles selected</p>
-                    )}
-                  </div>
-                )}
-
-                {selectionMode === 'latest' && (
-                  <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
-                    <Label className="text-sm font-medium">Latest Filters</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Category</Label>
-                        <Select
-                          value={(d.latestFilters as Record<string, unknown>)?.category as string || 'all'}
-                          onValueChange={(value) => updateData('latestFilters', { ...(d.latestFilters as Record<string, unknown> || {}), category: value === 'all' ? undefined : value })}
-                        >
-                          <SelectTrigger data-testid="select-category">
-                            <SelectValue placeholder="Any category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Any</SelectItem>
-                            <SelectItem value="markets">Markets</SelectItem>
-                            <SelectItem value="investing">Investing</SelectItem>
-                            <SelectItem value="economy">Economy</SelectItem>
-                            <SelectItem value="tech">Technology</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Locale</Label>
-                        <Select
-                          value={(d.latestFilters as Record<string, unknown>)?.locale as string || 'all'}
-                          onValueChange={(value) => updateData('latestFilters', { ...(d.latestFilters as Record<string, unknown> || {}), locale: value === 'all' ? undefined : value })}
-                        >
-                          <SelectTrigger data-testid="select-locale">
-                            <SelectValue placeholder="Any locale" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Any</SelectItem>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="ar">Arabic</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* External Source UI */}
-            {sourceType === 'external' && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>External Articles</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const items = (d.externalItems as Array<Record<string, unknown>>) || [];
-                      updateData('externalItems', [...items, { title: '', source: '', url: '', imageUrl: '' }]);
-                    }}
-                    data-testid="button-add-external"
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Add Link
-                  </Button>
-                </div>
-                {((d.externalItems as Array<Record<string, unknown>>) || []).map((item, idx) => (
-                  <div key={idx} className="p-3 border rounded-lg space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs text-muted-foreground">Article {idx + 1}</Label>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
-                          items.splice(idx, 1);
-                          updateData('externalItems', items);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <Input
-                      value={item.title as string || ''}
-                      onChange={(e) => {
-                        const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
-                        items[idx] = { ...items[idx], title: e.target.value };
-                        updateData('externalItems', items);
-                      }}
-                      placeholder="Article title"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        value={item.source as string || ''}
-                        onChange={(e) => {
-                          const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
-                          items[idx] = { ...items[idx], source: e.target.value };
-                          updateData('externalItems', items);
-                        }}
-                        placeholder="Source (e.g., Bloomberg)"
-                      />
-                      <Input
-                        value={item.url as string || ''}
-                        onChange={(e) => {
-                          const items = [...((d.externalItems as Array<Record<string, unknown>>) || [])];
-                          items[idx] = { ...items[idx], url: e.target.value };
-                          updateData('externalItems', items);
-                        }}
-                        placeholder="https://..."
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-
-      case 'stock_collection':
-        const stockMode = (d.mode as string) || 'manual';
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="Stock Collection"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={d.description as string || ''}
-                onChange={(e) => updateData('description', e.target.value)}
-                placeholder="Brief description..."
-                rows={2}
-              />
-            </div>
-
-            {/* Mode Toggle */}
-            <div className="space-y-2">
-              <Label>Mode</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant={stockMode === 'manual' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateData('mode', 'manual')}
-                  data-testid="button-mode-manual"
-                >
-                  Manual Selection
-                </Button>
-                <Button
-                  variant={stockMode === 'dynamic' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => updateData('mode', 'dynamic')}
-                  data-testid="button-mode-dynamic"
-                >
-                  Dynamic
-                </Button>
-              </div>
-            </div>
-
-            {/* Limit */}
-            <div className="space-y-2">
-              <Label>Limit</Label>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={d.limit as number || 5}
-                onChange={(e) => updateData('limit', parseInt(e.target.value) || 5)}
-                data-testid="input-limit"
-              />
-            </div>
-
-            {/* Manual Mode - Stock Search */}
-            {stockMode === 'manual' && (
-              <div className="space-y-2">
-                <Label>Select Stocks</Label>
-                <Input
-                  placeholder="Search stocks by ticker or name..."
-                  value={stockSearchQuery}
-                  onChange={(e) => setStockSearchQuery(e.target.value)}
-                  data-testid="input-stock-search"
-                />
-                {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
-                  <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
-                    {filteredStocks.slice(0, 5).map(stock => (
-                      <div
-                        key={stock.id}
-                        className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
-                        onClick={() => {
-                          const stocks = (d.stocks as Array<Record<string, unknown>>) || [];
-                          updateData('stocks', [...stocks, {
-                            stockId: stock.id,
-                            ticker: stock.ticker,
-                            companyName: stock.companyName_en,
-                            note: '',
-                          }]);
-                          setStockSearchQuery('');
-                        }}
-                      >
-                        <span className="font-medium">{stock.ticker}</span>
-                        <span className="text-muted-foreground">{stock.companyName_en}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {/* Selected stocks as chips */}
-                <div className="flex flex-wrap gap-2">
-                  {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
-                    <Badge key={idx} variant="secondary" className="gap-1 pr-1">
-                      <span className="font-medium text-xs">{stock.ticker as string}</span>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-4 w-4 p-0"
-                        onClick={() => {
-                          const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
-                          stocks.splice(idx, 1);
-                          updateData('stocks', stocks);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dynamic Mode - Type and Filters */}
-            {stockMode === 'dynamic' && (
-              <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
-                <div className="space-y-2">
-                  <Label>Dynamic Type</Label>
-                  <Select
-                    value={d.dynamicType as string || 'top_traded'}
-                    onValueChange={(value) => updateData('dynamicType', value)}
-                  >
-                    <SelectTrigger data-testid="select-dynamic-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="top_traded">Top Traded</SelectItem>
-                      <SelectItem value="top_gainers">Top Gainers</SelectItem>
-                      <SelectItem value="top_losers">Top Losers</SelectItem>
-                      <SelectItem value="most_viewed">Most Viewed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Market</Label>
-                    <Select
-                      value={(d.filters as Record<string, unknown>)?.market as string || 'all'}
-                      onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), market: value === 'all' ? undefined : value })}
-                    >
-                      <SelectTrigger data-testid="select-market">
-                        <SelectValue placeholder="Any" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any</SelectItem>
-                        <SelectItem value="US">US</SelectItem>
-                        <SelectItem value="UAE">UAE</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Asset Type</Label>
-                    <Select
-                      value={(d.filters as Record<string, unknown>)?.assetType as string || 'all'}
-                      onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), assetType: value === 'all' ? undefined : value })}
-                    >
-                      <SelectTrigger data-testid="select-asset-type">
-                        <SelectValue placeholder="Any" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any</SelectItem>
-                        <SelectItem value="stock">Stocks</SelectItem>
-                        <SelectItem value="etf">ETFs</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'assets_under_500':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="Assets Under $500"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={d.description as string || ''}
-                onChange={(e) => updateData('description', e.target.value)}
-                placeholder="Brief description..."
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Max Price ($)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={d.maxPrice as number || 500}
-                  onChange={(e) => updateData('maxPrice', parseInt(e.target.value) || 500)}
-                  data-testid="input-max-price"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Limit</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={d.limit as number || 5}
-                  onChange={(e) => updateData('limit', parseInt(e.target.value) || 5)}
-                  data-testid="input-limit"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Sort By</Label>
-              <Select
-                value={d.sortBy as string || 'volume'}
-                onValueChange={(value) => updateData('sortBy', value)}
-              >
-                <SelectTrigger data-testid="select-sort-by">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="volume">Volume</SelectItem>
-                  <SelectItem value="performance">Performance</SelectItem>
-                  <SelectItem value="popularity">Popularity</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Market</Label>
-                <Select
-                  value={(d.filters as Record<string, unknown>)?.market as string || 'all'}
-                  onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), market: value === 'all' ? undefined : value })}
-                >
-                  <SelectTrigger data-testid="select-market">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any</SelectItem>
-                    <SelectItem value="US">US</SelectItem>
-                    <SelectItem value="UAE">UAE</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Asset Type</Label>
-                <Select
-                  value={(d.filters as Record<string, unknown>)?.assetType as string || 'all'}
-                  onValueChange={(value) => updateData('filters', { ...(d.filters as Record<string, unknown> || {}), assetType: value === 'all' ? undefined : value })}
-                >
-                  <SelectTrigger data-testid="select-asset-type">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any</SelectItem>
-                    <SelectItem value="stock">Stocks</SelectItem>
-                    <SelectItem value="etf">ETFs</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            {/* Manual stock selection for overrides */}
-            <div className="space-y-2">
-              <Label>Manual Stock Overrides (optional)</Label>
-              <Input
-                placeholder="Search stocks..."
-                value={stockSearchQuery}
-                onChange={(e) => setStockSearchQuery(e.target.value)}
-                data-testid="input-stock-search"
-              />
-              {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
-                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
-                  {filteredStocks.slice(0, 5).map(stock => (
-                    <div
-                      key={stock.id}
-                      className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
-                      onClick={() => {
-                        const stocks = (d.stocks as Array<Record<string, unknown>>) || [];
-                        updateData('stocks', [...stocks, {
-                          stockId: stock.id,
-                          ticker: stock.ticker,
-                          companyName: stock.companyName_en,
-                        }]);
-                        setStockSearchQuery('');
-                      }}
-                    >
-                      <span className="font-medium">{stock.ticker}</span>
-                      <span className="text-muted-foreground">{stock.companyName_en}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
-                  <Badge key={idx} variant="secondary" className="gap-1 pr-1">
-                    <span className="font-medium text-xs">{stock.ticker as string}</span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-4 w-4 p-0"
-                      onClick={() => {
-                        const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
-                        stocks.splice(idx, 1);
-                        updateData('stocks', stocks);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'what_users_picked':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="What Users Picked"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={d.description as string || ''}
-                onChange={(e) => updateData('description', e.target.value)}
-                placeholder="Brief description..."
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Time Window</Label>
-                <Select
-                  value={d.timeWindow as string || '7d'}
-                  onValueChange={(value) => updateData('timeWindow', value)}
-                >
-                  <SelectTrigger data-testid="select-time-window">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="24h">Last 24 Hours</SelectItem>
-                    <SelectItem value="7d">Last 7 Days</SelectItem>
-                    <SelectItem value="30d">Last 30 Days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Limit</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={d.limit as number || 5}
-                  onChange={(e) => updateData('limit', parseInt(e.target.value) || 5)}
-                  data-testid="input-limit"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Market Filter</Label>
-              <Select
-                value={(d.filters as Record<string, unknown>)?.market as string || 'all'}
-                onValueChange={(value) => updateData('filters', { market: value === 'all' ? undefined : value })}
-              >
-                <SelectTrigger data-testid="select-market">
-                  <SelectValue placeholder="Any" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Any</SelectItem>
-                  <SelectItem value="US">US</SelectItem>
-                  <SelectItem value="UAE">UAE</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Manual stock selection for overrides */}
-            <div className="space-y-2">
-              <Label>Manual Stock Overrides (optional)</Label>
-              <Input
-                placeholder="Search stocks..."
-                value={stockSearchQuery}
-                onChange={(e) => setStockSearchQuery(e.target.value)}
-                data-testid="input-stock-search"
-              />
-              {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
-                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
-                  {filteredStocks.slice(0, 5).map(stock => (
-                    <div
-                      key={stock.id}
-                      className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
-                      onClick={() => {
-                        const stocks = (d.stocks as Array<Record<string, unknown>>) || [];
-                        updateData('stocks', [...stocks, {
-                          stockId: stock.id,
-                          ticker: stock.ticker,
-                          companyName: stock.companyName_en,
-                        }]);
-                        setStockSearchQuery('');
-                      }}
-                    >
-                      <span className="font-medium">{stock.ticker}</span>
-                      <span className="text-muted-foreground">{stock.companyName_en}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {((d.stocks as Array<Record<string, unknown>>) || []).map((stock, idx) => (
-                  <Badge key={idx} variant="secondary" className="gap-1 pr-1">
-                    <span className="font-medium text-xs">{stock.ticker as string}</span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-4 w-4 p-0"
-                      onClick={() => {
-                        const stocks = [...((d.stocks as Array<Record<string, unknown>>) || [])];
-                        stocks.splice(idx, 1);
-                        updateData('stocks', stocks);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'asset_highlight':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="Asset Highlight"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Select Stock</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Search stocks..."
-                  value={stockSearchQuery}
-                  onChange={(e) => setStockSearchQuery(e.target.value)}
-                  data-testid="input-stock-search"
-                />
-              </div>
-              {stockSearchQuery && filteredStocks && filteredStocks.length > 0 && (
-                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
-                  {filteredStocks.slice(0, 5).map(stock => (
-                    <div
-                      key={stock.id}
-                      className="p-2 hover-elevate cursor-pointer text-sm flex justify-between"
-                      onClick={() => {
-                        updateData('stockId', stock.id);
-                        updateData('ticker', stock.ticker);
-                        updateData('companyName', stock.companyName_en);
-                        setStockSearchQuery('');
-                      }}
-                    >
-                      <span className="font-medium">{stock.ticker}</span>
-                      <span className="text-muted-foreground">{stock.companyName_en}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {typeof d.ticker === 'string' && d.ticker && (
-                <div className="p-2 border rounded-lg flex items-center gap-2">
-                  <span className="font-medium">{d.ticker}</span>
-                  <span className="text-muted-foreground">{typeof d.companyName === 'string' ? d.companyName : ''}</span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={d.description as string || ''}
-                onChange={(e) => updateData('description', e.target.value)}
-                placeholder="Why this stock matters..."
-                rows={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Why It Matters</Label>
-              <Textarea
-                value={d.whyItMatters as string || ''}
-                onChange={(e) => updateData('whyItMatters', e.target.value)}
-                placeholder="Key reasons to watch..."
-                rows={2}
-              />
-            </div>
-          </div>
-        );
-
-      case 'term_of_the_day':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Term *</Label>
-              <Input
-                value={d.term as string || ''}
-                onChange={(e) => updateData('term', e.target.value)}
-                placeholder="e.g., Dividend Yield"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Definition *</Label>
-              <Textarea
-                value={d.definition as string || ''}
-                onChange={(e) => updateData('definition', e.target.value)}
-                placeholder="Clear definition..."
-                rows={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Example</Label>
-              <Textarea
-                value={d.example as string || ''}
-                onChange={(e) => updateData('example', e.target.value)}
-                placeholder="Real-world example..."
-                rows={2}
-              />
-            </div>
-          </div>
-        );
-
-      case 'in_other_news':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="In Other News"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>News Items</Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const newsItems = (d.newsItems as Array<Record<string, unknown>>) || [];
-                  updateData('newsItems', [...newsItems, { headline: '', source: '', url: '', summary: '' }]);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add News Item
-              </Button>
-              {((d.newsItems as Array<Record<string, unknown>>) || []).map((item, idx) => (
-                <div key={idx} className="p-3 border rounded-lg space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Item {idx + 1}</Label>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => {
-                        const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
-                        newsItems.splice(idx, 1);
-                        updateData('newsItems', newsItems);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Input
-                    value={item.headline as string || ''}
-                    onChange={(e) => {
-                      const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
-                      newsItems[idx] = { ...newsItems[idx], headline: e.target.value };
-                      updateData('newsItems', newsItems);
-                    }}
-                    placeholder="Headline"
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      value={item.source as string || ''}
-                      onChange={(e) => {
-                        const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
-                        newsItems[idx] = { ...newsItems[idx], source: e.target.value };
-                        updateData('newsItems', newsItems);
-                      }}
-                      placeholder="Source"
-                    />
-                    <Input
-                      value={item.url as string || ''}
-                      onChange={(e) => {
-                        const newsItems = [...((d.newsItems as Array<Record<string, unknown>>) || [])];
-                        newsItems[idx] = { ...newsItems[idx], url: e.target.value };
-                        updateData('newsItems', newsItems);
-                      }}
-                      placeholder="URL"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'call_to_action':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="Ready to start investing?"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Input
-                value={d.subtitle as string || ''}
-                onChange={(e) => updateData('subtitle', e.target.value)}
-                placeholder="Join thousands of investors..."
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Button Text *</Label>
-                <Input
-                  value={d.buttonText as string || ''}
-                  onChange={(e) => updateData('buttonText', e.target.value)}
-                  placeholder="Get Started"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Button URL *</Label>
-                <Input
-                  value={d.buttonUrl as string || ''}
-                  onChange={(e) => updateData('buttonUrl', e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'hero':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input
-                value={d.title as string || ''}
-                onChange={(e) => updateData('title', e.target.value)}
-                placeholder="Weekly Market Update"
-                data-testid="input-block-title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Subtitle</Label>
-              <Input
-                value={d.subtitle as string || ''}
-                onChange={(e) => updateData('subtitle', e.target.value)}
-                placeholder="Your essential market insights"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input
-                value={d.imageUrl as string || ''}
-                onChange={(e) => updateData('imageUrl', e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>CTA Text</Label>
-                <Input
-                  value={d.ctaText as string || ''}
-                  onChange={(e) => updateData('ctaText', e.target.value)}
-                  placeholder="Learn More"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>CTA URL</Label>
-                <Input
-                  value={d.ctaUrl as string || ''}
-                  onChange={(e) => updateData('ctaUrl', e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'footer':
-        return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Legal Text</Label>
-              <Textarea
-                value={d.legalText as string || ''}
-                onChange={(e) => updateData('legalText', e.target.value)}
-                placeholder="Securities trading involves risk..."
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Company Info</Label>
-              <Textarea
-                value={d.body as string || ''}
-                onChange={(e) => updateData('body', e.target.value)}
-                placeholder="You're receiving this email because you subscribed..."
-                rows={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Unsubscribe Text</Label>
-              <Input
-                value={d.unsubscribeText as string || 'Unsubscribe'}
-                onChange={(e) => updateData('unsubscribeText', e.target.value)}
-                placeholder="Unsubscribe"
-              />
-            </div>
-          </div>
-        );
-
-      default:
-        return (
-          <div className="text-sm text-muted-foreground p-4 border rounded-lg">
-            Block content editor. Configure the block data below.
-            <Textarea
-              className="mt-2 font-mono text-xs"
-              value={JSON.stringify(data, null, 2)}
-              onChange={(e) => {
-                try {
-                  setBlockEditorData(JSON.parse(e.target.value));
-                } catch {
-                  // Invalid JSON, ignore
-                }
-              }}
-              rows={8}
-            />
-          </div>
-        );
-    }
-  };
 
   if (newsletterLoading) {
     return (
@@ -2419,7 +1330,7 @@ export default function AdminNewsletterEdit() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-72">
-                  <DropdownMenuLabel>Content Block Types {newsletterTemplate ? `(${newsletterTemplate.name})` : ''}</DropdownMenuLabel>
+                  <DropdownMenuLabel>Content Block Types</DropdownMenuLabel>
                   {availableBlockTypes.map((blockType) => (
                     <DropdownMenuItem
                       key={blockType.type}
@@ -2445,177 +1356,96 @@ export default function AdminNewsletterEdit() {
                   ))}
                 </div>
               ) : sortedBlocks.length > 0 ? (
-                <div className="space-y-4">
-                  {sortedBlocks.map((block, index) => (
-                    <div
-                      key={block.id}
-                      className="p-4 border rounded-lg bg-card"
-                      data-testid={`block-instance-${block.id}`}
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                        <Badge variant="secondary" className="text-xs">
-                          {getBlockTypeLabel(block.blockType)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          #{block.sortOrder + 1}
-                        </span>
-                        <div className="flex-1" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              data-testid={`button-block-menu-${block.id}`}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleEditBlock(block)}
-                              data-testid={`menu-edit-${block.id}`}
-                            >
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Edit in Dialog
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              disabled={index === 0}
-                              onClick={() => handleMoveBlock(index, 'up')}
-                              data-testid={`menu-move-up-${block.id}`}
-                            >
-                              <ArrowUp className="h-4 w-4 mr-2" />
-                              Move Up
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              disabled={index === sortedBlocks.length - 1}
-                              onClick={() => handleMoveBlock(index, 'down')}
-                              data-testid={`menu-move-down-${block.id}`}
-                            >
-                              <ArrowDown className="h-4 w-4 mr-2" />
-                              Move Down
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => deleteBlockMutation.mutate(block.id)}
-                              className="text-destructive"
-                              data-testid={`menu-delete-${block.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Block
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                <div className="space-y-3">
+                  {sortedBlocks.map((block, index) => {
+                    const isExpanded = expandedBlocks.has(block.id);
+                    return (
+                      <div
+                        key={block.id}
+                        className="border rounded-lg bg-card overflow-hidden"
+                        data-testid={`block-instance-${block.id}`}
+                      >
+                        <div 
+                          className="flex items-center gap-2 p-3 cursor-pointer hover-elevate"
+                          onClick={() => toggleBlockExpanded(block.id)}
+                          data-testid={`block-header-${block.id}`}
+                        >
+                          <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                          <Badge variant="secondary" className="text-xs">
+                            {getBlockTypeLabel(block.blockType)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground truncate flex-1">
+                            {(block.blockDataJson as Record<string, unknown>)?.title as string || `Block #${block.sortOrder + 1}`}
+                          </span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                data-testid={`button-block-menu-${block.id}`}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                disabled={index === 0}
+                                onClick={() => handleMoveBlock(index, 'up')}
+                                data-testid={`menu-move-up-${block.id}`}
+                              >
+                                <ArrowUp className="h-4 w-4 mr-2" />
+                                Move Up
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                disabled={index === sortedBlocks.length - 1}
+                                onClick={() => handleMoveBlock(index, 'down')}
+                                data-testid={`menu-move-down-${block.id}`}
+                              >
+                                <ArrowDown className="h-4 w-4 mr-2" />
+                                Move Down
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => deleteBlockMutation.mutate(block.id)}
+                                className="text-destructive"
+                                data-testid={`menu-delete-${block.id}`}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Block
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        {isExpanded && (
+                          <div className="px-4 pb-4 pt-2 border-t">
+                            <InlineBlockEditor
+                              block={block}
+                              stockPages={stockPages}
+                              blogPosts={blogPosts}
+                              onUpdate={(newData) => {
+                                updateBlockMutation.mutate({
+                                  blockId: block.id,
+                                  data: { blockDataJson: newData }
+                                });
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
-                      <InlineBlockEditor
-                        block={block}
-                        stockPages={stockPages}
-                        blogPosts={blogPosts}
-                        onUpdate={(newData) => {
-                          updateBlockMutation.mutate({
-                            blockId: block.id,
-                            data: { blockDataJson: newData }
-                          });
-                        }}
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                   <Plus className="h-8 w-8 mx-auto mb-3 opacity-50" />
                   <p className="mb-2">No blocks yet</p>
-                  <p className="text-sm">Add content blocks to build your newsletter</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => setAddBlockDialogOpen(true)}
-                    data-testid="button-add-first-block"
-                  >
-                    Add First Block
-                  </Button>
+                  <p className="text-sm">Use the "Add Block" dropdown above to add content blocks</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Library className="h-4 w-4" />
-                  Library Templates
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ScrollArea className="h-[120px]">
-                  {libraryTemplates && libraryTemplates.length > 0 ? (
-                    <div className="space-y-1">
-                      {libraryTemplates.map((template) => (
-                        <Button
-                          key={template.id}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-left h-auto py-1"
-                          onClick={() => handleInsertFromLibrary(template)}
-                          data-testid={`button-insert-${template.id}`}
-                        >
-                          <div>
-                            <p className="font-medium text-xs">{template.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {getBlockTypeLabel(template.blockType)}
-                            </p>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-2">
-                      No templates
-                    </p>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Schema Definitions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ScrollArea className="h-[120px]">
-                  {schemaDefinitions && schemaDefinitions.length > 0 ? (
-                    <div className="space-y-1">
-                      {schemaDefinitions.map((def) => {
-                        const blockType = BLOCK_TYPES.find(b => b.type === def.blockType);
-                        const Icon = blockType?.icon || FileText;
-                        return (
-                          <div
-                            key={def.id}
-                            className="flex items-center gap-2 p-1 rounded hover-elevate cursor-pointer"
-                            onClick={() => handleEditSchemaDefinition(def)}
-                            data-testid={`schema-def-${def.id}`}
-                          >
-                            <Icon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                            <span className="text-xs truncate flex-1">{def.name}</span>
-                            <Pencil className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-2">
-                      No definitions
-                    </p>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         <div className="h-full border rounded-lg overflow-hidden" data-testid="live-preview-panel">
@@ -2623,242 +1453,7 @@ export default function AdminNewsletterEdit() {
         </div>
       </div>
 
-      <Dialog open={schemaDefEditDialogOpen} onOpenChange={(open) => {
-        setSchemaDefEditDialogOpen(open);
-        if (!open) {
-          setEditingSchemaDefinition(null);
-        }
-      }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Schema Block Definition</DialogTitle>
-            <DialogDescription>
-              Modify the default settings for {editingSchemaDefinition?.blockType}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="schema-name">Name</Label>
-              <Input
-                id="schema-name"
-                value={schemaDefFormData.name}
-                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, name: e.target.value }))}
-                data-testid="input-schema-name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schema-description">Description</Label>
-              <Textarea
-                id="schema-description"
-                value={schemaDefFormData.description}
-                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, description: e.target.value }))}
-                rows={2}
-                data-testid="input-schema-description"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schema-defaults">Default Schema JSON</Label>
-              <Textarea
-                id="schema-defaults"
-                value={schemaDefFormData.defaultSchemaJson}
-                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, defaultSchemaJson: e.target.value }))}
-                className="font-mono text-xs"
-                rows={6}
-                data-testid="input-schema-defaults"
-              />
-              <p className="text-xs text-muted-foreground">Default content/data for this block type</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schema-settings">Default Settings JSON</Label>
-              <Textarea
-                id="schema-settings"
-                value={schemaDefFormData.defaultSettingsJson}
-                onChange={(e) => setSchemaDefFormData(prev => ({ ...prev, defaultSettingsJson: e.target.value }))}
-                className="font-mono text-xs"
-                rows={6}
-                data-testid="input-schema-settings"
-              />
-              <p className="text-xs text-muted-foreground">Display/behavior settings for this block type</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setSchemaDefEditDialogOpen(false)}
-              data-testid="button-cancel-schema"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveSchemaDefinition}
-              disabled={updateSchemaDefMutation.isPending}
-              data-testid="button-save-schema"
-            >
-              {updateSchemaDefMutation.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={addBlockDialogOpen} onOpenChange={(open) => {
-        setAddBlockDialogOpen(open);
-        if (!open) {
-          setBlockEditorData({});
-          setSelectedSchemaDefinition('');
-          setAddBlockMode('schema');
-        }
-      }}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add Block</DialogTitle>
-            <DialogDescription>
-              Select a schema block definition or create a custom block
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs value={addBlockMode} onValueChange={(v) => {
-            setAddBlockMode(v as 'schema' | 'custom');
-            setBlockEditorData({});
-            setSelectedSchemaDefinition('');
-          }} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="schema" data-testid="tab-schema-block">From Schema</TabsTrigger>
-              <TabsTrigger value="custom" data-testid="tab-custom-block">Custom</TabsTrigger>
-            </TabsList>
-            <TabsContent value="schema" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Select Schema Block</Label>
-                <Select
-                  value={selectedSchemaDefinition}
-                  onValueChange={handleSchemaDefinitionSelect}
-                >
-                  <SelectTrigger data-testid="select-schema-definition">
-                    <SelectValue placeholder="Choose a schema block..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {schemaDefinitions?.map((def) => (
-                      <SelectItem key={def.id} value={def.id}>
-                        <div className="flex flex-col">
-                          <span>{def.name}</span>
-                          <span className="text-xs text-muted-foreground">{getBlockTypeLabel(def.blockType)}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedSchemaDefinition && (
-                  <p className="text-xs text-muted-foreground">
-                    {schemaDefinitions?.find(d => d.id === selectedSchemaDefinition)?.description}
-                  </p>
-                )}
-              </div>
-              {selectedSchemaDefinition && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Edit Content (optional)</Label>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Modify the default values below, or add the block as-is
-                    </p>
-                    {renderBlockEditor(selectedBlockType, blockEditorData, true)}
-                  </div>
-                </>
-              )}
-            </TabsContent>
-            <TabsContent value="custom" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Block Type</Label>
-                <Select
-                  value={selectedBlockType}
-                  onValueChange={(value: NewsletterBlockType) => {
-                    setSelectedBlockType(value);
-                    setBlockEditorData(getBlockDataWithTemplateDefaults(value));
-                  }}
-                >
-                  <SelectTrigger data-testid="select-block-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableBlockTypes.map((bt) => (
-                      <SelectItem key={bt.type} value={bt.type}>
-                        {bt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Separator />
-              {renderBlockEditor(selectedBlockType, blockEditorData, true)}
-            </TabsContent>
-          </Tabs>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddBlockDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddBlock}
-              disabled={addBlockMutation.isPending || (addBlockMode === 'schema' && !selectedSchemaDefinition)}
-              data-testid="button-confirm-add"
-            >
-              {addBlockMutation.isPending ? 'Adding...' : 'Add Block'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editBlockDialogOpen} onOpenChange={setEditBlockDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Block</DialogTitle>
-            <DialogDescription>
-              {editingBlock && getBlockTypeLabel(editingBlock.blockType)}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            {editingBlock && renderBlockEditor(editingBlock.blockType, blockEditorData, false)}
-            
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Issue-Level Settings Override</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowOverrideSettings(!showOverrideSettings)}
-                  data-testid="button-toggle-overrides"
-                >
-                  {showOverrideSettings ? 'Hide' : 'Show'}
-                </Button>
-              </div>
-              {showOverrideSettings && (
-                <div className="mt-2 space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    Override default/template settings for this specific newsletter issue
-                  </p>
-                  <Textarea
-                    value={overrideSettingsString}
-                    onChange={(e) => setOverrideSettingsString(e.target.value)}
-                    placeholder='{"max_items": 15}'
-                    rows={4}
-                    className="font-mono text-sm"
-                    data-testid="textarea-override-settings"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditBlockDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveBlock}
-              disabled={updateBlockMutation.isPending}
-              data-testid="button-save-block"
-            >
-              {updateBlockMutation.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
