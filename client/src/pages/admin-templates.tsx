@@ -23,7 +23,9 @@ import {
   Code,
   Eye
 } from 'lucide-react';
-import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage } from '@shared/schema';
+import type { NewsletterTemplate, InsertNewsletterTemplate, StockPage, NewsletterTemplateBlockOverride, SchemaBlockDefinition } from '@shared/schema';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Settings2 } from 'lucide-react';
 
 type ViewMode = 'list' | 'editor';
 
@@ -80,6 +82,218 @@ const DEFAULT_ZONE_BLOCKS: Record<ZoneName, BlockType[]> = {
   body: ['intro', 'featured', 'articles', 'stockCollection', 'assetsUnder500', 'userPicks', 'assetHighlight', 'termOfTheDay', 'inOtherNews', 'cta'],
   footer: ['footer', 'cta'],
 };
+
+function TemplateBlockOverridesSection({ templateId }: { templateId: string }) {
+  const { toast } = useToast();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedBlockType, setSelectedBlockType] = useState<string | null>(null);
+  const [editingSettings, setEditingSettings] = useState<string>('{}');
+
+  const { data: overrides = [], isLoading: overridesLoading } = useQuery<NewsletterTemplateBlockOverride[]>({
+    queryKey: ['/api/newsletter-templates', templateId, 'block-overrides'],
+    queryFn: () => fetch(`/api/newsletter-templates/${templateId}/block-overrides`).then(res => res.json()),
+  });
+
+  const { data: definitions = [] } = useQuery<SchemaBlockDefinition[]>({
+    queryKey: ['/api/schema-block-definitions'],
+  });
+
+  const createOverrideMutation = useMutation({
+    mutationFn: (data: { blockType: string; overrideSettingsJson: Record<string, unknown> }) => 
+      apiRequest('POST', `/api/newsletter-templates/${templateId}/block-overrides`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/newsletter-templates', templateId, 'block-overrides'] });
+      toast({ title: 'Override created' });
+      setEditDialogOpen(false);
+    },
+    onError: () => toast({ title: 'Failed to create override', variant: 'destructive' }),
+  });
+
+  const updateOverrideMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { overrideSettingsJson: Record<string, unknown> } }) => 
+      apiRequest('PUT', `/api/template-block-overrides/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/newsletter-templates', templateId, 'block-overrides'] });
+      toast({ title: 'Override updated' });
+      setEditDialogOpen(false);
+    },
+    onError: () => toast({ title: 'Failed to update override', variant: 'destructive' }),
+  });
+
+  const deleteOverrideMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/template-block-overrides/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/newsletter-templates', templateId, 'block-overrides'] });
+      toast({ title: 'Override deleted' });
+    },
+    onError: () => toast({ title: 'Failed to delete override', variant: 'destructive' }),
+  });
+
+  const handleAddOverride = (blockType: string) => {
+    const def = definitions.find(d => d.blockType === blockType);
+    setSelectedBlockType(blockType);
+    setEditingSettings(JSON.stringify(def?.defaultSettingsJson || {}, null, 2));
+    setEditDialogOpen(true);
+  };
+
+  const handleEditOverride = (override: NewsletterTemplateBlockOverride) => {
+    setSelectedBlockType(override.blockType);
+    setEditingSettings(JSON.stringify(override.overrideSettingsJson || {}, null, 2));
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveOverride = () => {
+    if (!selectedBlockType) return;
+    
+    let parsedSettings: Record<string, unknown>;
+    try {
+      parsedSettings = JSON.parse(editingSettings);
+    } catch {
+      toast({ title: 'Invalid JSON', variant: 'destructive' });
+      return;
+    }
+
+    const existingOverride = overrides.find(o => o.blockType === selectedBlockType);
+    if (existingOverride) {
+      updateOverrideMutation.mutate({ id: existingOverride.id, data: { overrideSettingsJson: parsedSettings } });
+    } else {
+      createOverrideMutation.mutate({ blockType: selectedBlockType, overrideSettingsJson: parsedSettings });
+    }
+  };
+
+  const getDefinitionForBlockType = (blockType: string) => definitions.find(d => d.blockType === blockType);
+
+  const availableBlockTypes = definitions.filter(d => !overrides.find(o => o.blockType === d.blockType));
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4" />
+            <CardTitle>Block Settings Overrides</CardTitle>
+          </div>
+          {availableBlockTypes.length > 0 && (
+            <Select onValueChange={(value) => handleAddOverride(value)}>
+              <SelectTrigger className="w-[200px]" data-testid="select-add-override">
+                <SelectValue placeholder="Add override..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableBlockTypes.map((def) => (
+                  <SelectItem key={def.id} value={def.blockType}>
+                    {def.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <CardDescription>
+          Override default block settings for this template. These will apply to all newsletters using this template.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {overridesLoading ? (
+          <Skeleton className="h-20 w-full" />
+        ) : overrides.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Block Type</TableHead>
+                <TableHead>Override Settings</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {overrides.map((override) => {
+                const def = getDefinitionForBlockType(override.blockType);
+                return (
+                  <TableRow key={override.id} data-testid={`row-override-${override.id}`}>
+                    <TableCell>
+                      <Badge variant="outline">{def?.name || override.blockType}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <code className="text-xs bg-muted px-2 py-1 rounded">
+                        {Object.keys(override.overrideSettingsJson || {}).length} overrides
+                      </code>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleEditOverride(override)}
+                          data-testid={`button-edit-override-${override.id}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => deleteOverrideMutation.mutate(override.id)}
+                          data-testid={`button-delete-override-${override.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <Settings2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No block settings overrides configured</p>
+            <p className="text-xs mt-1">Select a block type above to add template-level settings</p>
+          </div>
+        )}
+      </CardContent>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {overrides.find(o => o.blockType === selectedBlockType) ? 'Edit' : 'Add'} Block Override
+            </DialogTitle>
+            <DialogDescription>
+              Override settings for {selectedBlockType} blocks in newsletters using this template
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Override Settings JSON</Label>
+              <Textarea
+                value={editingSettings}
+                onChange={(e) => setEditingSettings(e.target.value)}
+                placeholder='{"max_items": 20}'
+                rows={8}
+                className="font-mono text-sm mt-2"
+                data-testid="textarea-override-settings"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Only include settings you want to override from the defaults
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)} data-testid="button-cancel-override">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveOverride}
+              disabled={createOverrideMutation.isPending || updateOverrideMutation.isPending}
+              data-testid="button-save-override"
+            >
+              {createOverrideMutation.isPending || updateOverrideMutation.isPending ? 'Saving...' : 'Save Override'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
 
 export default function AdminTemplates() {
   const { toast } = useToast();
@@ -495,6 +709,10 @@ export default function AdminTemplates() {
                 />
               </CardContent>
             </Card>
+
+            {selectedTemplate && (
+              <TemplateBlockOverridesSection templateId={selectedTemplate.id} />
+            )}
           </div>
         </div>
       </div>
