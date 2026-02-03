@@ -317,20 +317,34 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 
     case 'footer':
       return (
-        <div style={{ marginTop: '24px', padding: '20px', backgroundColor: '#0a0a0a', borderTop: '1px solid #222', textAlign: 'center' }}>
-          {data.title && <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>{data.title}</h3>}
-          {data.body && <p style={{ fontSize: '11px', color: '#666', lineHeight: '1.6' }}>{data.body}</p>}
+        <div style={{ marginTop: '24px', padding: '40px 20px', backgroundColor: '#0a0a0a', textAlign: 'center' }}>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            margin: '0 auto 20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 4C8 4 5 7 5 11v6c0 2 1 3 3 3h8c2 0 3-1 3-3v-6c0-4-3-7-7-7z" fill="#00d4aa"/>
+              <circle cx="9" cy="12" r="1.5" fill="#0a0a0a"/>
+              <circle cx="15" cy="12" r="1.5" fill="#0a0a0a"/>
+            </svg>
+          </div>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>
+            {data.title || "Let's Stay in Touch"}
+          </h3>
+          <p style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>
+            {data.body || 'Questions or suggestions? Reach us at'}
+          </p>
           {data.contactEmail && (
-            <p style={{ marginTop: '8px' }}>
-              <a href={`mailto:${data.contactEmail}`} style={{ color: '#00d4aa', fontSize: '12px', textDecoration: 'underline' }}>
+            <p style={{ marginBottom: '20px' }}>
+              <a href={`mailto:${data.contactEmail}`} style={{ color: 'white', fontSize: '14px', textDecoration: 'underline' }}>
                 {data.contactEmail}
               </a>
             </p>
           )}
-          <div style={{ marginTop: '12px' }}>
-            <a href="#" style={{ color: '#00d4aa', fontSize: '11px', marginRight: '16px' }}>Unsubscribe</a>
-            <a href="#" style={{ color: '#00d4aa', fontSize: '11px' }}>Preferences</a>
-          </div>
         </div>
       );
 
@@ -512,74 +526,110 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 
     case 'premium_cta':
       return (
-        <div style={{ marginBottom: '24px', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ marginBottom: '24px', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
           <div style={{ 
             width: '100%', 
-            height: '200px', 
-            background: 'linear-gradient(135deg, #2d1f4e 0%, #1a1a2e 50%, #16213e 100%)',
-            padding: '24px',
+            minHeight: '220px',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1f4e 30%, #1a1a2e 70%, #16213e 100%)',
+            padding: '28px',
             display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
+            position: 'relative'
           }}>
-            <p style={{ fontSize: '11px', color: '#a78bfa', letterSpacing: '2px', marginBottom: '8px' }}>PREMIUM</p>
-            <p style={{ fontSize: '10px', color: '#666', marginBottom: '12px' }}>MEMBERSHIP</p>
-            {data.title && <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: 'white', marginBottom: '12px' }}>{data.title}</h3>}
-            {data.body && <p style={{ fontSize: '13px', color: '#999', marginBottom: '16px' }}>{data.body}</p>}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {data.ctaText && (
-                <span style={{ padding: '10px 20px', backgroundColor: 'white', color: 'black', fontWeight: 'bold', borderRadius: '20px', fontSize: '13px' }}>
-                  {data.ctaText}
+            <div style={{ flex: 1, zIndex: 1 }}>
+              <p style={{ fontSize: '11px', color: '#00d4aa', letterSpacing: '3px', marginBottom: '2px', fontWeight: '500' }}>PREMIUM</p>
+              <p style={{ fontSize: '9px', color: '#666', letterSpacing: '2px', marginBottom: '16px' }}>MEMBERSHIP</p>
+              <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: 'white', marginBottom: '12px', lineHeight: '1.2' }}>
+                {data.title || 'Introducing Premium+'}
+              </h3>
+              <p style={{ fontSize: '14px', color: '#aaa', marginBottom: '20px', lineHeight: '1.5', maxWidth: '280px' }}>
+                {data.body || 'Access exclusive investment perks and lifestyle memberships all in one app.'}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ 
+                  padding: '12px 24px', 
+                  backgroundColor: 'white', 
+                  color: 'black', 
+                  fontWeight: 'bold', 
+                  borderRadius: '24px', 
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}>
+                  {data.ctaText || 'Get Premium+'}
                 </span>
-              )}
-              {data.termsText && <span style={{ fontSize: '11px', color: '#666' }}>{data.termsText}</span>}
+                <span style={{ fontSize: '12px', color: '#666' }}>{data.termsText || 'T&Cs apply.'}</span>
+              </div>
             </div>
+            <div style={{ 
+              position: 'absolute', 
+              right: '20px', 
+              top: '50%', 
+              transform: 'translateY(-50%) rotate(-15deg)',
+              width: '120px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #d4a574 0%, #b8956a 50%, #8b6914 100%)',
+              borderRadius: '8px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              opacity: 0.9
+            }} />
           </div>
         </div>
       );
 
     case 'feedback':
       return (
-        <div style={{ marginBottom: '24px', padding: '24px', backgroundColor: '#1a1a1a', borderRadius: '12px', textAlign: 'center' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
+        <div style={{ marginBottom: '24px', padding: '32px 24px', backgroundColor: '#1a1a1a', borderRadius: '16px', textAlign: 'center' }}>
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>
             {data.feedbackQuestion || "How was today's newsletter?"}
           </h3>
-          <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
             {data.feedbackSubtext || 'Your feedback helps us improve'}
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '32px' }}>
-            <span style={{ cursor: 'pointer' }}>🤩</span>
-            <span style={{ cursor: 'pointer' }}>😊</span>
-            <span style={{ cursor: 'pointer' }}>🙂</span>
-            <span style={{ cursor: 'pointer' }}>😐</span>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '36px' }}>
+            <span style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>🤩</span>
+            <span style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>😊</span>
+            <span style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>🙄</span>
+            <span style={{ cursor: 'pointer', transition: 'transform 0.2s' }}>😕</span>
           </div>
         </div>
       );
 
     case 'referral':
       return (
-        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#0d4a42', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ 
+          marginBottom: '24px', 
+          padding: '24px', 
+          background: 'linear-gradient(135deg, #0d4a42 0%, #0a3d36 100%)',
+          borderRadius: '16px', 
+          display: 'flex', 
+          alignItems: 'flex-start', 
+          gap: '16px' 
+        }}>
           <div style={{ 
-            width: '48px', 
-            height: '48px', 
-            borderRadius: '12px', 
-            backgroundColor: 'rgba(239, 68, 68, 0.2)', 
+            width: '56px', 
+            height: '56px', 
+            borderRadius: '14px', 
+            backgroundColor: 'rgba(239, 68, 68, 0.15)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
             flexShrink: 0
           }}>
-            <span style={{ fontSize: '24px' }}>👥</span>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
           </div>
           <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'white', marginBottom: '4px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', marginBottom: '6px' }}>
               {data.referralTitle || 'Refer a Friend, Earn Rewards'}
             </h3>
-            <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '8px' }}>
+            <p style={{ fontSize: '14px', color: '#b0c4c0', marginBottom: '12px', lineHeight: '1.5' }}>
               {data.referralBody || 'Share baraka with friends and earn up to $50 in free stocks for each successful referral.'}
             </p>
-            <p style={{ color: '#00d4aa', fontSize: '13px', fontWeight: '600' }}>
-              {data.referralCtaText || 'Get Your Referral Link'} →
+            <p style={{ color: '#00d4aa', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+              {data.referralCtaText || 'Get Your Referral Link'} <span style={{ marginLeft: '4px' }}>→</span>
             </p>
           </div>
         </div>
