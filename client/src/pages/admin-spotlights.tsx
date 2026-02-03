@@ -130,6 +130,8 @@ export default function AdminSpotlights() {
       title: '',
       subtitle: '',
       imageUrl: '',
+      portraitImageUrl: '',
+      landscapeImageUrl: '',
       ctaText: '',
       ctaUrl: '',
       appDeepLink: '',
@@ -145,7 +147,11 @@ export default function AdminSpotlights() {
 
   const handleEdit = (spotlight: SpotlightBanner) => {
     setSelectedSpotlight(spotlight);
-    setEditingSpotlight({ ...spotlight });
+    setEditingSpotlight({
+      ...spotlight,
+      portraitImageUrl: spotlight.portraitImageUrl || '',
+      landscapeImageUrl: spotlight.landscapeImageUrl || '',
+    });
     setViewMode('editor');
   };
 
@@ -154,6 +160,8 @@ export default function AdminSpotlights() {
       title: `${spotlight.title} (Copy)`,
       subtitle: spotlight.subtitle,
       imageUrl: spotlight.imageUrl,
+      portraitImageUrl: spotlight.portraitImageUrl || '',
+      landscapeImageUrl: spotlight.landscapeImageUrl || '',
       ctaText: spotlight.ctaText,
       ctaUrl: spotlight.ctaUrl,
       appDeepLink: spotlight.appDeepLink,
@@ -277,26 +285,81 @@ export default function AdminSpotlights() {
                   />
                   <p className="text-xs text-muted-foreground">{(editingSpotlight.subtitle || '').length}/120 characters</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl">Image URL</Label>
-                  <Input
-                    id="imageUrl"
-                    value={editingSpotlight.imageUrl || ''}
-                    onChange={(e) => setEditingSpotlight({ ...editingSpotlight, imageUrl: e.target.value })}
-                    placeholder="https://..."
-                    data-testid="input-image-url"
-                  />
-                  {editingSpotlight.imageUrl && (
-                    <div className="mt-2 border rounded-md overflow-hidden bg-surface2">
-                      <img 
-                        src={editingSpotlight.imageUrl} 
-                        alt="Preview" 
-                        className="w-full h-32 object-cover"
-                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        data-testid="img-preview"
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUrl">Default Image URL</Label>
+                    <Input
+                      id="imageUrl"
+                      value={editingSpotlight.imageUrl || ''}
+                      onChange={(e) => setEditingSpotlight({ ...editingSpotlight, imageUrl: e.target.value })}
+                      placeholder="https://..."
+                      data-testid="input-image-url"
+                    />
+                    <p className="text-xs text-muted-foreground">Fallback image used when specific sizes are not provided</p>
+                    {editingSpotlight.imageUrl && (
+                      <div className="mt-2 border rounded-md overflow-hidden bg-surface2">
+                        <img 
+                          src={editingSpotlight.imageUrl} 
+                          alt="Preview" 
+                          className="w-full h-32 object-cover"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          data-testid="img-preview"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="portraitImageUrl" className="flex items-center gap-2">
+                        <Smartphone className="h-4 w-4" />
+                        Portrait Image
+                      </Label>
+                      <Input
+                        id="portraitImageUrl"
+                        value={editingSpotlight.portraitImageUrl || ''}
+                        onChange={(e) => setEditingSpotlight({ ...editingSpotlight, portraitImageUrl: e.target.value })}
+                        placeholder="https://..."
+                        data-testid="input-portrait-image-url"
                       />
+                      <p className="text-xs text-muted-foreground">1080 × 1920px (9:16 ratio)</p>
+                      {editingSpotlight.portraitImageUrl && (
+                        <div className="mt-2 border rounded-md overflow-hidden bg-surface2 w-16 h-28">
+                          <img 
+                            src={editingSpotlight.portraitImageUrl} 
+                            alt="Portrait Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            data-testid="img-portrait-preview"
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <div className="space-y-2">
+                      <Label htmlFor="landscapeImageUrl" className="flex items-center gap-2">
+                        <Image className="h-4 w-4" />
+                        Landscape Image
+                      </Label>
+                      <Input
+                        id="landscapeImageUrl"
+                        value={editingSpotlight.landscapeImageUrl || ''}
+                        onChange={(e) => setEditingSpotlight({ ...editingSpotlight, landscapeImageUrl: e.target.value })}
+                        placeholder="https://..."
+                        data-testid="input-landscape-image-url"
+                      />
+                      <p className="text-xs text-muted-foreground">1024 × 576px (16:9 ratio)</p>
+                      {editingSpotlight.landscapeImageUrl && (
+                        <div className="mt-2 border rounded-md overflow-hidden bg-surface2 w-32 h-18">
+                          <img 
+                            src={editingSpotlight.landscapeImageUrl} 
+                            alt="Landscape Preview" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            data-testid="img-landscape-preview"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">

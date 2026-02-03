@@ -1242,6 +1242,8 @@ export interface SpotlightBanner {
   title: string;
   subtitle: string;
   imageUrl: string;
+  portraitImageUrl?: string;
+  landscapeImageUrl?: string;
   ctaText: string;
   ctaUrl: string;
   appDeepLink?: string;
@@ -1371,6 +1373,8 @@ export const insertSpotlightBannerSchema = z.object({
   title: z.string().min(1),
   subtitle: z.string().max(120),
   imageUrl: z.string(),
+  portraitImageUrl: z.string().optional(),
+  landscapeImageUrl: z.string().optional(),
   ctaText: z.string().min(1),
   ctaUrl: z.string().min(1),
   appDeepLink: z.string().optional(),
