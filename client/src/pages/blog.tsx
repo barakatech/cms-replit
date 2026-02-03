@@ -17,7 +17,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
-import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost } from '@shared/schema';
+import type { SpotlightBanner, Newsletter, BlogPost, InsertBlogPost, NewsletterTemplate } from '@shared/schema';
 
 type BlogStatus = 'draft' | 'published' | 'archived';
 
@@ -125,6 +125,13 @@ export default function Blog() {
     queryKey: ['/api/newsletters'],
   });
 
+  const { data: newsletterTemplates = [] } = useQuery<NewsletterTemplate[]>({
+    queryKey: ['/api/newsletter-templates'],
+  });
+
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+
   const spotlightsByBlogId = useMemo(() => {
     const map: Record<string, SpotlightBanner> = {};
     spotlights.forEach(s => {
@@ -211,11 +218,11 @@ export default function Blog() {
   });
 
   const createNewsletterMutation = useMutation({
-    mutationFn: async (blog: BlogPost) => {
+    mutationFn: async ({ blog, templateId }: { blog: BlogPost; templateId: string }) => {
       const response = await apiRequest('POST', '/api/newsletters', {
         subject: blog.title_en,
         preheader: blog.excerpt_en.slice(0, 120),
-        templateId: '1',
+        templateId: templateId || '1',
         contentBlocks: [
           { type: 'hero' as const, title: blog.title_en, imageUrl: blog.featuredImage || '', ctaText: 'Read Article', ctaUrl: `/blog/${blog.slug}` },
           { type: 'intro' as const, content: blog.excerpt_en },
@@ -234,8 +241,9 @@ export default function Blog() {
 
   const [isPublishingEverywhere, setIsPublishingEverywhere] = useState(false);
 
-  const handlePublishEverywhere = async () => {
+  const handlePublishEverywhere = async (templateId: string) => {
     if (!selectedBlog || isCreatingNew) return;
+    setPublishDialogOpen(false);
     
     setIsPublishingEverywhere(true);
     
@@ -296,7 +304,7 @@ export default function Blog() {
 
     if (!existingNewsletter) {
       try {
-        await createNewsletterMutation.mutateAsync(blogDataForSync);
+        await createNewsletterMutation.mutateAsync({ blog: blogDataForSync, templateId });
         createdItems.push('Newsletter');
       } catch (e) {
         console.error('Failed to create newsletter:', e);
@@ -355,7 +363,7 @@ export default function Blog() {
     
     if (!existingNewsletter) {
       try {
-        await createNewsletterMutation.mutateAsync(blog);
+        await createNewsletterMutation.mutateAsync({ blog, templateId: '1' });
         createdItems.push('Newsletter draft');
       } catch (e) {
         console.error('Failed to create newsletter:', e);
@@ -480,32 +488,98 @@ export default function Blog() {
               {isSaving ? 'Saving...' : 'Save Draft'}
             </Button>
             {!isCreatingNew && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={handlePublishEverywhere} 
-                    disabled={isSaving || isPublishingEverywhere}
-                    className="gap-2"
-                    data-testid="button-publish-everywhere"
-                  >
-                    {isPublishingEverywhere ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Publishing...
-                      </>
-                    ) : (
-                      <>
-                        <Rocket className="h-4 w-4" />
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={() => {
+                        setSelectedTemplateId(newsletterTemplates[0]?.id || '1');
+                        setPublishDialogOpen(true);
+                      }}
+                      disabled={isSaving || isPublishingEverywhere}
+                      className="gap-2"
+                      data-testid="button-publish-everywhere"
+                    >
+                      {isPublishingEverywhere ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Publishing...
+                        </>
+                      ) : (
+                        <>
+                          <Rocket className="h-4 w-4" />
+                          Publish Everywhere
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p className="font-medium mb-1">One-click publishing</p>
+                    <p className="text-xs text-muted-foreground">Publishes blog and auto-creates Newsletter and Spotlight in one click</p>
+                  </TooltipContent>
+                </Tooltip>
+                
+                <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <Rocket className="h-5 w-5" />
                         Publish Everywhere
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <p className="font-medium mb-1">One-click publishing</p>
-                  <p className="text-xs text-muted-foreground">Publishes blog and auto-creates Newsletter and Spotlight in one click</p>
-                </TooltipContent>
-              </Tooltip>
+                      </DialogTitle>
+                      <DialogDescription>
+                        This will publish your blog post and create a Newsletter and Spotlight automatically.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="newsletter-template">Newsletter Template</Label>
+                        <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                          <SelectTrigger id="newsletter-template" data-testid="select-newsletter-template">
+                            <SelectValue placeholder="Select a template" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {newsletterTemplates.map((template) => (
+                              <SelectItem key={template.id} value={template.id} data-testid={`template-option-${template.id}`}>
+                                <div className="flex flex-col">
+                                  <span>{template.name}</span>
+                                  <span className="text-xs text-muted-foreground">{template.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Choose the template to use for the auto-generated newsletter
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Newsletter</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">+</span>
+                        <div className="flex items-center gap-2">
+                          <Megaphone className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Spotlight</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setPublishDialogOpen(false)} data-testid="button-cancel-publish">
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={() => handlePublishEverywhere(selectedTemplateId)} 
+                        disabled={!selectedTemplateId}
+                        data-testid="button-confirm-publish"
+                      >
+                        <Rocket className="h-4 w-4 mr-2" />
+                        Publish
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </div>
         </div>
