@@ -1,0 +1,202 @@
+You are debugging and completing an existing Replit CMS app (Node.js + Express + SQLite + simple UI) where Newsletter editing exists but NEW schema blocks are NOT actually insertable into a specific newsletter yet. Implement the missing functionality described below.
+
+IMPORTANT GUARDRAILS
+- Do NOT modify or refactor existing schema blocks already present in the system.
+- You may ADD new tables, routes, and UI components.
+- You must implement an “Add Schema Block” flow inside an individual newsletter.
+- Remove/Do NOT implement “Ticker Catalog” or any ticker catalog dependency. Ticker selection must be manual text inputs only.
+
+GOAL
+Inside a specific newsletter issue:
+1) User clicks “Add Schema Block”
+2) User sees a dropdown listing all available schema block types (for the NEW block types we add, plus any existing ones already in the system if they are listable)
+3) User selects a schema block type
+4) A block instance is created inside that newsletter using default schema + default settings from the schema block definition
+5) The user can edit the block instance manually inside the newsletter (content fields + instance override settings)
+6) Separately, inside the Newsletter Template editor, the user can set template-level overrides per schema block type
+7) Newsletter rendering resolves effective settings in this order:
+   schema defaults → template override → newsletter instance override
+
+DO NOT build a separate block library or catalog. Focus on the missing insertion + editing + override behavior.
+
+------------------------------------------------------------
+REQUIRED UX / PAGES
+------------------------------------------------------------
+
+A) Individual Newsletter page MUST support schema blocks
+Route: GET /newsletters/:id
+
+This page must include:
+- Newsletter metadata (title, type, template, status)
+- A section titled “Schema Blocks”
+- Button: “Add Schema Block”
+- On click, show dropdown modal or inline form:
+  - Select schema block type (dropdown)
+  - (Optional) instance label/name field
+  - Create button
+- After creation:
+  - show the block instance in the newsletter, with:
+    - “Edit Content” form (fields defined by schema definition)
+    - “Override Settings” form (optional overrides at instance level)
+    - Delete block
+    - Move up/down (reorder)
+
+B) Newsletter Template page MUST support block overrides
+Route: GET /templates/:id
+
+This page must include a section:
+- “Schema Block Overrides”
+- Dropdown of schema block types
+- When user selects a type:
+  - show the default settings for that block type
+  - allow user to save override JSON for that template+type
+- Save / update overrides without touching schema defaults.
+
+------------------------------------------------------------
+DATA MODEL (ADDITIVE)
+------------------------------------------------------------
+
+1) schema_block_definitions (canonical block types)
+If it exists already, reuse it; if not, create it:
+- id
+- block_type (unique)
+- display_name (text)
+- field_schema_json (text)   // defines content fields and validation
+- default_content_json (text) // default content for new instances
+- default_settings_json (text) // default settings/config
+- created_at
+- updated_at
+
+2) newsletter_block_instances (instances placed into a newsletter)
+If you already have newsletter_blocks, reuse it without modifying columns; otherwise create:
+- id
+- newsletter_id (fk)
+- block_type
+- content_json (text)
+- instance_override_settings_json (text, nullable)
+- sort_order (int)
+- created_at
+- updated_at
+
+3) newsletter_template_block_overrides (template overrides per type)
+- id
+- template_id (fk)
+- block_type
+- override_settings_json (text)
+- created_at
+- updated_at
+Unique constraint (template_id, block_type)
+
+------------------------------------------------------------
+NEW SCHEMA BLOCK TYPES TO ADD (ONLY IF NOT ALREADY PRESENT)
+------------------------------------------------------------
+
+Add these as NEW entries in schema_block_definitions (do NOT change existing ones):
+
+1) stock_list_manual
+- display_name: "Stock List (Manual)"
+- Content fields:
+  - title (required)
+  - description (optional)
+  - items[]:
+    - ticker (required, validate 1–8 chars A–Z and allow dot)
+    - note (optional)
+    - link (optional)
+- Default content: title="Top traded stocks", items empty
+- Default settings: max_items=10, show_notes=true, show_links=true
+
+2) options_ideas_manual
+- display_name: "Options Ideas (Manual)"
+- Content fields:
+  - title (required)
+  - intro (optional)
+  - contracts[]:
+    - underlying_ticker (required)
+    - type (CALL|PUT)
+    - expiry_date (YYYY-MM-DD)
+    - strike (numeric)
+    - premium (optional)
+    - rationale (optional)
+    - link (optional)
+- Default settings: max_contracts=6, show_premium=true, show_rationale=true
+
+3) market_snapshot_manual
+- display_name: "Market Snapshot"
+- Content fields:
+  - title (required)
+  - bullets[] (required 3–6)
+  - what_to_watch (optional)
+- Default settings: max_bullets=6, show_what_to_watch=true
+
+4) promo_banner
+- display_name: "Promotional Banner"
+- Content fields:
+  - image_url (required)
+  - link_url (required)
+  - banner_title (optional, NOT mandatory)
+- Default settings: title_position="overlay", height="md"
+- Render rules:
+  - empty banner_title renders image-only
+
+------------------------------------------------------------
+EDITOR FORMS (AUTO-GENERATED)
+------------------------------------------------------------
+
+Implement a simple dynamic form renderer:
+- Read field_schema_json for a block type
+- Render inputs accordingly (text, textarea, select, date, number, repeatable array rows)
+- Save to content_json
+- Validate required fields and formats
+
+For settings override forms:
+- Render a simple JSON editor textarea OR a small set of inputs for known settings keys
+- Store only overridden keys in instance_override_settings_json / override_settings_json
+
+------------------------------------------------------------
+RENDERING / PREVIEW
+------------------------------------------------------------
+
+When rendering a newsletter preview:
+- Determine newsletter.template_id
+- For each block instance:
+  - load schema defaults (default_settings_json)
+  - load template override for that block_type (override_settings_json)
+  - load instance override (instance_override_settings_json)
+  - effective_settings = deep merge in order: defaults → template → instance
+- Render block content using effective settings.
+
+------------------------------------------------------------
+REQUIRED ROUTES
+------------------------------------------------------------
+
+Schema definitions:
+- GET /schema-blocks (list)
+- POST /schema-blocks/seed (seed if empty) OR seed on boot
+
+Newsletter blocks inside a specific newsletter:
+- POST /newsletters/:id/blocks/add (creates instance from defaults)
+- POST /newsletters/:id/blocks/:blockId/content (update content_json)
+- POST /newsletters/:id/blocks/:blockId/override (update instance_override_settings_json)
+- POST /newsletters/:id/blocks/:blockId/delete
+- POST /newsletters/:id/blocks/reorder
+
+Template overrides:
+- POST /templates/:id/block-overrides/save
+- GET /templates/:id/block-overrides (optional)
+
+------------------------------------------------------------
+SEEDING
+------------------------------------------------------------
+On first run, seed schema_block_definitions for the 4 new block types above (only insert if block_type not present).
+Create one sample newsletter + template and show that Add Schema Block works.
+
+------------------------------------------------------------
+DELIVERABLES
+------------------------------------------------------------
+- Working implementation where:
+  - On /newsletters/:id I can click Add Schema Block → choose from dropdown → block appears → I can edit it manually
+  - On /templates/:id I can set overrides per block type
+  - Preview reflects defaults and overrides correctly
+- README: how to run, seed behavior, how to test the flow
+
+Keep scope tight. No ticker catalog. No block library. No unrelated refactors.

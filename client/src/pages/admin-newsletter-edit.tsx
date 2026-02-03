@@ -45,8 +45,11 @@ import type {
   NewsletterBlockType, 
   NewsletterBlockData,
   BlockLibraryTemplate,
-  StockPage
+  StockPage,
+  SchemaBlockDefinition
 } from '@shared/schema';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; icon: typeof TrendingUp; category: string }[] = [
   { type: 'introduction', label: 'Introduction', icon: FileText, category: 'Content' },
@@ -106,6 +109,8 @@ export default function AdminNewsletterEdit() {
   const [showOverrideSettings, setShowOverrideSettings] = useState(false);
   const [stockSearchQuery, setStockSearchQuery] = useState('');
   const [articleSearchQuery, setArticleSearchQuery] = useState('');
+  const [addBlockMode, setAddBlockMode] = useState<'schema' | 'custom'>('schema');
+  const [selectedSchemaDefinition, setSelectedSchemaDefinition] = useState<string>('');
 
   const newsletterId = params.id;
 
@@ -136,10 +141,14 @@ export default function AdminNewsletterEdit() {
     queryKey: ['/api/blog-posts'],
   });
 
+  const { data: schemaDefinitions } = useQuery<SchemaBlockDefinition[]>({
+    queryKey: ['/api/schema-block-definitions'],
+  });
+
   const filteredStocks = stockSearchQuery.length >= 2 && stockPages 
     ? stockPages.filter(stock => 
         (stock.ticker?.toLowerCase().includes(stockSearchQuery.toLowerCase()) ||
-         stock.companyName?.toLowerCase().includes(stockSearchQuery.toLowerCase()))
+         stock.companyName_en?.toLowerCase().includes(stockSearchQuery.toLowerCase()))
       )
     : [];
 
@@ -215,10 +224,31 @@ export default function AdminNewsletterEdit() {
   };
 
   const handleAddBlock = () => {
-    addBlockMutation.mutate({
-      blockType: selectedBlockType,
-      blockDataJson: blockEditorData,
-    });
+    if (addBlockMode === 'schema' && selectedSchemaDefinition) {
+      const schemaDef = schemaDefinitions?.find(s => s.id === selectedSchemaDefinition);
+      if (schemaDef) {
+        const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
+        addBlockMutation.mutate({
+          blockType: schemaDef.blockType,
+          blockDataJson: { ...defaultData, ...blockEditorData },
+        });
+      }
+    } else {
+      addBlockMutation.mutate({
+        blockType: selectedBlockType,
+        blockDataJson: blockEditorData,
+      });
+    }
+  };
+
+  const handleSchemaDefinitionSelect = (definitionId: string) => {
+    setSelectedSchemaDefinition(definitionId);
+    const schemaDef = schemaDefinitions?.find(s => s.id === definitionId);
+    if (schemaDef) {
+      setSelectedBlockType(schemaDef.blockType);
+      const defaultData = (schemaDef.defaultSchemaJson || {}) as NewsletterBlockData;
+      setBlockEditorData(defaultData);
+    }
   };
 
   const handleSaveBlock = () => {
@@ -420,14 +450,14 @@ export default function AdminNewsletterEdit() {
                         updateData('stocks', [...stocks, {
                           stockId: stock.id,
                           ticker: stock.ticker,
-                          companyName: stock.companyName,
+                          companyName: stock.companyName_en,
                           note: '',
                         }]);
                         setStockSearchQuery('');
                       }}
                     >
                       <span className="font-medium">{stock.ticker}</span>
-                      <span className="text-muted-foreground">{stock.companyName}</span>
+                      <span className="text-muted-foreground">{stock.companyName_en}</span>
                     </div>
                   ))}
                 </div>
@@ -484,20 +514,20 @@ export default function AdminNewsletterEdit() {
                       onClick={() => {
                         updateData('stockId', stock.id);
                         updateData('ticker', stock.ticker);
-                        updateData('companyName', stock.companyName);
+                        updateData('companyName', stock.companyName_en);
                         setStockSearchQuery('');
                       }}
                     >
                       <span className="font-medium">{stock.ticker}</span>
-                      <span className="text-muted-foreground">{stock.companyName}</span>
+                      <span className="text-muted-foreground">{stock.companyName_en}</span>
                     </div>
                   ))}
                 </div>
               )}
               {d.ticker && (
                 <div className="p-2 border rounded-lg flex items-center gap-2">
-                  <span className="font-medium">{d.ticker as string}</span>
-                  <span className="text-muted-foreground">{d.companyName as string}</span>
+                  <span className="font-medium">{String(d.ticker || '')}</span>
+                  <span className="text-muted-foreground">{String(d.companyName || '')}</span>
                 </div>
               )}
             </div>
@@ -917,46 +947,103 @@ export default function AdminNewsletterEdit() {
         </div>
       </div>
 
-      <Dialog open={addBlockDialogOpen} onOpenChange={setAddBlockDialogOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={addBlockDialogOpen} onOpenChange={(open) => {
+        setAddBlockDialogOpen(open);
+        if (!open) {
+          setBlockEditorData({});
+          setSelectedSchemaDefinition('');
+          setAddBlockMode('schema');
+        }
+      }}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Block</DialogTitle>
             <DialogDescription>
-              Choose a block type and configure its content
+              Select a schema block definition or create a custom block
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Block Type</Label>
-              <Select
-                value={selectedBlockType}
-                onValueChange={(value: NewsletterBlockType) => {
-                  setSelectedBlockType(value);
-                  setBlockEditorData(getDefaultBlockData(value));
-                }}
-              >
-                <SelectTrigger data-testid="select-block-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BLOCK_TYPES.map((bt) => (
-                    <SelectItem key={bt.type} value={bt.type}>
-                      {bt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Separator />
-            {renderBlockEditor(selectedBlockType, blockEditorData, true)}
-          </div>
+          <Tabs value={addBlockMode} onValueChange={(v) => {
+            setAddBlockMode(v as 'schema' | 'custom');
+            setBlockEditorData({});
+            setSelectedSchemaDefinition('');
+          }} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="schema" data-testid="tab-schema-block">From Schema</TabsTrigger>
+              <TabsTrigger value="custom" data-testid="tab-custom-block">Custom</TabsTrigger>
+            </TabsList>
+            <TabsContent value="schema" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Select Schema Block</Label>
+                <Select
+                  value={selectedSchemaDefinition}
+                  onValueChange={handleSchemaDefinitionSelect}
+                >
+                  <SelectTrigger data-testid="select-schema-definition">
+                    <SelectValue placeholder="Choose a schema block..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {schemaDefinitions?.map((def) => (
+                      <SelectItem key={def.id} value={def.id}>
+                        <div className="flex flex-col">
+                          <span>{def.name}</span>
+                          <span className="text-xs text-muted-foreground">{getBlockTypeLabel(def.blockType)}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedSchemaDefinition && (
+                  <p className="text-xs text-muted-foreground">
+                    {schemaDefinitions?.find(d => d.id === selectedSchemaDefinition)?.description}
+                  </p>
+                )}
+              </div>
+              {selectedSchemaDefinition && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Edit Content (optional)</Label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Modify the default values below, or add the block as-is
+                    </p>
+                    {renderBlockEditor(selectedBlockType, blockEditorData, true)}
+                  </div>
+                </>
+              )}
+            </TabsContent>
+            <TabsContent value="custom" className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Block Type</Label>
+                <Select
+                  value={selectedBlockType}
+                  onValueChange={(value: NewsletterBlockType) => {
+                    setSelectedBlockType(value);
+                    setBlockEditorData(getDefaultBlockData(value));
+                  }}
+                >
+                  <SelectTrigger data-testid="select-block-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BLOCK_TYPES.map((bt) => (
+                      <SelectItem key={bt.type} value={bt.type}>
+                        {bt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Separator />
+              {renderBlockEditor(selectedBlockType, blockEditorData, true)}
+            </TabsContent>
+          </Tabs>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddBlockDialogOpen(false)}>
               Cancel
             </Button>
             <Button 
               onClick={handleAddBlock}
-              disabled={addBlockMutation.isPending}
+              disabled={addBlockMutation.isPending || (addBlockMode === 'schema' && !selectedSchemaDefinition)}
               data-testid="button-confirm-add"
             >
               {addBlockMutation.isPending ? 'Adding...' : 'Add Block'}

@@ -33,7 +33,6 @@ const blogSubItems = [
   { title: 'Schema Blocks', url: '/admin/schema-blocks', icon: Layers, testId: 'link-schema-blocks' },
   { title: 'Blocks Library', url: '/admin/blocks-library', icon: Layers, testId: 'link-blocks-library' },
   { title: 'Block Definitions', url: '/admin/schema-block-definitions', icon: Layers, testId: 'link-block-definitions' },
-  { title: 'Ticker Catalog', url: '/admin/ticker-catalog', icon: BarChart3, testId: 'link-ticker-catalog' },
   { title: 'Subscribers', url: '/admin/subscribers', icon: Users, testId: 'link-subscribers' },
 ];
 
