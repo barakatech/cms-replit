@@ -647,6 +647,12 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 function LivePreviewPanel({ newsletter, blocks }: { newsletter: Newsletter; blocks: NewsletterBlockInstance[] }) {
   const sortedBlocks = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
   
+  // Get issue info from newsletter_header block if exists
+  const headerBlock = sortedBlocks.find(b => b.blockType === 'newsletter_header');
+  const headerData = headerBlock?.data || {};
+  const issueNumber = headerData.issueNumber || 147;
+  const issueDate = headerData.issueDate || 'WEDNESDAY, FEB 4, 2026';
+  
   return (
     <div className="bg-background rounded-lg overflow-hidden h-full flex flex-col">
       <div className="p-3 border-b">
@@ -656,23 +662,68 @@ function LivePreviewPanel({ newsletter, blocks }: { newsletter: Newsletter; bloc
       <ScrollArea className="flex-1">
         <div style={{ backgroundColor: '#0a0a0a', minHeight: '100%', padding: '20px' }}>
           <div style={{ maxWidth: '100%', backgroundColor: '#111', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ backgroundColor: '#000', padding: '48px 24px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#0d1117', padding: '32px 24px 48px', textAlign: 'center' }}>
+              {/* Logo Section */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                gap: '16px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#888', fontSize: '20px' }}>✳</span>
+                  <div>
+                    <span style={{ fontSize: '22px', fontWeight: '300', color: 'white', letterSpacing: '1px' }}>akhbaraka</span>
+                    <p style={{ fontSize: '8px', color: '#666', margin: 0, letterSpacing: '2px', textTransform: 'uppercase' }}>FRESH FINANCIAL NEWS</p>
+                  </div>
+                </div>
+                <div style={{ width: '1px', height: '32px', backgroundColor: '#333', margin: '0 8px' }} />
+                <div style={{ 
+                  width: '28px', 
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 4C8 4 5 7 5 11v6c0 2 1 3 3 3h8c2 0 3-1 3-3v-6c0-4-3-7-7-7z" fill="#666"/>
+                    <circle cx="9" cy="12" r="1.5" fill="#0d1117"/>
+                    <circle cx="15" cy="12" r="1.5" fill="#0d1117"/>
+                  </svg>
+                </div>
+              </div>
+
+              {/* Issue Info */}
+              <p style={{ 
+                fontSize: '11px', 
+                color: '#666', 
+                margin: '0 0 32px 0',
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase'
+              }}>
+                ISSUE #{issueNumber} · {issueDate.toUpperCase()}
+              </p>
+
+              {/* Subject (Article Title) */}
               <h1 style={{ 
-                fontSize: '28px', 
+                fontSize: '32px', 
                 fontWeight: 'bold', 
                 color: 'white', 
-                margin: '0 0 16px 0',
-                lineHeight: '1.3',
+                margin: '0 0 20px 0',
+                lineHeight: '1.2',
                 letterSpacing: '-0.5px'
               }}>
                 {newsletter.subject || 'Markets Surge as S&P 500 Hits New Peak'}
               </h1>
+
+              {/* Preheader (Article Excerpt) */}
               {newsletter.preheader && (
                 <p style={{ 
-                  fontSize: '15px', 
+                  fontSize: '16px', 
                   color: '#888', 
                   margin: 0,
-                  lineHeight: '1.5'
+                  lineHeight: '1.6'
                 }}>
                   {newsletter.preheader}
                 </p>
