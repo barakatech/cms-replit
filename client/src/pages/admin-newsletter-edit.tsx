@@ -1333,7 +1333,13 @@ export default function AdminNewsletterEdit() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" data-testid="button-preview">
+          <Button 
+            variant="outline" 
+            data-testid="button-preview"
+            onClick={() => {
+              window.open(`/newsletter-preview/${id}`, '_blank', 'width=700,height=900');
+            }}
+          >
             <Eye className="h-4 w-4 mr-2" />
             Preview
           </Button>

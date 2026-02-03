@@ -42,6 +42,7 @@ import AdminUsers from '@/pages/admin-users';
 import AdminAuditLog from '@/pages/admin-audit-log';
 import AdminCompliance from '@/pages/admin-compliance';
 import PageBuilder from '@/pages/page-builder';
+import NewsletterPreview from '@/pages/newsletter-preview';
 import LandingPagePublic from '@/pages/landing-page';
 import StockThemePage from '@/pages/stock-theme';
 import ThemesPage from '@/pages/themes';
@@ -526,6 +527,7 @@ function Router() {
           </ProtectedRoute>
         )}
       </Route>
+      <Route path="/newsletter-preview/:id" component={NewsletterPreview} />
       <Route path="/p/:slug" component={LandingPagePublic} />
       <Route path="/p/:slug/preview" component={LandingPagePublic} />
       <Route component={NotFound} />
