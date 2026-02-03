@@ -1124,6 +1124,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // SCHEMA BLOCK DEFINITIONS API (canonical structure + defaults)
+  // ============================================
+
+  app.get("/api/schema-block-definitions", async (req, res) => {
+    const definitions = await storage.getSchemaBlockDefinitions();
+    res.json(definitions);
+  });
+
+  app.get("/api/schema-block-definitions/:id", async (req, res) => {
+    const def = await storage.getSchemaBlockDefinition(req.params.id);
+    if (!def) {
+      return res.status(404).json({ error: "Schema block definition not found" });
+    }
+    res.json(def);
+  });
+
+  app.get("/api/schema-block-definitions/by-type/:blockType", async (req, res) => {
+    const def = await storage.getSchemaBlockDefinitionByType(req.params.blockType);
+    if (!def) {
+      return res.status(404).json({ error: "Schema block definition not found for this type" });
+    }
+    res.json(def);
+  });
+
+  app.post("/api/schema-block-definitions", async (req, res) => {
+    try {
+      const { blockType, name, description, defaultSchemaJson, defaultSettingsJson } = req.body;
+      if (!blockType || !name) {
+        return res.status(400).json({ error: "blockType and name are required" });
+      }
+      const def = await storage.createSchemaBlockDefinition({
+        blockType,
+        name,
+        description: description || '',
+        defaultSchemaJson: defaultSchemaJson || {},
+        defaultSettingsJson: defaultSettingsJson || {},
+      });
+      res.status(201).json(def);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create schema block definition" });
+    }
+  });
+
+  app.put("/api/schema-block-definitions/:id", async (req, res) => {
+    try {
+      const def = await storage.updateSchemaBlockDefinition(req.params.id, req.body);
+      if (!def) {
+        return res.status(404).json({ error: "Schema block definition not found" });
+      }
+      res.json(def);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update schema block definition" });
+    }
+  });
+
+  app.delete("/api/schema-block-definitions/:id", async (req, res) => {
+    const success = await storage.deleteSchemaBlockDefinition(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Schema block definition not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
+  // TEMPLATE BLOCK OVERRIDES API (template-level settings)
+  // ============================================
+
+  app.get("/api/newsletter-templates/:templateId/block-overrides", async (req, res) => {
+    const overrides = await storage.getTemplateBlockOverrides(req.params.templateId);
+    res.json(overrides);
+  });
+
+  app.get("/api/newsletter-templates/:templateId/block-overrides/:blockType", async (req, res) => {
+    const override = await storage.getTemplateBlockOverride(req.params.templateId, req.params.blockType);
+    if (!override) {
+      return res.status(404).json({ error: "Template block override not found" });
+    }
+    res.json(override);
+  });
+
+  app.post("/api/newsletter-templates/:templateId/block-overrides", async (req, res) => {
+    try {
+      const { blockType, overrideSettingsJson } = req.body;
+      if (!blockType) {
+        return res.status(400).json({ error: "blockType is required" });
+      }
+      const override = await storage.createTemplateBlockOverride({
+        templateId: req.params.templateId,
+        blockType,
+        overrideSettingsJson: overrideSettingsJson || {},
+      });
+      res.status(201).json(override);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create template block override" });
+    }
+  });
+
+  app.put("/api/template-block-overrides/:id", async (req, res) => {
+    try {
+      const override = await storage.updateTemplateBlockOverride(req.params.id, req.body);
+      if (!override) {
+        return res.status(404).json({ error: "Template block override not found" });
+      }
+      res.json(override);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update template block override" });
+    }
+  });
+
+  app.delete("/api/template-block-overrides/:id", async (req, res) => {
+    const success = await storage.deleteTemplateBlockOverride(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Template block override not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // ============================================
   // BLOCK LIBRARY TEMPLATES API
   // ============================================
 
