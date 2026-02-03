@@ -470,7 +470,7 @@ export default function AdminNewsletterEdit() {
                       data-testid={`block-instance-${block.id}`}
                     >
                       <GripVertical className="h-4 w-4 text-muted-foreground cursor-move" />
-                      <div className="flex-1" onClick={() => handleEditBlock(block)}>
+                      <div className="flex-1" onClick={() => handleEditBlock(block)} data-testid={`button-edit-block-${block.id}`}>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">
                             {getBlockTypeLabel(block.blockType)}

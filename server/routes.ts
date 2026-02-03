@@ -1388,7 +1388,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!block || block.newsletterId !== req.params.newsletterId) {
         return res.status(404).json({ error: "Block instance not found" });
       }
-      const updated = await storage.updateNewsletterBlockInstance(req.params.blockId, req.body);
+      
+      const updateData: Partial<{ blockDataJson: Record<string, unknown>; overrideSettingsJson: Record<string, unknown>; sortOrder: number }> = {};
+      
+      if (req.body.blockDataJson !== undefined) {
+        if (typeof req.body.blockDataJson !== 'object' || req.body.blockDataJson === null) {
+          return res.status(400).json({ error: "blockDataJson must be an object" });
+        }
+        updateData.blockDataJson = req.body.blockDataJson;
+      }
+      
+      if (req.body.overrideSettingsJson !== undefined) {
+        if (typeof req.body.overrideSettingsJson !== 'object' || req.body.overrideSettingsJson === null) {
+          return res.status(400).json({ error: "overrideSettingsJson must be an object" });
+        }
+        updateData.overrideSettingsJson = req.body.overrideSettingsJson;
+      }
+      
+      if (req.body.sortOrder !== undefined) {
+        if (typeof req.body.sortOrder !== 'number') {
+          return res.status(400).json({ error: "sortOrder must be a number" });
+        }
+        updateData.sortOrder = req.body.sortOrder;
+      }
+      
+      const updated = await storage.updateNewsletterBlockInstance(req.params.blockId, updateData);
       res.json(updated);
     } catch (error) {
       res.status(500).json({ error: "Failed to update block instance" });
@@ -1407,33 +1431,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Newsletter not found" });
       }
 
-      let mergedSettings: Record<string, unknown> = {};
-
       const schemaDefinition = await storage.getSchemaBlockDefinitionByType(block.blockType);
-      if (schemaDefinition?.defaultSettingsJson) {
-        mergedSettings = { ...mergedSettings, ...(schemaDefinition.defaultSettingsJson as Record<string, unknown>) };
-      }
+      const schemaDefaults = (schemaDefinition?.defaultSettingsJson as Record<string, unknown>) || {};
 
+      let templateOverrides: Record<string, unknown> = {};
       if (newsletter.templateId) {
         const templateOverride = await storage.getTemplateBlockOverride(newsletter.templateId, block.blockType);
-        if (templateOverride?.overrideSettingsJson) {
-          mergedSettings = { ...mergedSettings, ...(templateOverride.overrideSettingsJson as Record<string, unknown>) };
-        }
+        templateOverrides = (templateOverride?.overrideSettingsJson as Record<string, unknown>) || {};
       }
 
-      if (block.overrideSettingsJson) {
-        mergedSettings = { ...mergedSettings, ...(block.overrideSettingsJson as Record<string, unknown>) };
-      }
+      const issueOverrides = (block.overrideSettingsJson as Record<string, unknown>) || {};
+
+      const mergedSettings: Record<string, unknown> = {
+        ...schemaDefaults,
+        ...templateOverrides,
+        ...issueOverrides,
+      };
 
       res.json({
         blockId: block.id,
         blockType: block.blockType,
         mergedSettings,
         layers: {
-          schemaDefaults: schemaDefinition?.defaultSettingsJson || {},
-          templateOverrides: newsletter.templateId ? 
-            (await storage.getTemplateBlockOverride(newsletter.templateId, block.blockType))?.overrideSettingsJson || {} : {},
-          issueOverrides: block.overrideSettingsJson || {},
+          schemaDefaults,
+          templateOverrides,
+          issueOverrides,
         },
       });
     } catch (error) {
