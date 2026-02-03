@@ -239,17 +239,21 @@ export default function AdminNewsletters() {
   };
 
   const addBlock = (type: BlockTypeOption) => {
+    if (!editingNewsletter) return;
     const newBlock = getDefaultBlockContent(type);
-    const blocks = editingNewsletter?.contentBlocks ? [...editingNewsletter.contentBlocks, newBlock] : [newBlock];
-    setEditingNewsletter({ ...editingNewsletter, contentBlocks: blocks });
+    const blocks = editingNewsletter.contentBlocks ? [...editingNewsletter.contentBlocks, newBlock] : [newBlock];
+    setEditingNewsletter((prev) => prev ? { ...prev, contentBlocks: blocks } : null);
     toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} block added` });
   };
 
   const deleteBlock = (index: number) => {
     if (!editingNewsletter?.contentBlocks) return;
-    const blocks = [...editingNewsletter.contentBlocks];
-    blocks.splice(index, 1);
-    setEditingNewsletter({ ...editingNewsletter, contentBlocks: blocks });
+    setEditingNewsletter((prev) => {
+      if (!prev?.contentBlocks) return prev;
+      const blocks = [...prev.contentBlocks];
+      blocks.splice(index, 1);
+      return { ...prev, contentBlocks: blocks };
+    });
     toast({ title: 'Block deleted' });
   };
 
