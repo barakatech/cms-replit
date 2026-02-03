@@ -23,7 +23,6 @@ import {
   Send,
   Mail,
   ArrowLeft,
-  Download,
   Eye,
   ExternalLink,
   Sparkles,
@@ -176,21 +175,6 @@ export default function AdminNewsletters() {
     }
   };
 
-  const handleExportHtml = () => {
-    if (!selectedNewsletter?.htmlOutput) {
-      toast({ title: 'No HTML output available', variant: 'destructive' });
-      return;
-    }
-    const blob = new Blob([selectedNewsletter.htmlOutput], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `newsletter-${selectedNewsletter.id}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: 'HTML exported' });
-  };
-
   const moveBlock = (index: number, direction: 'up' | 'down') => {
     if (!editingNewsletter?.contentBlocks) return;
     const blocks = [...editingNewsletter.contentBlocks];
@@ -230,14 +214,6 @@ export default function AdminNewsletters() {
           <div className="flex items-center gap-2">
             {selectedNewsletter && (
               <>
-                <Button 
-                  variant="outline" 
-                  onClick={handleExportHtml}
-                  data-testid="button-export-html"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export HTML
-                </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => sendTestMutation.mutate(selectedNewsletter.id)}
