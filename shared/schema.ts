@@ -1181,7 +1181,6 @@ export type NewsletterBlockType =
   | 'in_other_news'
   | 'call_to_action'
   | 'footer'
-  | 'newsletter_header'
   | 'main_article'
   | 'market_overview'
   | 'promo_banner'

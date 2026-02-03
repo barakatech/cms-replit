@@ -65,7 +65,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 
 const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: string; icon: typeof TrendingUp; category: string }[] = [
-  { type: 'newsletter_header', label: 'Header', description: 'Logo, issue number, date', icon: Layers, category: 'Layout' },
   { type: 'hero', label: 'Hero', description: 'Main hero banner', icon: Image, category: 'Layout' },
   { type: 'main_article', label: 'Main Article', description: 'Personalized greeting + body', icon: FileText, category: 'Content' },
   { type: 'introduction', label: 'Introduction', description: 'Introduction paragraph', icon: FileText, category: 'Content' },
@@ -345,22 +344,6 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
               </a>
             </p>
           )}
-        </div>
-      );
-
-    case 'newsletter_header':
-      return (
-        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#0a0a0a', textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-            {data.logoUrl ? (
-              <img src={data.logoUrl} alt="Logo" style={{ height: '32px' }} />
-            ) : (
-              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#00d4aa' }}>akhbaraka</span>
-            )}
-          </div>
-          <p style={{ fontSize: '11px', color: '#888', letterSpacing: '1px', textTransform: 'uppercase' }}>
-            Issue #{data.issueNumber || '---'} · {data.issueDate || 'Date not set'}
-          </p>
         </div>
       );
 
@@ -647,11 +630,9 @@ function renderBlockPreview(block: NewsletterBlockInstance) {
 function LivePreviewPanel({ newsletter, blocks }: { newsletter: Newsletter; blocks: NewsletterBlockInstance[] }) {
   const sortedBlocks = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
   
-  // Get issue info from newsletter or header block
-  const headerBlock = sortedBlocks.find(b => b.blockType === 'newsletter_header');
-  const headerData = headerBlock?.blockDataJson as { issueNumber?: number; issueDate?: string } || {};
-  const issueNumber = newsletter.issueNumber || headerData.issueNumber || 147;
-  const issueDate = newsletter.issueDate || headerData.issueDate || 'WEDNESDAY, FEB 4, 2026';
+  // Get issue info from newsletter settings
+  const issueNumber = newsletter.issueNumber || 147;
+  const issueDate = newsletter.issueDate || 'WEDNESDAY, FEB 4, 2026';
   
   return (
     <div className="bg-background rounded-lg overflow-hidden h-full flex flex-col">
@@ -1413,42 +1394,6 @@ function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlo
         </div>
       );
 
-    case 'newsletter_header':
-      return (
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Logo URL (optional)</Label>
-            <Input
-              value={data.logoUrl as string || ''}
-              onChange={(e) => updateField('logoUrl', e.target.value)}
-              placeholder="Leave empty for default logo"
-              data-testid="inline-input-logoUrl"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Issue Number</Label>
-              <Input
-                type="number"
-                value={data.issueNumber as number || ''}
-                onChange={(e) => updateField('issueNumber', parseInt(e.target.value) || 0)}
-                placeholder="147"
-                data-testid="inline-input-issueNumber"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Issue Date</Label>
-              <Input
-                value={data.issueDate as string || ''}
-                onChange={(e) => updateField('issueDate', e.target.value)}
-                placeholder="Wednesday, Feb 4, 2026"
-                data-testid="inline-input-issueDate"
-              />
-            </div>
-          </div>
-        </div>
-      );
-
     case 'main_article':
       return (
         <div className="space-y-3">
@@ -1869,8 +1814,6 @@ const getDefaultBlockData = (blockType: NewsletterBlockType): NewsletterBlockDat
       return { title: '', subtitle: '', buttonText: '', buttonUrl: '' };
     case 'footer':
       return { title: "Let's Stay in Touch", body: 'Questions or suggestions? Reach us at', contactEmail: 'support@getbaraka.com' };
-    case 'newsletter_header':
-      return { logoUrl: '', issueNumber: 1, issueDate: '' };
     case 'main_article':
       return { greeting: '{{first_name}}', body: '' };
     case 'market_overview':
