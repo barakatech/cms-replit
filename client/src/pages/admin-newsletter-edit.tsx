@@ -67,18 +67,262 @@ import type {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const BLOCK_TYPES: { type: NewsletterBlockType; label: string; icon: typeof TrendingUp; category: string }[] = [
-  { type: 'introduction', label: 'Introduction', icon: FileText, category: 'Content' },
-  { type: 'featured_content', label: 'Featured Content', icon: Star, category: 'Content' },
-  { type: 'articles_list', label: 'Articles List', icon: Newspaper, category: 'Content' },
-  { type: 'stock_collection', label: 'Stock Collection', icon: TrendingUp, category: 'Stocks' },
-  { type: 'assets_under_500', label: 'Assets Under $500', icon: DollarSign, category: 'Stocks' },
-  { type: 'what_users_picked', label: 'What Users Picked', icon: Users, category: 'Stocks' },
-  { type: 'asset_highlight', label: 'Asset Highlight', icon: Star, category: 'Stocks' },
-  { type: 'term_of_the_day', label: 'Term Of The Day', icon: Lightbulb, category: 'Education' },
-  { type: 'in_other_news', label: 'In Other News', icon: Newspaper, category: 'Content' },
-  { type: 'call_to_action', label: 'Call To Action', icon: Send, category: 'Layout' },
+const BLOCK_TYPES: { type: NewsletterBlockType; label: string; description: string; icon: typeof TrendingUp; category: string }[] = [
+  { type: 'introduction', label: 'Introduction', description: 'Introduction paragraph', icon: FileText, category: 'Content' },
+  { type: 'featured_content', label: 'Featured', description: 'Featured content section', icon: Star, category: 'Content' },
+  { type: 'articles_list', label: 'Articles', description: 'List of articles', icon: Newspaper, category: 'Content' },
+  { type: 'stock_collection', label: 'Stocks', description: 'Stock collection grid', icon: TrendingUp, category: 'Stocks' },
+  { type: 'assets_under_500', label: 'Under $500', description: 'Affordable assets list', icon: DollarSign, category: 'Stocks' },
+  { type: 'what_users_picked', label: 'User Picks', description: 'Popular user picks', icon: Users, category: 'Stocks' },
+  { type: 'asset_highlight', label: 'Highlight', description: 'Single asset spotlight', icon: Star, category: 'Stocks' },
+  { type: 'term_of_the_day', label: 'Term', description: 'Financial term education', icon: Lightbulb, category: 'Education' },
+  { type: 'in_other_news', label: 'News', description: 'External news links', icon: Newspaper, category: 'Content' },
+  { type: 'call_to_action', label: 'CTA', description: 'Call to action button', icon: Send, category: 'Layout' },
 ];
+
+interface BlockData {
+  title?: string;
+  subtitle?: string;
+  body?: string;
+  articles?: Array<{ articleId?: string; title?: string; excerpt?: string }>;
+  externalItems?: Array<{ title?: string; source?: string; url?: string; imageUrl?: string }>;
+  stocks?: Array<{ ticker?: string; companyName?: string }>;
+  term?: string;
+  definition?: string;
+  example?: string;
+  buttonText?: string;
+  buttonUrl?: string;
+  newsItems?: Array<{ headline?: string; source?: string; url?: string }>;
+  stockId?: string;
+  ticker?: string;
+  companyName?: string;
+  description?: string;
+  imageUrl?: string;
+  sourceType?: string;
+  mode?: string;
+  dynamicType?: string;
+  timeWindow?: string;
+  limit?: number;
+  maxPrice?: number;
+  sortBy?: string;
+}
+
+function renderBlockPreview(block: NewsletterBlockInstance) {
+  const data = (block.blockDataJson as BlockData) || {};
+  const blockType = block.blockType;
+
+  switch (blockType) {
+    case 'introduction':
+      return (
+        <div style={{ marginBottom: '24px' }}>
+          {data.title && <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: '#00d4aa' }}>{data.title}</h2>}
+          {data.subtitle && <p style={{ fontSize: '16px', color: '#999', marginBottom: '12px' }}>{data.subtitle}</p>}
+          {data.body && <p style={{ fontSize: '14px', color: '#ccc', lineHeight: '1.6' }}>{data.body}</p>}
+        </div>
+      );
+
+    case 'featured_content':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
+          <h3 style={{ fontSize: '12px', color: '#00d4aa', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Featured</h3>
+          {data.title && <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>{data.title}</h2>}
+          {data.imageUrl && <img src={data.imageUrl} alt="" style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '4px', marginBottom: '12px' }} />}
+          {data.articles && data.articles.length > 0 && (
+            <div>
+              {data.articles.map((article, idx) => (
+                <div key={idx} style={{ padding: '12px 0', borderBottom: idx < data.articles!.length - 1 ? '1px solid #333' : 'none' }}>
+                  <p style={{ fontWeight: '600', color: 'white' }}>{article.title || 'Untitled Article'}</p>
+                  {article.excerpt && <p style={{ fontSize: '14px', color: '#999', marginTop: '4px' }}>{article.excerpt}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+
+    case 'articles_list':
+      return (
+        <div style={{ marginBottom: '24px' }}>
+          {data.title && <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: 'white' }}>{data.title}</h3>}
+          {data.sourceType === 'external' && data.externalItems && data.externalItems.length > 0 ? (
+            <div>
+              {data.externalItems.map((item, idx) => (
+                <div key={idx} style={{ padding: '12px 0', borderBottom: '1px solid #333' }}>
+                  <p style={{ fontWeight: '600', color: 'white' }}>{item.title || 'Untitled'}</p>
+                  {item.source && <p style={{ fontSize: '12px', color: '#666' }}>Source: {item.source}</p>}
+                </div>
+              ))}
+            </div>
+          ) : data.articles && data.articles.length > 0 ? (
+            <div>
+              {data.articles.map((article, idx) => (
+                <div key={idx} style={{ padding: '12px 0', borderBottom: '1px solid #333' }}>
+                  <p style={{ fontWeight: '600', color: 'white' }}>{article.title || 'Untitled Article'}</p>
+                  {article.excerpt && <p style={{ fontSize: '14px', color: '#999', marginTop: '4px' }}>{article.excerpt}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: '#666', fontStyle: 'italic' }}>No articles selected</p>
+          )}
+        </div>
+      );
+
+    case 'stock_collection':
+      return (
+        <div style={{ marginBottom: '24px' }}>
+          {data.title && <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: 'white' }}>{data.title}</h3>}
+          {data.mode === 'dynamic' ? (
+            <p style={{ color: '#999', fontStyle: 'italic' }}>Dynamic: {data.dynamicType?.replace('_', ' ').toUpperCase() || 'Top Traded'}</p>
+          ) : data.stocks && data.stocks.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '8px' }}>
+              {data.stocks.map((stock, idx) => (
+                <div key={idx} style={{ padding: '12px', backgroundColor: '#1a1a1a', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontWeight: 'bold', color: '#00d4aa', fontSize: '14px' }}>{stock.ticker}</p>
+                  <p style={{ fontSize: '10px', color: '#999' }}>{stock.companyName}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: '#666', fontStyle: 'italic' }}>No stocks selected</p>
+          )}
+        </div>
+      );
+
+    case 'assets_under_500':
+    case 'what_users_picked':
+      return (
+        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
+          {data.title && <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>{data.title}</h3>}
+          <p style={{ color: '#999', fontSize: '12px' }}>
+            {blockType === 'assets_under_500' ? `Max: $${data.maxPrice || 500}` : `Window: ${data.timeWindow || '24h'}`} | Limit: {data.limit || 5}
+          </p>
+          {data.stocks && data.stocks.length > 0 && (
+            <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {data.stocks.map((stock, idx) => (
+                <span key={idx} style={{ padding: '4px 10px', backgroundColor: '#00d4aa', color: 'white', borderRadius: '12px', fontSize: '11px' }}>
+                  {stock.ticker}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+
+    case 'asset_highlight':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#0a0a0a', borderRadius: '8px', border: '2px solid #00d4aa' }}>
+          <h3 style={{ fontSize: '12px', color: '#00d4aa', marginBottom: '8px', textTransform: 'uppercase' }}>Asset Highlight</h3>
+          {data.title && <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>{data.title}</h2>}
+          {data.ticker && <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#00d4aa', margin: '8px 0' }}>{data.ticker}</p>}
+          {data.companyName && <p style={{ color: '#999' }}>{data.companyName}</p>}
+          {data.description && <p style={{ marginTop: '12px', color: '#ccc', lineHeight: '1.6' }}>{data.description}</p>}
+        </div>
+      );
+
+    case 'term_of_the_day':
+      return (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: '#1a1a1a', borderRadius: '8px', borderLeft: '4px solid #00d4aa' }}>
+          <h3 style={{ fontSize: '12px', color: '#00d4aa', marginBottom: '8px', textTransform: 'uppercase' }}>Term of the Day</h3>
+          {data.term && <p style={{ fontSize: '18px', fontWeight: '600', color: 'white' }}>{data.term}</p>}
+          {data.definition && <p style={{ marginTop: '8px', color: '#ccc', lineHeight: '1.6' }}>{data.definition}</p>}
+          {data.example && (
+            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#0a0a0a', borderRadius: '4px' }}>
+              <p style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Example:</p>
+              <p style={{ color: '#999', fontStyle: 'italic', fontSize: '13px' }}>{data.example}</p>
+            </div>
+          )}
+        </div>
+      );
+
+    case 'in_other_news':
+      return (
+        <div style={{ marginBottom: '24px' }}>
+          {data.title && <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: 'white' }}>{data.title}</h3>}
+          {data.newsItems && data.newsItems.length > 0 ? (
+            <div>
+              {data.newsItems.map((item, idx) => (
+                <div key={idx} style={{ padding: '8px 0', borderBottom: '1px solid #333' }}>
+                  <p style={{ color: 'white' }}>{item.headline || 'Untitled'}</p>
+                  {item.source && <p style={{ fontSize: '12px', color: '#666' }}>{item.source}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: '#666', fontStyle: 'italic' }}>No news items</p>
+          )}
+        </div>
+      );
+
+    case 'call_to_action':
+      return (
+        <div style={{ marginBottom: '24px', textAlign: 'center', padding: '24px', backgroundColor: '#0a0a0a', borderRadius: '8px' }}>
+          {data.title && <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', marginBottom: '8px' }}>{data.title}</h2>}
+          {data.body && <p style={{ color: '#999', marginBottom: '16px' }}>{data.body}</p>}
+          {data.buttonText && (
+            <span style={{ display: 'inline-block', padding: '12px 32px', backgroundColor: '#00d4aa', color: 'white', fontWeight: 'bold', borderRadius: '4px' }}>
+              {data.buttonText}
+            </span>
+          )}
+        </div>
+      );
+
+    default:
+      return (
+        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '8px' }}>
+          <p style={{ color: '#999' }}>Block: {getBlockTypeLabel(blockType)}</p>
+        </div>
+      );
+  }
+}
+
+function LivePreviewPanel({ newsletter, blocks }: { newsletter: Newsletter; blocks: NewsletterBlockInstance[] }) {
+  const sortedBlocks = [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
+  
+  return (
+    <div className="bg-background rounded-lg overflow-hidden h-full flex flex-col">
+      <div className="p-3 border-b">
+        <h3 className="font-semibold text-sm">Live Preview</h3>
+        <p className="text-xs text-muted-foreground">HTML output preview</p>
+      </div>
+      <ScrollArea className="flex-1">
+        <div style={{ backgroundColor: '#0a0a0a', minHeight: '100%', padding: '20px' }}>
+          <div style={{ maxWidth: '100%', backgroundColor: '#111', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ backgroundColor: '#0a0a0a', padding: '20px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#00d4aa' }}>baraka</span>
+              </div>
+              <h1 style={{ fontSize: '18px', fontWeight: 'bold', color: 'white', margin: '0 0 8px 0' }}>
+                {newsletter.subject}
+              </h1>
+              {newsletter.preheader && (
+                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>{newsletter.preheader}</p>
+              )}
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              {sortedBlocks.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#666', padding: '40px' }}>No content blocks yet</p>
+              ) : (
+                sortedBlocks.map((block) => (
+                  <div key={block.id}>
+                    {renderBlockPreview(block)}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ backgroundColor: '#0a0a0a', padding: '16px', textAlign: 'center', borderTop: '1px solid #222' }}>
+              <p style={{ fontSize: '10px', color: '#666', margin: 0 }}>
+                <a href="#" style={{ color: '#00d4aa' }}>Unsubscribe</a> | <a href="#" style={{ color: '#00d4aa' }}>Preferences</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
 
 const getBlockTypeLabel = (type: NewsletterBlockType): string => {
   const found = BLOCK_TYPES.find(b => b.type === type);
@@ -394,9 +638,9 @@ function InlineBlockEditor({ block, onUpdate, stockPages, blogPosts }: InlineBlo
                 ))}
               </div>
             )}
-            {data.ticker && (
+            {typeof data.ticker === 'string' && data.ticker && (
               <div className="text-sm text-muted-foreground">
-                Selected: <span className="font-medium text-primary">{String(data.ticker || '')}</span> - {String(data.companyName || '')}
+                Selected: <span className="font-medium text-primary">{data.ticker}</span> - {typeof data.companyName === 'string' ? data.companyName : ''}
               </div>
             )}
           </div>
@@ -1725,10 +1969,10 @@ export default function AdminNewsletterEdit() {
                   ))}
                 </div>
               )}
-              {d.ticker && (
+              {typeof d.ticker === 'string' && d.ticker && (
                 <div className="p-2 border rounded-lg flex items-center gap-2">
-                  <span className="font-medium">{String(d.ticker || '')}</span>
-                  <span className="text-muted-foreground">{String(d.companyName || '')}</span>
+                  <span className="font-medium">{d.ticker}</span>
+                  <span className="text-muted-foreground">{typeof d.companyName === 'string' ? d.companyName : ''}</span>
                 </div>
               )}
             </div>
@@ -1988,8 +2232,8 @@ export default function AdminNewsletterEdit() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-180px)]">
+        <div className="space-y-4 overflow-auto">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <div>
@@ -2004,42 +2248,22 @@ export default function AdminNewsletterEdit() {
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuLabel>Schema Blocks</DropdownMenuLabel>
-                  {schemaDefinitions && schemaDefinitions.length > 0 ? (
-                    schemaDefinitions.map((def) => (
-                      <DropdownMenuItem
-                        key={def.id}
-                        onClick={() => handleQuickAddSchemaBlock(def)}
-                        data-testid={`dropdown-schema-${def.blockType}`}
-                      >
-                        <Layers className="h-4 w-4 mr-2" />
-                        {def.name}
-                      </DropdownMenuItem>
-                    ))
-                  ) : (
-                    <DropdownMenuItem disabled>No schema blocks available</DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel>Custom Blocks</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuLabel>Content Block Types</DropdownMenuLabel>
                   {BLOCK_TYPES.map((blockType) => (
                     <DropdownMenuItem
                       key={blockType.type}
                       onClick={() => handleQuickAddCustomBlock(blockType.type)}
+                      className="flex items-start gap-3 py-2"
                       data-testid={`dropdown-custom-${blockType.type}`}
                     >
-                      <blockType.icon className="h-4 w-4 mr-2" />
-                      {blockType.label}
+                      <blockType.icon className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{blockType.label}</span>
+                        <span className="text-xs text-muted-foreground">{blockType.description}</span>
+                      </div>
                     </DropdownMenuItem>
                   ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setAddBlockDialogOpen(true)}
-                    data-testid="dropdown-advanced-add"
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Advanced Add (Edit Before Adding)
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </CardHeader>
@@ -2145,130 +2369,87 @@ export default function AdminNewsletterEdit() {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Newsletter Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Subject:</span>
-                <p className="font-medium">{newsletter.subject}</p>
-              </div>
-              <Separator />
-              <div>
-                <span className="text-muted-foreground">Preheader:</span>
-                <p>{newsletter.preheader || '-'}</p>
-              </div>
-              <Separator />
-              <div>
-                <span className="text-muted-foreground">Created:</span>
-                <p>{new Date(newsletter.createdAt).toLocaleDateString()}</p>
-              </div>
-              {newsletter.scheduledAt && (
-                <>
-                  <Separator />
-                  <div>
-                    <span className="text-muted-foreground">Scheduled:</span>
-                    <p>{new Date(newsletter.scheduledAt).toLocaleString()}</p>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Library className="h-4 w-4" />
-                Library Templates
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Quick insert from saved templates
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[200px]">
-                {libraryTemplates && libraryTemplates.length > 0 ? (
-                  <div className="space-y-2">
-                    {libraryTemplates.map((template) => (
-                      <Button
-                        key={template.id}
-                        variant="ghost"
-                        className="w-full justify-start text-left h-auto py-2"
-                        onClick={() => handleInsertFromLibrary(template)}
-                        data-testid={`button-insert-${template.id}`}
-                      >
-                        <div>
-                          <p className="font-medium text-sm">{template.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {getBlockTypeLabel(template.blockType)}
-                          </p>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No templates available
-                  </p>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Schema Block Definitions
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Edit default settings for each block type
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[280px]">
-                {schemaDefinitions && schemaDefinitions.length > 0 ? (
-                  <div className="space-y-2">
-                    {schemaDefinitions.map((def) => {
-                      const blockType = BLOCK_TYPES.find(b => b.type === def.blockType);
-                      const Icon = blockType?.icon || FileText;
-                      return (
-                        <div
-                          key={def.id}
-                          className="flex items-center gap-2 p-2 rounded-md border bg-card hover-elevate"
-                          data-testid={`schema-def-${def.id}`}
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Library className="h-4 w-4" />
+                  Library Templates
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ScrollArea className="h-[120px]">
+                  {libraryTemplates && libraryTemplates.length > 0 ? (
+                    <div className="space-y-1">
+                      {libraryTemplates.map((template) => (
+                        <Button
+                          key={template.id}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-left h-auto py-1"
+                          onClick={() => handleInsertFromLibrary(template)}
+                          data-testid={`button-insert-${template.id}`}
                         >
-                          <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{def.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {def.blockType}
+                          <div>
+                            <p className="font-medium text-xs">{template.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {getBlockTypeLabel(template.blockType)}
                             </p>
                           </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
+                        </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No templates
+                    </p>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Schema Definitions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ScrollArea className="h-[120px]">
+                  {schemaDefinitions && schemaDefinitions.length > 0 ? (
+                    <div className="space-y-1">
+                      {schemaDefinitions.map((def) => {
+                        const blockType = BLOCK_TYPES.find(b => b.type === def.blockType);
+                        const Icon = blockType?.icon || FileText;
+                        return (
+                          <div
+                            key={def.id}
+                            className="flex items-center gap-2 p-1 rounded hover-elevate cursor-pointer"
                             onClick={() => handleEditSchemaDefinition(def)}
-                            data-testid={`button-edit-schema-${def.id}`}
+                            data-testid={`schema-def-${def.id}`}
                           >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No schema definitions available
-                  </p>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                            <Icon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                            <span className="text-xs truncate flex-1">{def.name}</span>
+                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No definitions
+                    </p>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <div className="h-full border rounded-lg overflow-hidden" data-testid="live-preview-panel">
+          <LivePreviewPanel newsletter={newsletter} blocks={sortedBlocks} />
         </div>
       </div>
 

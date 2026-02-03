@@ -1,0 +1,152 @@
+Inside Newsletter Edit → Content Blocks:
+
+The Add Block dropdown must show ALL block types that exist in “All Blocks” (Hero Banner, Introduction, Featured Content, Article List, CTA, Footer, Stock Collection, Assets Under $500, User Picks, Asset Highlight, Term of the Day, In Other News).
+
+When I select a block type from the dropdown:
+
+it gets added to the newsletter content blocks list
+
+it expands immediately and shows the editable fields exactly based on that block’s schema configuration
+
+the UI should look/behave like image 1 (expandable block editor with fields like Title, Content, Image URL, CTA, etc.)
+
+Reordering blocks should be possible (drag handle).
+
+Deleting a block removes it from that newsletter only.
+
+Editing fields should save to the newsletter (autosave or Save button).
+
+Important: Do NOT implement this inside “Block Edit” or “All Blocks”
+
+“All Blocks” should remain a registry only.
+
+No “Edit block content” flow should exist there.
+
+The “edit” button on All Blocks can optionally edit schema/defaults, but NOT newsletter content.
+
+Data model (must implement if missing)
+
+We need:
+
+Block Registry (global)
+
+BlockDefinition (or whatever the current model is called in your DB)
+
+id
+
+name
+
+typeKey (unique string: hero, introduction, featured, articles, cta, footer, stock_collection, etc.)
+
+schema (JSON) // defines editable fields and control types
+
+defaultValues (JSON)
+
+Newsletter content (per newsletter instance)
+
+NewsletterBlockInstance
+
+id
+
+newsletterId
+
+typeKey (FK / reference to BlockDefinition.typeKey)
+
+orderIndex
+
+values (JSON) // stores the actual filled values for this newsletter’s block instance
+
+Rendering requirement (THIS is what you must build)
+
+In Newsletter Edit:
+
+Fetch all BlockDefinition rows
+
+Populate Add Block dropdown using them
+
+When adding a block:
+
+create a NewsletterBlockInstance with values = BlockDefinition.defaultValues
+
+Render each NewsletterBlockInstance as an expandable accordion card:
+
+title = BlockDefinition.name
+
+body = a dynamic form generated from BlockDefinition.schema
+
+when user edits a field, update NewsletterBlockInstance.values
+
+Use the schema to decide field type:
+
+text input, textarea, number, toggle
+
+select (enum)
+
+async searchable select for articles/stocks when schema says so
+
+Schema-driven behavior examples (must implement)
+Article List block
+
+In Newsletter Edit, when block type is Article List:
+
+show:
+
+numberOfArticles (1–20)
+
+sourceType: Internal | External
+
+if Internal:
+
+show article dropdown (searchable) sourced from internal Articles table
+
+allow selecting up to numberOfArticles
+
+if External:
+
+show repeatable rows: title + url + source + optional imageUrl
+
+Stock Collection
+
+show:
+
+mode: Manual | Dynamic
+
+Manual:
+
+stock dropdown searchable (ticker/name)
+
+limit
+
+Dynamic:
+
+collectionType (top traded/gainers/losers etc.)
+
+limit
+
+Implementation checklist
+
+Update Newsletter Edit “Add Block” dropdown to use ALL BlockDefinitions from All Blocks registry.
+
+Add block instance creation endpoint: POST /api/newsletters/:id/blocks
+
+Add update endpoint: PATCH /api/newsletters/:id/blocks/:blockInstanceId
+
+Add reorder endpoint: PATCH /api/newsletters/:id/blocks/reorder
+
+Add delete endpoint: DELETE /api/newsletters/:id/blocks/:blockInstanceId
+
+Build a dynamic schema-to-form renderer used ONLY in Newsletter Edit.
+
+Acceptance test
+
+I open a newsletter → click Add Block → I see the same list as All Blocks
+
+I add “Article List” → it expands → I can choose internal articles via dropdown + set count
+
+I add “Hero Banner” → it expands → I can edit Title/Content/Image URL/CTA fields
+
+Refresh page → everything persists
+
+No content editing is done in All Blocks page.
+
+Deliver the working implementation.
