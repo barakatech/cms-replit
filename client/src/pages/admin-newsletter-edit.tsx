@@ -59,7 +59,8 @@ import type {
   NewsletterBlockData,
   StockPage,
   NewsletterTemplate,
-  NewsletterStatus
+  NewsletterStatus,
+  BlogPost
 } from '@shared/schema';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -1913,6 +1914,24 @@ export default function AdminNewsletterEdit() {
     enabled: !!newsletterId,
   });
 
+  // Fetch the source blog post if newsletter is article-specific
+  const { data: sourceBlogPost } = useQuery<BlogPost>({
+    queryKey: ['/api/blog-posts', newsletter?.sourceBlogPostId],
+    enabled: !!newsletter?.sourceBlogPostId,
+  });
+
+  // Helper to extract first paragraph from blog post content
+  const getFirstParagraph = (content: string): string => {
+    if (!content) return '';
+    // Strip HTML tags and get first paragraph
+    const stripped = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    // Get first ~200 characters ending at a word boundary
+    if (stripped.length <= 200) return stripped;
+    const truncated = stripped.substring(0, 200);
+    const lastSpace = truncated.lastIndexOf(' ');
+    return (lastSpace > 100 ? truncated.substring(0, lastSpace) : truncated) + '...';
+  };
+
   // Fetch all templates for the template selector
   const { data: templates } = useQuery<NewsletterTemplate[]>({
     queryKey: ['/api/newsletter-templates'],
@@ -2106,7 +2125,16 @@ export default function AdminNewsletterEdit() {
   };
 
   const handleQuickAddCustomBlock = (blockType: NewsletterBlockType) => {
-    const defaultData = getBlockDataWithTemplateDefaults(blockType);
+    let defaultData = getBlockDataWithTemplateDefaults(blockType);
+    
+    // For main_article blocks, auto-populate body from source blog post
+    if (blockType === 'main_article' && sourceBlogPost) {
+      const locale = newsletter?.locale || 'en';
+      const content = locale === 'ar' ? sourceBlogPost.content_ar : sourceBlogPost.content_en;
+      const firstParagraph = getFirstParagraph(content);
+      defaultData = { ...defaultData, body: firstParagraph };
+    }
+    
     addBlockMutation.mutate({
       blockType,
       blockDataJson: defaultData,
