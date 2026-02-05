@@ -15,7 +15,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, Users, ClipboardList, Shield } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, Users, ClipboardList, Shield, Landmark } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
@@ -23,6 +23,7 @@ const menuItems = [
   { title: 'Discover Page', url: '/admin/discover', icon: Compass, testId: 'link-discover' },
   { title: 'Landing Pages', url: '/admin/pages', icon: Layers, testId: 'link-landing-pages' },
   { title: 'Stock Pages', url: '/admin/stocks', icon: FileText, testId: 'link-stock-pages' },
+  { title: 'Bond Pages', url: '/admin/bonds', icon: Landmark, testId: 'link-bond-pages' },
 ];
 
 const blogSubItems = [

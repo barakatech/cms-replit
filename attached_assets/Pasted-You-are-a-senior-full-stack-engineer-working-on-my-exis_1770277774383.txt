@@ -1,0 +1,75 @@
+You are a senior full-stack engineer working on my existing CMS (already running, do not restructure unrelated areas).
+TASK: Add a new CMS feature to create and manage “Bond Pages” similar to stock pages.
+
+GOALS
+1) Add a new CMS content type: BondPage
+2) Provide a complete admin UI to create/edit/publish BondPages
+3) Store all bond-specific fields (pricing, yield, coupon schedule, risk, liquidity, issuer profile, SEO, localization)
+4) Add validations + publish gating + compliance-scan integration (reuse existing compliance checker; do NOT change its architecture)
+5) Render a public-facing Bond Landing Page using modular page blocks (like stock pages) but bond-specific blocks.
+
+NON-NEGOTIABLES
+- Do not remove existing features.
+- Do not refactor the CMS broadly; implement BondPage in a clean, isolated way.
+- Reuse existing patterns: routing, auth, RBAC, drafts/publishing, rich text, media uploads, and the existing compliance checker.
+- Bond pages must support EN/AR fields with fallback rules.
+- Implement “simple mode” and “pro mode” editing in the UI.
+
+DATA MODEL
+Create BondPage with fields grouped as:
+A) Identity: title(en/ar), slug, status, canonicalUrl, tags, featured
+B) Classification: instrumentType, issuerType, couponType, seniority, callable(+schedule), putable(+schedule), convertible(+terms), guaranteed(+guarantor)
+C) IDs/Metadata: isin, cusip, ticker, exchange, issuerCountry, countryOfRisk, currency, issueDate, maturityDate, settlementDays, denomination, minInvestment, incrementSize, dayCountConvention
+D) Pricing/Yield: cleanPrice, dirtyPrice, accruedInterest, ytm, currentYield, yieldToCall, yieldToWorst, spread(+type), benchmark(+spreadToBenchmark), bid/ask (price+yield), lastUpdatedAt, priceSource
+E) Coupon/Cashflow: couponRate, couponFrequency, nextCouponDate, lastCouponDate, principalRepaymentType, couponSchedule (autogen but editable override), amortizationSchedule(optional), incomeCalculatorDefaults(defaultInvestmentAmount, showIncomeEstimate, disclaimer)
+F) Risk/Credit: creditRatingDisplay, ratingAgencies[{agency,rating,outlook,lastReviewedDate}], riskLevel, duration, macaulayDuration, convexity, interestRateSensitivityNotes(en/ar), defaultRiskNotes(en/ar), countryRiskNotes(en/ar)
+G) Issuer: issuerName, issuerShortDescription(en/ar), issuerSector, issuerWebsite, issuerLogo, issuerFinancialHighlights(en/ar), issuerDocsLinks[{name,url}]
+H) Liquidity: liquidityScore, avgDailyVolume, typicalBidAskBps, tradableOnPlatform, tradingHoursNotes(en/ar), earlyExitNotes(en/ar)
+I) Content Modules: heroSummary(en/ar), highlights(en/ar array), howItWorks(en/ar rich), faq(en/ar array), riskDisclosure(en/ar rich), disclaimers(en/ar array), educationalTooltips(glossary en/ar)
+J) Charts: showCharts, ytmSeriesRef/priceSeriesRef (store as references; do not bloat DB)
+K) SEO: metaTitle(en/ar), metaDescription(en/ar), ogTitle/ogDescription/ogImage, indexable, schemaOrgJsonLd(auto)
+L) Compliance: complianceStatus, complianceScanResults, blockedKeywordsHit, requiredDisclosuresPresent, lastComplianceScanAt
+
+ADMIN UI
+- Add “Bonds” in the CMS menu.
+- Provide list view with filters: status, currency, issuerType, maturity band, rating band, riskLevel, tradableOnPlatform.
+- Create/edit view with tabs: Basics, Pricing & Yield, Cashflow, Risk & Credit, Liquidity, Content Blocks, SEO, Compliance.
+- Simple/Pro mode toggle:
+  - Simple shows: Basics + Key Metrics + Content + SEO + Compliance.
+  - Pro shows everything.
+- Add “Run Compliance Scan” button that scans ALL text fields (including FAQs, highlights, disclaimers, howItWorks, riskDisclosure, issuer descriptions).
+- Publishing is blocked unless:
+  - complianceStatus = Pass OR adminOverride with reason
+  - required fields present (title, slug, currency, issuerName, maturityDate unless perpetual, coupon fields unless zero, ytm or cleanPrice, riskDisclosure, disclaimers)
+  - show clear inline errors.
+
+AUTO-GENERATION
+- When couponRate + couponFrequency + issueDate/maturityDate exist:
+  - Auto-generate couponSchedule dates and amount-per-100, store as draft data
+  - Allow manual override edit of schedule
+- Income estimate module:
+  - Takes investment amount input and shows expected annual coupon income
+  - Must show disclaimer text beneath
+
+PUBLIC PAGE RENDERING
+- Route: /bonds/:slug
+- Build block-based layout:
+  1) BondHeroBlock (YTM, Coupon, Maturity, Rating, Currency, CTA)
+  2) KeyFactsBlock
+  3) IncomeCalculatorBlock
+  4) CouponScheduleBlock
+  5) RiskSummaryBlock (rating + duration + notes)
+  6) ChartsBlock (optional)
+  7) IssuerBlock
+  8) LiquidityExitBlock
+  9) SimilarBondsBlock
+  10) FAQ + Disclosures
+- Ensure SEO tags + JSON-LD generated from fields.
+
+TESTING
+- Add unit tests for validation logic
+- Add integration test for create → scan → publish → render page
+- Ensure no regressions to existing stock pages.
+
+DELIVERABLE
+Implement the BondPage feature end-to-end, adhering strictly to existing CMS patterns and without removing existing functionality.

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema, insertBondPageSchema, DEFAULT_BOND_PAGE_BLOCKS } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -814,6 +814,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Stock page not found" });
     }
     res.json({ success: true });
+  });
+
+  // ============================================
+  // BOND PAGES (Admin CMS)
+  // ============================================
+
+  // Get all bond pages
+  app.get("/api/bond-pages", async (_req, res) => {
+    const pages = await storage.getBondPages();
+    res.json(pages);
+  });
+
+  // Get single bond page by ID
+  app.get("/api/bond-pages/:id", async (req, res) => {
+    const page = await storage.getBondPage(req.params.id);
+    if (!page) {
+      return res.status(404).json({ error: "Bond page not found" });
+    }
+    res.json(page);
+  });
+
+  // Get bond page by slug (public)
+  app.get("/api/bond-pages/slug/:slug", async (req, res) => {
+    const page = await storage.getBondPageBySlug(req.params.slug);
+    if (!page) {
+      return res.status(404).json({ error: "Bond page not found" });
+    }
+    res.json(page);
+  });
+
+  // Create bond page (admin)
+  app.post("/api/bond-pages", async (req, res) => {
+    try {
+      const validatedData = insertBondPageSchema.parse(req.body);
+      const pageData = {
+        ...validatedData,
+        pageBuilderJson: validatedData.pageBuilderJson || DEFAULT_BOND_PAGE_BLOCKS,
+      };
+      const page = await storage.createBondPage(pageData);
+      res.status(201).json(page);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create bond page" });
+    }
+  });
+
+  // Update bond page (admin)
+  app.put("/api/bond-pages/:id", async (req, res) => {
+    try {
+      const validatedData = insertBondPageSchema.partial().parse(req.body);
+      const page = await storage.updateBondPage(req.params.id, validatedData);
+      if (!page) {
+        return res.status(404).json({ error: "Bond page not found" });
+      }
+      res.json(page);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update bond page" });
+    }
+  });
+
+  // Delete bond page (admin)
+  app.delete("/api/bond-pages/:id", async (req, res) => {
+    const success = await storage.deleteBondPage(req.params.id);
+    if (!success) {
+      return res.status(404).json({ error: "Bond page not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // Run compliance scan on bond page
+  app.post("/api/bond-pages/:id/compliance-scan", async (req, res) => {
+    try {
+      const bondPage = await storage.getBondPage(req.params.id);
+      if (!bondPage) {
+        return res.status(404).json({ error: "Bond page not found" });
+      }
+
+      // Get compliance rules
+      const rules = await storage.getComplianceRules();
+      const activeRules = rules.filter(r => r.enabled);
+
+      // Collect all text content to scan
+      const textToScan = [
+        bondPage.title_en,
+        bondPage.title_ar,
+        bondPage.heroSummary_en || '',
+        bondPage.heroSummary_ar || '',
+        bondPage.howItWorks_en || '',
+        bondPage.howItWorks_ar || '',
+        bondPage.riskDisclosure_en || '',
+        bondPage.riskDisclosure_ar || '',
+        bondPage.interestRateSensitivityNotes_en || '',
+        bondPage.defaultRiskNotes_en || '',
+        bondPage.issuerShortDescription_en || '',
+        bondPage.issuerFinancialHighlights_en || '',
+      ].join(' ');
+
+      // Run compliance checks
+      const violations: Array<{ ruleId: string; keyword: string; severity: string; category: string }> = [];
+      for (const rule of activeRules) {
+        // Skip rules without keywords
+        if (!rule.keyword) continue;
+        
+        let matched = false;
+        if (rule.matchType === 'exact') {
+          const regex = new RegExp(`\\b${rule.keyword}\\b`, 'gi');
+          matched = regex.test(textToScan);
+        } else if (rule.matchType === 'contains') {
+          matched = textToScan.toLowerCase().includes(rule.keyword.toLowerCase());
+        } else if (rule.matchType === 'regex') {
+          try {
+            const regex = new RegExp(rule.keyword, 'gi');
+            matched = regex.test(textToScan);
+          } catch {
+            // Invalid regex, skip
+          }
+        }
+        if (matched) {
+          violations.push({
+            ruleId: rule.id,
+            keyword: rule.keyword,
+            severity: rule.severity,
+            category: rule.category,
+          });
+        }
+      }
+
+      // Check required disclosures
+      const hasRiskDisclosure = !!(bondPage.riskDisclosure_en && bondPage.riskDisclosure_en.trim().length > 50);
+
+      // Determine compliance status
+      const hasCriticalViolations = violations.some(v => v.severity === 'critical' || v.severity === 'high');
+      const complianceStatus = violations.length === 0 ? 'pass' : (hasCriticalViolations ? 'fail' : 'pending');
+
+      // Update bond page with scan results
+      const updatedPage = await storage.updateBondPage(req.params.id, {
+        complianceStatus,
+        complianceScanResults: violations,
+        blockedKeywordsHit: violations.map(v => v.keyword),
+        requiredDisclosuresPresent: hasRiskDisclosure,
+        lastComplianceScanAt: new Date().toISOString(),
+      });
+
+      // Create a compliance scan run record
+      await storage.createComplianceScanRun({
+        contentType: 'bond_page',
+        contentId: req.params.id,
+        contentTitle: bondPage.title_en,
+        locale: 'en',
+        totalMatches: violations.length,
+        matchesJson: violations,
+        severityCounts: {
+          low: violations.filter(v => v.severity === 'low').length,
+          medium: violations.filter(v => v.severity === 'medium').length,
+          high: violations.filter(v => v.severity === 'high').length,
+          critical: violations.filter(v => v.severity === 'critical').length,
+        },
+        approvalStatus: complianceStatus === 'pass' ? 'approved' : 'pending',
+        scannedBy: 'system',
+      });
+
+      res.json({
+        success: true,
+        complianceStatus,
+        violations,
+        requiredDisclosuresPresent: hasRiskDisclosure,
+        scanDate: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Bond compliance scan error:', error);
+      res.status(500).json({ error: "Failed to run compliance scan" });
+    }
   });
 
   // ============================================

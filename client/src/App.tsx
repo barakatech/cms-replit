@@ -38,6 +38,9 @@ import AdminSettings from '@/pages/admin-settings';
 import AdminUsers from '@/pages/admin-users';
 import AdminAuditLog from '@/pages/admin-audit-log';
 import AdminCompliance from '@/pages/admin-compliance';
+import AdminBonds from '@/pages/admin-bonds';
+import AdminBondEditor from '@/pages/admin-bond-editor';
+import BondDetail from '@/pages/bond-detail';
 import PageBuilder from '@/pages/page-builder';
 import NewsletterPreview from '@/pages/newsletter-preview';
 import LandingPagePublic from '@/pages/landing-page';
@@ -83,6 +86,41 @@ function Router() {
           </ProtectedRoute>
         )}
       </Route>
+      <Route path="/admin/bonds">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminBonds />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/bonds/:id/edit">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <TopBar />
+                  <main className="flex-1 overflow-hidden">
+                    <AdminBondEditor />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/bonds/:slug" component={BondDetail} />
       <Route path="/dashboard">
         {() => (
           <ProtectedRoute>

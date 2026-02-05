@@ -49,6 +49,21 @@ The CMS provides:
   - **Severity Levels**: low, medium, high, critical with visual indicators
   - **CSV Export**: Export all rules for backup/analysis
   - **Security Note**: URL scanning includes SSRF protections but does not perform DNS resolution validation; for maximum security in production, consider using an allowlist of trusted domains
+- **Bond Pages Module** (`/admin/bonds`): Fixed income investment page management mirroring stock page architecture:
+  - **Admin List Page**: Multi-dimensional filters (status, currency, issuer type, risk level) with stats dashboard
+  - **Editor with Simple/Pro Mode**: Toggle between simplified and advanced field views
+    - **Basics Tab**: Identity (title, slug, ISIN, CUSIP), classification (instrument/issuer/coupon type, seniority), key metrics
+    - **Pricing & Yield Tab** (Pro): Clean/dirty price, YTM, current yield, bid/ask prices and yields
+    - **Cashflow Tab** (Pro): Coupon frequency, payment dates, principal repayment type
+    - **Risk & Credit Tab** (Pro): Duration, convexity, risk notes, credit ratings
+    - **Liquidity Tab** (Pro): Liquidity score, trading volume, platform availability
+    - **Content Tab**: Hero summary, how it works, risk disclosure (bilingual EN/AR)
+    - **SEO Tab**: Meta titles, descriptions, OG tags for both languages
+    - **Compliance Tab**: Run compliance scans, view status, publish gating
+  - **11 Bond-Specific Block Types**: bond_hero, key_facts, income_calculator, coupon_schedule, risk_summary, charts, issuer_profile, liquidity_exit, similar_bonds, faq, disclosures
+  - **Compliance Integration**: Dedicated scan endpoint with keyword matching, violation detection, publish blocking
+  - **Public Detail Page** (`/bonds/:slug`): Renders bond metrics, issuer profile, risk disclosures, trading info
+  - **Bond Types**: BondInstrumentType, BondIssuerType, BondCouponType, BondSeniority, BondRiskLevel for type safety
 
 ## User Preferences
 

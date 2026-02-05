@@ -2098,3 +2098,504 @@ export const DEFAULT_PIXEL_EVENT_MAPPINGS: Record<PixelPlatform, Partial<Record<
     app_install_click: 'select_content',
   },
 };
+
+// ============================================
+// BOND PAGE - Fixed Income Investment Pages
+// ============================================
+
+// Bond Classification Types
+export type BondInstrumentType = 'government' | 'corporate' | 'municipal' | 'sukuk' | 'treasury' | 'agency' | 'supranational';
+export type BondIssuerType = 'sovereign' | 'corporate' | 'financial' | 'government_agency' | 'supranational' | 'municipal';
+export type BondCouponType = 'fixed' | 'floating' | 'zero' | 'step_up' | 'payment_in_kind';
+export type BondSeniority = 'senior_secured' | 'senior_unsecured' | 'subordinated' | 'junior_subordinated';
+export type BondPrincipalRepaymentType = 'bullet' | 'amortizing' | 'sinking_fund' | 'callable' | 'perpetual';
+export type BondDayCountConvention = '30/360' | 'actual/360' | 'actual/365' | 'actual/actual';
+export type BondCouponFrequency = 'annual' | 'semi_annual' | 'quarterly' | 'monthly' | 'at_maturity';
+export type BondRiskLevel = 'low' | 'medium' | 'high' | 'very_high';
+export type BondComplianceStatus = 'pending' | 'pass' | 'fail' | 'override';
+export type BondSpreadType = 'g_spread' | 'i_spread' | 'z_spread' | 'oas';
+
+// Rating Agency Entry
+export interface BondRatingAgency {
+  agency: string; // e.g., 'Moody\'s', 'S&P', 'Fitch'
+  rating: string;
+  outlook?: 'stable' | 'positive' | 'negative' | 'watch';
+  lastReviewedDate?: string;
+}
+
+// Coupon Schedule Entry
+export interface BondCouponScheduleEntry {
+  date: string;
+  amount: number; // per 100 face value
+  isEstimated: boolean;
+}
+
+// Amortization Schedule Entry
+export interface BondAmortizationEntry {
+  date: string;
+  principalPayment: number;
+  remainingPrincipal: number;
+}
+
+// Callable/Putable Schedule Entry
+export interface BondCallPutScheduleEntry {
+  date: string;
+  price: number;
+  type: 'call' | 'put';
+}
+
+// Issuer Document Link
+export interface BondIssuerDocLink {
+  name_en: string;
+  name_ar: string;
+  url: string;
+}
+
+// FAQ Entry
+export interface BondFaqEntry {
+  question_en: string;
+  question_ar: string;
+  answer_en: string;
+  answer_ar: string;
+}
+
+// Highlight Entry
+export interface BondHighlightEntry {
+  text_en: string;
+  text_ar: string;
+  icon?: string;
+}
+
+// Disclaimer Entry
+export interface BondDisclaimerEntry {
+  title_en: string;
+  title_ar: string;
+  content_en: string;
+  content_ar: string;
+}
+
+// Educational Tooltip Entry
+export interface BondTooltipEntry {
+  term_en: string;
+  term_ar: string;
+  definition_en: string;
+  definition_ar: string;
+}
+
+// Income Calculator Defaults
+export interface BondIncomeCalculatorDefaults {
+  defaultInvestmentAmount: number;
+  showIncomeEstimate: boolean;
+  disclaimer_en: string;
+  disclaimer_ar: string;
+}
+
+// Compliance Scan Result for Bonds
+export interface BondComplianceScanResult {
+  field: string;
+  violations: Array<{
+    ruleId: string;
+    phrase: string;
+    severity: ComplianceFindingSeverity;
+    message: string;
+  }>;
+}
+
+// Bond Page Block Types
+export type BondPageBlockType = 
+  | 'bond_hero'
+  | 'key_facts'
+  | 'income_calculator'
+  | 'coupon_schedule'
+  | 'risk_summary'
+  | 'charts'
+  | 'issuer_profile'
+  | 'liquidity_exit'
+  | 'similar_bonds'
+  | 'faq'
+  | 'disclosures';
+
+export interface BondPageBlockBase {
+  id: string;
+  type: BondPageBlockType;
+  visible: boolean;
+  order: number;
+}
+
+export interface BondHeroBlock extends BondPageBlockBase {
+  type: 'bond_hero';
+  showYtm: boolean;
+  showCoupon: boolean;
+  showMaturity: boolean;
+  showRating: boolean;
+  ctaText_en: string;
+  ctaText_ar: string;
+  ctaUrl: string;
+}
+
+export interface BondKeyFactsBlock extends BondPageBlockBase {
+  type: 'key_facts';
+  facts: string[]; // array of fact keys to display
+}
+
+export interface BondIncomeCalculatorBlock extends BondPageBlockBase {
+  type: 'income_calculator';
+  showCalculator: boolean;
+}
+
+export interface BondCouponScheduleBlock extends BondPageBlockBase {
+  type: 'coupon_schedule';
+  showFutureOnly: boolean;
+  maxEntries: number;
+}
+
+export interface BondRiskSummaryBlock extends BondPageBlockBase {
+  type: 'risk_summary';
+  showRatings: boolean;
+  showDuration: boolean;
+  showNotes: boolean;
+}
+
+export interface BondChartsBlock extends BondPageBlockBase {
+  type: 'charts';
+  showYtmChart: boolean;
+  showPriceChart: boolean;
+}
+
+export interface BondIssuerProfileBlock extends BondPageBlockBase {
+  type: 'issuer_profile';
+  showLogo: boolean;
+  showFinancials: boolean;
+  showDocuments: boolean;
+}
+
+export interface BondLiquidityExitBlock extends BondPageBlockBase {
+  type: 'liquidity_exit';
+  showLiquidityScore: boolean;
+  showTradingNotes: boolean;
+}
+
+export interface BondSimilarBondsBlock extends BondPageBlockBase {
+  type: 'similar_bonds';
+  maxBonds: number;
+  filterBy: 'issuer' | 'currency' | 'maturity' | 'rating';
+}
+
+export interface BondFaqBlock extends BondPageBlockBase {
+  type: 'faq';
+  showAll: boolean;
+  maxItems: number;
+}
+
+export interface BondDisclosuresBlock extends BondPageBlockBase {
+  type: 'disclosures';
+  showRiskDisclosure: boolean;
+  showDisclaimers: boolean;
+}
+
+export type BondPageBlock = 
+  | BondHeroBlock
+  | BondKeyFactsBlock
+  | BondIncomeCalculatorBlock
+  | BondCouponScheduleBlock
+  | BondRiskSummaryBlock
+  | BondChartsBlock
+  | BondIssuerProfileBlock
+  | BondLiquidityExitBlock
+  | BondSimilarBondsBlock
+  | BondFaqBlock
+  | BondDisclosuresBlock;
+
+// SEO for Bond Pages
+export interface BondPageSEO {
+  metaTitle: string;
+  metaDescription: string;
+  ogTitle: string;
+  ogDescription: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  indexable: boolean;
+}
+
+// Main BondPage Interface
+export interface BondPage {
+  id: string;
+  
+  // Identity
+  title_en: string;
+  title_ar: string;
+  slug: string;
+  status: 'draft' | 'published' | 'archived';
+  tags: string[];
+  featured: boolean;
+  
+  // Classification
+  instrumentType: BondInstrumentType;
+  issuerType: BondIssuerType;
+  couponType: BondCouponType;
+  seniority: BondSeniority;
+  callable: boolean;
+  callSchedule?: BondCallPutScheduleEntry[];
+  putable: boolean;
+  putSchedule?: BondCallPutScheduleEntry[];
+  convertible: boolean;
+  conversionTerms_en?: string;
+  conversionTerms_ar?: string;
+  guaranteed: boolean;
+  guarantor_en?: string;
+  guarantor_ar?: string;
+  
+  // IDs & Metadata
+  isin?: string;
+  cusip?: string;
+  ticker?: string;
+  exchange?: string;
+  issuerCountry?: string;
+  countryOfRisk?: string;
+  currency: string;
+  issueDate?: string;
+  maturityDate?: string;
+  isPerpetual: boolean;
+  settlementDays?: number;
+  denomination?: number;
+  minInvestment?: number;
+  incrementSize?: number;
+  dayCountConvention?: BondDayCountConvention;
+  
+  // Pricing & Yield
+  cleanPrice?: number;
+  dirtyPrice?: number;
+  accruedInterest?: number;
+  ytm?: number; // Yield to Maturity
+  currentYield?: number;
+  yieldToCall?: number;
+  yieldToWorst?: number;
+  spreadValue?: number;
+  spreadType?: BondSpreadType;
+  benchmark?: string;
+  spreadToBenchmark?: number;
+  bidPrice?: number;
+  bidYield?: number;
+  askPrice?: number;
+  askYield?: number;
+  priceLastUpdatedAt?: string;
+  priceSource?: string;
+  
+  // Coupon & Cashflow
+  couponRate?: number;
+  couponFrequency?: BondCouponFrequency;
+  nextCouponDate?: string;
+  lastCouponDate?: string;
+  principalRepaymentType: BondPrincipalRepaymentType;
+  couponSchedule?: BondCouponScheduleEntry[];
+  couponScheduleOverride?: boolean;
+  amortizationSchedule?: BondAmortizationEntry[];
+  incomeCalculatorDefaults?: BondIncomeCalculatorDefaults;
+  
+  // Risk & Credit
+  creditRatingDisplay?: string;
+  ratingAgencies?: BondRatingAgency[];
+  riskLevel: BondRiskLevel;
+  duration?: number;
+  macaulayDuration?: number;
+  convexity?: number;
+  interestRateSensitivityNotes_en?: string;
+  interestRateSensitivityNotes_ar?: string;
+  defaultRiskNotes_en?: string;
+  defaultRiskNotes_ar?: string;
+  countryRiskNotes_en?: string;
+  countryRiskNotes_ar?: string;
+  
+  // Issuer
+  issuerName_en: string;
+  issuerName_ar: string;
+  issuerShortDescription_en?: string;
+  issuerShortDescription_ar?: string;
+  issuerSector?: string;
+  issuerWebsite?: string;
+  issuerLogo?: string;
+  issuerFinancialHighlights_en?: string;
+  issuerFinancialHighlights_ar?: string;
+  issuerDocsLinks?: BondIssuerDocLink[];
+  
+  // Liquidity
+  liquidityScore?: number; // 1-10
+  avgDailyVolume?: number;
+  typicalBidAskBps?: number;
+  tradableOnPlatform: boolean;
+  tradingHoursNotes_en?: string;
+  tradingHoursNotes_ar?: string;
+  earlyExitNotes_en?: string;
+  earlyExitNotes_ar?: string;
+  
+  // Content Modules
+  heroSummary_en?: string;
+  heroSummary_ar?: string;
+  highlights?: BondHighlightEntry[];
+  howItWorks_en?: string;
+  howItWorks_ar?: string;
+  faq?: BondFaqEntry[];
+  riskDisclosure_en?: string;
+  riskDisclosure_ar?: string;
+  disclaimers?: BondDisclaimerEntry[];
+  educationalTooltips?: BondTooltipEntry[];
+  
+  // Charts
+  showCharts: boolean;
+  ytmSeriesRef?: string;
+  priceSeriesRef?: string;
+  
+  // SEO
+  seo_en: BondPageSEO;
+  seo_ar: BondPageSEO;
+  schemaOrgJsonLd?: string;
+  
+  // Page Builder
+  pageBuilderJson: BondPageBlock[];
+  
+  // Compliance
+  complianceStatus: BondComplianceStatus;
+  complianceScanResults?: BondComplianceScanResult[];
+  blockedKeywordsHit?: string[];
+  requiredDisclosuresPresent: boolean;
+  lastComplianceScanAt?: string;
+  complianceOverrideReason?: string;
+  complianceOverrideBy?: string;
+  
+  // Timestamps
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InsertBondPage = Omit<BondPage, 'id' | 'createdAt' | 'updatedAt'>;
+
+// Zod schema for Bond Page validation
+export const insertBondPageSchema = z.object({
+  title_en: z.string().min(1, 'English title is required'),
+  title_ar: z.string().min(1, 'Arabic title is required'),
+  slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with hyphens'),
+  status: z.enum(['draft', 'published', 'archived']).default('draft'),
+  tags: z.array(z.string()).default([]),
+  featured: z.boolean().default(false),
+  instrumentType: z.enum(['government', 'corporate', 'municipal', 'sukuk', 'treasury', 'agency', 'supranational']).default('corporate'),
+  issuerType: z.enum(['sovereign', 'corporate', 'financial', 'government_agency', 'supranational', 'municipal']).default('corporate'),
+  couponType: z.enum(['fixed', 'floating', 'zero', 'step_up', 'payment_in_kind']).default('fixed'),
+  seniority: z.enum(['senior_secured', 'senior_unsecured', 'subordinated', 'junior_subordinated']).default('senior_unsecured'),
+  principalRepaymentType: z.enum(['bullet', 'amortizing', 'sinking_fund', 'callable', 'perpetual']).default('bullet'),
+  riskLevel: z.enum(['low', 'medium', 'high', 'very_high']).default('medium'),
+  currency: z.string().min(1, 'Currency is required'),
+  issuerName_en: z.string().min(1, 'Issuer name (English) is required'),
+  issuerName_ar: z.string().min(1, 'Issuer name (Arabic) is required'),
+  isin: z.string().optional(),
+  cusip: z.string().optional(),
+  ticker: z.string().optional(),
+  exchange: z.string().optional(),
+  issuerCountry: z.string().optional(),
+  countryOfRisk: z.string().optional(),
+  issueDate: z.string().optional(),
+  maturityDate: z.string().optional(),
+  isPerpetual: z.boolean().default(false),
+  settlementDays: z.number().optional(),
+  denomination: z.number().optional(),
+  minInvestment: z.number().optional(),
+  incrementSize: z.number().optional(),
+  dayCountConvention: z.enum(['30/360', 'actual/360', 'actual/365', 'actual/actual']).optional(),
+  cleanPrice: z.number().optional(),
+  dirtyPrice: z.number().optional(),
+  accruedInterest: z.number().optional(),
+  ytm: z.number().optional(),
+  currentYield: z.number().optional(),
+  yieldToCall: z.number().optional(),
+  yieldToWorst: z.number().optional(),
+  spreadValue: z.number().optional(),
+  spreadType: z.enum(['g_spread', 'i_spread', 'z_spread', 'oas']).optional(),
+  benchmark: z.string().optional(),
+  spreadToBenchmark: z.number().optional(),
+  bidPrice: z.number().optional(),
+  bidYield: z.number().optional(),
+  askPrice: z.number().optional(),
+  askYield: z.number().optional(),
+  priceSource: z.string().optional(),
+  couponRate: z.number().optional(),
+  couponFrequency: z.enum(['annual', 'semi_annual', 'quarterly', 'monthly', 'at_maturity']).optional(),
+  nextCouponDate: z.string().optional(),
+  lastCouponDate: z.string().optional(),
+  creditRatingDisplay: z.string().optional(),
+  duration: z.number().optional(),
+  macaulayDuration: z.number().optional(),
+  convexity: z.number().optional(),
+  interestRateSensitivityNotes_en: z.string().optional(),
+  interestRateSensitivityNotes_ar: z.string().optional(),
+  defaultRiskNotes_en: z.string().optional(),
+  defaultRiskNotes_ar: z.string().optional(),
+  countryRiskNotes_en: z.string().optional(),
+  countryRiskNotes_ar: z.string().optional(),
+  issuerShortDescription_en: z.string().optional(),
+  issuerShortDescription_ar: z.string().optional(),
+  issuerSector: z.string().optional(),
+  issuerWebsite: z.string().optional(),
+  issuerLogo: z.string().optional(),
+  issuerFinancialHighlights_en: z.string().optional(),
+  issuerFinancialHighlights_ar: z.string().optional(),
+  liquidityScore: z.number().min(1).max(10).optional(),
+  avgDailyVolume: z.number().optional(),
+  typicalBidAskBps: z.number().optional(),
+  tradableOnPlatform: z.boolean().default(true),
+  tradingHoursNotes_en: z.string().optional(),
+  tradingHoursNotes_ar: z.string().optional(),
+  earlyExitNotes_en: z.string().optional(),
+  earlyExitNotes_ar: z.string().optional(),
+  heroSummary_en: z.string().optional(),
+  heroSummary_ar: z.string().optional(),
+  howItWorks_en: z.string().optional(),
+  howItWorks_ar: z.string().optional(),
+  riskDisclosure_en: z.string().optional(),
+  riskDisclosure_ar: z.string().optional(),
+  showCharts: z.boolean().default(false),
+  callable: z.boolean().default(false),
+  putable: z.boolean().default(false),
+  convertible: z.boolean().default(false),
+  guaranteed: z.boolean().default(false),
+  pageBuilderJson: z.array(z.any()).optional(),
+  seo_en: z.object({
+    metaTitle: z.string(),
+    metaDescription: z.string(),
+    ogTitle: z.string(),
+    ogDescription: z.string(),
+    ogImage: z.string().optional(),
+    canonicalUrl: z.string().optional(),
+    indexable: z.boolean(),
+  }).optional(),
+  seo_ar: z.object({
+    metaTitle: z.string(),
+    metaDescription: z.string(),
+    ogTitle: z.string(),
+    ogDescription: z.string(),
+    ogImage: z.string().optional(),
+    canonicalUrl: z.string().optional(),
+    indexable: z.boolean(),
+  }).optional(),
+  complianceStatus: z.enum(['pass', 'fail', 'pending', 'override']).default('pending'),
+  complianceScanResults: z.array(z.any()).optional(),
+  blockedKeywordsHit: z.array(z.string()).optional(),
+  requiredDisclosuresPresent: z.boolean().default(false),
+  complianceOverrideReason: z.string().optional(),
+  lastComplianceScanAt: z.string().optional(),
+  publishedAt: z.string().optional(),
+});
+
+// Default Bond Page Blocks
+export const DEFAULT_BOND_PAGE_BLOCKS: BondPageBlock[] = [
+  { id: 'hero', type: 'bond_hero', visible: true, order: 0, showYtm: true, showCoupon: true, showMaturity: true, showRating: true, ctaText_en: 'Invest Now', ctaText_ar: 'استثمر الآن', ctaUrl: '' },
+  { id: 'key_facts', type: 'key_facts', visible: true, order: 1, facts: ['currency', 'maturity', 'coupon', 'rating', 'minInvestment'] },
+  { id: 'income_calc', type: 'income_calculator', visible: true, order: 2, showCalculator: true },
+  { id: 'coupon_schedule', type: 'coupon_schedule', visible: true, order: 3, showFutureOnly: true, maxEntries: 10 },
+  { id: 'risk_summary', type: 'risk_summary', visible: true, order: 4, showRatings: true, showDuration: true, showNotes: true },
+  { id: 'charts', type: 'charts', visible: false, order: 5, showYtmChart: true, showPriceChart: true },
+  { id: 'issuer', type: 'issuer_profile', visible: true, order: 6, showLogo: true, showFinancials: true, showDocuments: true },
+  { id: 'liquidity', type: 'liquidity_exit', visible: true, order: 7, showLiquidityScore: true, showTradingNotes: true },
+  { id: 'similar', type: 'similar_bonds', visible: true, order: 8, maxBonds: 4, filterBy: 'currency' },
+  { id: 'faq', type: 'faq', visible: true, order: 9, showAll: false, maxItems: 5 },
+  { id: 'disclosures', type: 'disclosures', visible: true, order: 10, showRiskDisclosure: true, showDisclaimers: true },
+];

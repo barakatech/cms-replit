@@ -83,7 +83,10 @@ import {
   type InsertSchemaBlockDefinition,
   type NewsletterTemplateBlockOverride,
   type InsertNewsletterTemplateBlockOverride,
-  BARAKA_STORE_URLS
+  BARAKA_STORE_URLS,
+  type BondPage,
+  type InsertBondPage,
+  DEFAULT_BOND_PAGE_BLOCKS
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { 
@@ -2677,6 +2680,14 @@ export interface IStorage {
   updateNewsletterBlockInstance(id: string, instance: Partial<NewsletterBlockInstance>): Promise<NewsletterBlockInstance | undefined>;
   deleteNewsletterBlockInstance(id: string): Promise<boolean>;
   reorderNewsletterBlockInstances(newsletterId: string, orderedIds: string[]): Promise<boolean>;
+  
+  // Bond Pages
+  getBondPages(): Promise<BondPage[]>;
+  getBondPage(id: string): Promise<BondPage | undefined>;
+  getBondPageBySlug(slug: string): Promise<BondPage | undefined>;
+  createBondPage(page: InsertBondPage): Promise<BondPage>;
+  updateBondPage(id: string, page: Partial<BondPage>): Promise<BondPage | undefined>;
+  deleteBondPage(id: string): Promise<boolean>;
 }
 
 // Dashboard Summary Types
@@ -2862,6 +2873,7 @@ export class MemStorage implements IStorage {
   private newsletterBlockInstances: Map<string, NewsletterBlockInstance>;
   private schemaBlockDefinitions: Map<string, SchemaBlockDefinition>;
   private templateBlockOverrides: Map<string, NewsletterTemplateBlockOverride>;
+  private bondPages: Map<string, BondPage>;
 
   constructor() {
     this.users = new Map();
@@ -2920,6 +2932,7 @@ export class MemStorage implements IStorage {
     this.newsletterBlockInstances = new Map();
     this.schemaBlockDefinitions = new Map();
     this.templateBlockOverrides = new Map();
+    this.bondPages = new Map();
     
     // Seed schema block definitions with default settings
     const defaultSchemaBlockDefinitions: SchemaBlockDefinition[] = [
@@ -4899,6 +4912,46 @@ export class MemStorage implements IStorage {
       }
     }
     return true;
+  }
+
+  // Bond Pages
+  async getBondPages(): Promise<BondPage[]> {
+    return Array.from(this.bondPages.values()).sort((a, b) => 
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }
+
+  async getBondPage(id: string): Promise<BondPage | undefined> {
+    return this.bondPages.get(id);
+  }
+
+  async getBondPageBySlug(slug: string): Promise<BondPage | undefined> {
+    return Array.from(this.bondPages.values()).find(p => p.slug === slug);
+  }
+
+  async createBondPage(page: InsertBondPage): Promise<BondPage> {
+    const now = new Date().toISOString();
+    const newPage: BondPage = {
+      ...page,
+      id: randomUUID(),
+      pageBuilderJson: page.pageBuilderJson || [...DEFAULT_BOND_PAGE_BLOCKS],
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.bondPages.set(newPage.id, newPage);
+    return newPage;
+  }
+
+  async updateBondPage(id: string, updates: Partial<BondPage>): Promise<BondPage | undefined> {
+    const page = this.bondPages.get(id);
+    if (!page) return undefined;
+    const updated: BondPage = { ...page, ...updates, updatedAt: new Date().toISOString() };
+    this.bondPages.set(id, updated);
+    return updated;
+  }
+
+  async deleteBondPage(id: string): Promise<boolean> {
+    return this.bondPages.delete(id);
   }
 }
 
