@@ -1,0 +1,306 @@
+You are a senior full-stack engineer working inside my existing Replit CMS + public web app codebase.
+
+ABSOLUTE CONSTRAINTS (NON-NEGOTIABLE)
+- Do NOT refactor unrelated parts of the app.
+- Reuse the exact same architectural patterns used for Stocks and Bonds: model structure, list view, detail editor, draft/publish workflow, RBAC, navigation, Discover integration, SEO handling, and compliance workflow.
+- All rich content in CMS must use the global WYSIWYG editor + renderer (single consistent format; no second format).
+- LIVE prices + market stats MUST come from 3rd-party APIs (CoinGecko primary, CoinCap fallback) via a backend service layer.
+- NEVER call 3rd-party APIs directly from the frontend. All external API calls must be server-side only.
+- Public page render MUST be resilient: use caching + stale-while-revalidate so pages load even if provider is down.
+- CMS controls ONLY editorial content sections (About/How it works/Use cases/Risks/FAQ/Disclaimers/SEO/modules visibility & order).
+- Market numbers/stats/charts/markets/news are NOT editable in CMS and must be sourced from 3rd-party APIs through the backend.
+- IMPORTANT: DO NOT build a “Generate Top 100” button/feature in CMS. For demo, we will seed 100 pages ONCE via a seed script/migration, not a product feature.
+
+===========================================================
+GOAL
+Create a COMPLETE “Crypto” section in the CMS (same feature parity as Bonds/Stocks) to manage crypto landing pages editorially, while powering Coinbase-like market data modules via 3rd-party APIs.
+
+Deliver:
+1) CMS: Manage Crypto landing pages (editorial content + modules + SEO + compliance)
+2) Public: /crypto index and /crypto/:slug detail (Stocks-like styling)
+3) Discover: include Stocks + Bonds + Crypto (same style)
+4) Header: add Crypto to site header menu
+5) Backend: server-side API aggregation layer for live crypto prices, stats, charts, markets, and news with caching/fallback
+6) DEMO DATA: Seed the current Top 100 crypto landing pages (CMS records) so the site shows 100 assets by ranking for demo; later we can change seeding/integration, but for now it must be static seed and not a user-facing feature.
+
+===========================================================
+TASK 0 — GLOBAL WYSIWYG (ALL PAGE TYPES)
+If not already implemented:
+- Add reusable RichTextEditor used across ALL page types wherever rich content exists.
+- Supports: H2/H3, bold/italic/underline, lists, links, quotes; RTL/LTR.
+- Single storage format (reuse existing).
+- Safe rendering (sanitize output).
+Update Bonds and any other page types to use it where they have long-form content.
+
+===========================================================
+TASK 1 — CMS: FULL “CRYPTO” MANAGEMENT SECTION (PARITY WITH STOCKS/BONDS)
+A) CMS Sidebar
+- Add “Crypto” menu item next to Stocks and Bonds.
+
+B) Crypto List Screen
+- Columns: status, featured, lastKnownRank, symbol, name, slug, updatedAt, complianceStatus
+- Filters: status, featured, isStablecoin, assetType, complianceStatus, rank range (1–100)
+- Search: symbol, name, slug, coingeckoId
+- Sorting: lastKnownRank asc, updatedAt desc
+- Bulk actions: publish/unpublish (RBAC + gating), run compliance scan, toggle featured, add tags, set indexable, export CSV
+NOTE: no “generate” or “create top 100” action button.
+
+C) Crypto Page Editor
+Tabs: Basics | Content | Modules | SEO | Compliance | Live Data (read-only)
+Simple/Pro mode toggle:
+- Simple: Basics + Content + SEO + Compliance
+- Pro: includes Modules + Live Data
+
+D) Publish gating (block publish unless)
+- title.en, slug, symbol, coingeckoId present
+- risks{en,ar} present (WYSIWYG)
+- disclaimers{en,ar} present
+- complianceStatus == Pass OR existing admin override workflow
+- requiredDisclosuresPresent == true
+
+E) Compliance
+- “Run Compliance Scan” button
+- Scans extracted plain text from ALL editorial fields (WYSIWYG + arrays + FAQs + SEO fields)
+- Stores: complianceStatus, scanResults, blockedKeywordsHit, requiredDisclosuresPresent, lastComplianceScanAt
+
+===========================================================
+TASK 2 — CRYPTO CMS MODEL (EDITORIAL ONLY + MODULE CONTROLS)
+CryptoPage model fields (localized fields are {en,ar}):
+
+A) Identity
+- title{en,ar}
+- slug (unique)
+- status (draft|published|archived)
+- featured boolean
+- tags[]
+- languageDefault (en|ar)
+
+B) Identifiers (used to fetch live data)
+- symbol
+- name (stored for display)
+- coingeckoId (required)
+- coincapId (optional fallback)
+
+C) Classification (editorial tagging + filtering)
+- assetType enum: Coin|Token|Stablecoin|Meme|DeFi|L2|NFTInfra|Other
+- isStablecoin boolean
+- categories[] (editorial)
+- lastKnownRank number (set during seed; later updated by API sync job)
+
+D) Editorial Content (CMS-editable; WYSIWYG where noted)
+- heroSummary{en,ar}
+- highlights{en[],ar[]}
+- whatIsIt{en,ar} (WYSIWYG)
+- howItWorks{en,ar} (WYSIWYG)
+- useCases{en[],ar[]}
+- risks{en,ar} (WYSIWYG) [MANDATORY]
+- faq[]: { q{en,ar}, a{en,ar} }
+- disclaimers{en[],ar[]} [MANDATORY]
+
+E) Page Modules (CMS controls which sections show + order)
+- pageModules[]: {
+    type enum:
+      Hero,
+      PriceChart,
+      KeyStats,
+      MarketsTable,
+      NewsFeed,
+      About,
+      HowItWorks,
+      UseCases,
+      FAQ,
+      RiskCallout,
+      Disclosures,
+      RelatedAssets,
+      QuickTradeCTA
+    enabled boolean,
+    titleOverride{en,ar} optional,
+    config json (visibility flags, max rows, chart ranges, CTA text/url)
+  }
+
+F) SEO
+- metaTitle{en,ar}
+- metaDescription{en,ar}
+- ogTitle{en,ar}
+- ogDescription{en,ar}
+- ogImage
+- indexable boolean
+
+G) Compliance
+- complianceStatus (Pass|Fail|NeedsReview)
+- complianceScanResults
+- blockedKeywordsHit[]
+- requiredDisclosuresPresent
+- lastComplianceScanAt
+
+IMPORTANT
+- CMS does NOT store market numbers. It only stores editorial + module controls + identifiers + lastKnownRank.
+
+===========================================================
+TASK 3 — BACKEND: LIVE CRYPTO DATA SERVICE (SERVER-SIDE ONLY) + CACHING
+GOAL
+Power Coinbase-like market modules using 3rd-party APIs, safely cached.
+
+A) Create CryptoDataService (server-side)
+Methods:
+- getMarketSummaryTop({limit, currency}) -> list (rank, id, name, symbol, price, 24h%, market cap, volume)
+- getAssetSummary({coingeckoId, currency}) -> stats (price, change, market cap, volume, supply, ATH/ATL, lastUpdated)
+- getAssetChart({coingeckoId, currency, range}) -> series
+- getAssetMarkets({coingeckoId, limit}) -> tickers
+- getAssetNews({query, limit}) -> RSS headlines (free only)
+- getAssetProfile({coingeckoId}) -> optional description/links/contracts (cached; best effort)
+
+Provider strategy:
+- Primary: CoinGecko
+- Fallback: CoinCap (for price/market summary only)
+- News: RSS allowlist only (no scraping)
+
+B) Caching (mandatory)
+Implement cache with TTL + stale-while-revalidate:
+- Top market list: TTL 2–5 min, SWR up to 30 min
+- Asset summary: TTL 1–2 min, SWR up to 30 min
+- Charts: TTL 15–60 min
+- Markets: TTL 60–360 min
+- News: TTL 360 min
+- Profile: TTL 24h
+Cache can be DB tables (preferred), Redis, or existing cache layer.
+
+C) Internal endpoints (frontend calls these ONLY)
+Public:
+- GET /api/crypto/market?limit=&currency=usd
+- GET /api/crypto/data/:coingeckoId/summary
+- GET /api/crypto/data/:coingeckoId/chart?range=7d|30d|90d|1y|max
+- GET /api/crypto/data/:coingeckoId/markets?limit=50
+- GET /api/crypto/data/:coingeckoId/news?limit=10
+- GET /api/crypto/data/:coingeckoId/profile
+
+No provider calls from frontend.
+
+===========================================================
+TASK 4 — PUBLIC UI: /crypto + /crypto/:slug (STOCKS-LIKE STYLE)
+A) /crypto (index)
+- Same style/components as /stocks index.
+- Data comes from /api/crypto/market (live).
+- Join with published CryptoPages by coingeckoId:
+  - If CMS page exists & published -> link to /crypto/:slug
+  - Else -> disabled/“Coming soon”
+- The “Top 100 by ranking” display for demo MUST be controlled by CMS presence:
+  - For demo: seed 100 CryptoPages and publish them so all 100 are clickable.
+  - Later: pages can be created via API integration, but not part of this prompt.
+
+B) /crypto/:slug (detail)
+- Load CryptoPage (CMS editorial + module config) by slug.
+- For each enabled module, fetch live data from internal endpoints using coingeckoId:
+  - Hero/KeyStats: /summary
+  - Chart: /chart
+  - Markets: /markets
+  - News: /news
+  - Profile/links/contracts: /profile (optional)
+- Render content sections (About/HowItWorks/UseCases/FAQ/Risk/Disclosures) from CMS fields only.
+
+===========================================================
+TASK 5 — DISCOVER + HEADER NAV
+A) Header/Home global nav
+- Add “Crypto” link to /crypto (same group as Stocks/Bonds), desktop + mobile, active state.
+
+B) Discover
+- Add Crypto + Bonds in same style as Stocks.
+- Crypto cards/table use live data from /api/crypto/market?limit=50 and link to CMS pages.
+
+===========================================================
+TASK 6 — DEMO ONLY: SEED TOP 100 CRYPTO PAGES (NO GENERATE FEATURE)
+IMPORTANT
+- Do NOT build any CMS “generate” button/feature.
+- Implement a ONE-TIME seed script (or migration seed) that inserts/updates the top 100 CryptoPages for demo.
+- The seed can call the server-side CryptoDataService (or CoinGecko directly server-side) during seed execution only.
+
+SEED BEHAVIOR
+- Script name: `npm run seed:crypto-top100`
+- It fetches current top 100 by market cap rank (CoinGecko /coins/markets).
+- Upsert CryptoPages by coingeckoId.
+- Publish all 100 for demo (or publish 100 by default). Set indexable=false if you don’t want SEO yet.
+- Set lastKnownRank from provider.
+- Fill required editorial templates (below).
+- Set default pageModules template for all pages.
+- Run compliance scan during seed; if fails:
+  - still create the page but set status=draft and complianceStatus=NeedsReview (so you don’t publish unsafe pages).
+
+MANDATORY TEMPLATES (exact)
+disclaimers.en: ["This page is for information only and is not investment advice."]
+disclaimers.ar: ["هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."]
+
+risks.en (WYSIWYG):
+H2 Risks
+- Prices can be highly volatile.
+- Liquidity can vary by asset and venue.
+- Market data may be delayed or differ across providers.
+- Crypto markets can be affected by technical, regulatory, and operational factors.
+Paragraph: Capital is at risk.
+
+risks.ar (WYSIWYG):
+H2 المخاطر
+- قد تكون الأسعار شديدة التقلب.
+- قد تختلف السيولة حسب الأصل والجهة.
+- قد تتأخر بيانات السوق أو تختلف بين المصادر.
+- قد تتأثر أسواق الأصول الرقمية بعوامل تقنية وتنظيمية وتشغيلية.
+Paragraph: رأس المال معرّض للمخاطر.
+
+whatIsIt.en (WYSIWYG, neutral):
+H2 What is {Name}?
+Paragraph: {Name} ({SYMBOL}) is a crypto asset. This page provides market data and general educational context. Prices can change quickly.
+
+whatIsIt.ar (WYSIWYG):
+H2 ما هو {Name}؟
+Paragraph: {Name} ({SYMBOL}) هو أصل رقمي. تعرض هذه الصفحة بيانات السوق وسياقًا تعليميًا عامًا. قد تتغير الأسعار بسرعة.
+
+howItWorks.en/ar (WYSIWYG, neutral):
+H2 How it works / كيف يعمل
+Paragraph: Crypto assets trade on venues and prices can change quickly. Market data shown here is sourced from third parties and may update on a schedule.
+Bullets:
+- Data is cached and refreshed periodically
+- Different venues may show different prices
+(Provide Arabic equivalent)
+
+FAQ (2 Q/A EN/AR)
+- Where does the price data come from?
+- Why can prices differ across venues?
+
+DEFAULT MODULES TEMPLATE (enabled=true unless stated)
+1) Hero
+2) PriceChart (ranges enabled: 7D, 30D, 1Y, MAX; default 7D)
+3) KeyStats
+4) About (uses whatIsIt)
+5) HowItWorks
+6) UseCases
+7) MarketsTable (maxRows=50)
+8) NewsFeed (maxItems=10)
+9) RelatedAssets (mode=TopByRank, maxItems=10)
+10) RiskCallout (prominent=true)
+11) FAQ
+12) Disclosures (pinToBottom=true)
+13) QuickTradeCTA (cta text/url set to existing pattern; editable in CMS)
+
+SEED OUTPUT
+- Print: createdCount, updatedCount, publishedCount, needsReviewCount
+- Print first 10 URLs: /crypto/{slug}
+
+===========================================================
+DELIVERABLES (MUST BE COMPLETE)
+1) CMS: Full Crypto management section with parity to Stocks/Bonds (editorial + modules + SEO + compliance).
+2) Public: /crypto and /crypto/:slug in stocks-like style with live data modules powered by server-side API service.
+3) Discover updated with Crypto + Bonds.
+4) Header nav includes Crypto.
+5) Live data service with caching + fallback (server-side only).
+6) Demo seed script seeds top 100 pages ONCE (no CMS generate feature).
+
+FINAL OUTPUT REQUIREMENTS
+- Print exact commands to:
+  - run migrations
+  - run `npm run seed:crypto-top100`
+  - start dev server
+  - run tests
+- Confirm URLs that must work:
+  - /crypto
+  - /crypto/:slug
+  - /discover (or your discover route)
+  - CMS > Crypto

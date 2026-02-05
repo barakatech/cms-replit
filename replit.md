@@ -66,7 +66,16 @@ The CMS provides:
   - **Public Detail Page** (`/bonds/:slug`): Renders bond metrics, issuer profile, risk disclosures, trading info
   - **Seed Data**: 6 sample bonds auto-loaded on startup (3 featured: US Treasury, UAE Government, High Yield Corp)
   - **Bond Types**: BondInstrumentType, BondIssuerType, BondCouponType, BondSeniority, BondRiskLevel for type safety
-- **Crypto Pages Module** (`/crypto`): Cryptocurrency landing pages mirroring the bonds architecture:
+- **Crypto Pages Module** (`/admin/crypto`): Full CMS for cryptocurrency landing pages:
+  - **Admin List Page** (`/admin/crypto`): Multi-dimensional filters (status, asset type, compliance, featured) with stats dashboard, search, bulk actions
+  - **Admin Editor Page** (`/admin/crypto/:id/edit`): Multi-tab editor with Simple/Pro mode toggle:
+    - **Basics Tab**: Identity (name, symbol, title EN/AR, slug), CoinGecko ID, asset type, market cap rank, featured/stablecoin/editorial lock toggles
+    - **Content Tab**: Hero summary, WYSIWYG editors for whatIsIt, howItWorks, risks (EN/AR), disclaimers management
+    - **Modules Tab** (Pro): Page module configuration for flexible layout (hero, price_chart, key_stats, markets_table, news_feed, about, how_it_works, use_cases, faq, risk_callout, disclosures, related_assets, quick_trade_cta)
+    - **SEO Tab**: Meta titles, descriptions, OG tags for both EN/AR languages
+    - **Compliance Tab**: Run compliance scans, view violations, compliance status
+    - **Live Data Tab** (Pro): Read-only view of real-time market data from CoinGecko
+  - **CryptoDataService**: Server-side API aggregation with intelligent caching (TTL + stale-while-revalidate), CoinGecko primary provider with CoinCap fallback
   - **Public Landing Page** (`/crypto`): Browse all cryptocurrencies with search, featured cryptos, market data display
   - **Public Detail Page** (`/crypto/:slug`): Price, 24h change, market cap, volume, supply info, editorial content
   - **Bilingual Support**: English/Arabic language toggle with RTL layout support
@@ -76,12 +85,23 @@ The CMS provides:
     - GET `/api/crypto/pages` - List all crypto pages
     - GET `/api/crypto/pages/:id` - Get single crypto page by ID
     - GET `/api/crypto/pages/slug/:slug` - Get crypto page by slug
+    - POST `/api/crypto/pages` - Create new crypto page
+    - PUT `/api/crypto/pages/:id` - Update crypto page
+    - DELETE `/api/crypto/pages/:id` - Delete crypto page
     - POST `/api/crypto/generate` - Generate pages for top 100 cryptos from CoinGecko
-    - POST `/api/crypto/pages/:id/compliance-scan` - Run compliance check
+    - POST `/api/crypto/pages/:id/scan` - Run compliance check
+    - POST `/api/crypto/pages/:id/toggle-lock` - Toggle editorial lock
     - GET `/api/crypto/snapshots` - Get market data snapshots
+    - GET `/api/crypto/live/market` - Live market summary with caching
+    - GET `/api/crypto/live/asset/:coingeckoId` - Live asset details
+    - GET `/api/crypto/live/chart/:coingeckoId` - Live price chart data
+    - GET `/api/crypto/live/markets/:coingeckoId` - Exchange tickers
+    - GET `/api/crypto/live/profile/:coingeckoId` - Asset profile/metadata
+    - POST `/api/crypto/live/refresh` - Refresh market snapshots
   - **Editorial Lock**: editorialLocked flag prevents auto-generation from overwriting human edits
   - **Compliance Integration**: Uses existing compliance rules for content scanning
-  - **Navigation**: Crypto link in BarakaHeader nav bar
+  - **Navigation**: Crypto link in BarakaHeader nav bar + CMS sidebar navigation
+  - **13 Page Module Types**: hero, price_chart, key_stats, markets_table, news_feed, about, how_it_works, use_cases, faq, risk_callout, disclosures, related_assets, quick_trade_cta
 
 ## User Preferences
 

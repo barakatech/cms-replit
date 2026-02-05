@@ -41,6 +41,8 @@ import AdminAuditLog from '@/pages/admin-audit-log';
 import AdminCompliance from '@/pages/admin-compliance';
 import AdminBonds from '@/pages/admin-bonds';
 import AdminBondEditor from '@/pages/admin-bond-editor';
+import AdminCrypto from '@/pages/admin-crypto';
+import AdminCryptoEditor from '@/pages/admin-crypto-editor';
 import BondDetail from '@/pages/bond-detail';
 import BondsLanding from '@/pages/bonds';
 import CryptoLanding from '@/pages/crypto';
@@ -129,6 +131,40 @@ function Router() {
         )}
       </Route>
       <Route path="/bonds/:slug" component={BondDetail} />
+      <Route path="/admin/crypto">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1">
+                  <TopBar />
+                  <main className="flex-1 overflow-auto">
+                    <AdminCrypto />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin/crypto/:id/edit">
+        {() => (
+          <ProtectedRoute>
+            <SidebarProvider>
+              <div className="flex h-screen w-full">
+                <AppSidebar />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <TopBar />
+                  <main className="flex-1 overflow-hidden">
+                    <AdminCryptoEditor />
+                  </main>
+                </div>
+              </div>
+            </SidebarProvider>
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route path="/dashboard">
         {() => (
           <ProtectedRoute>

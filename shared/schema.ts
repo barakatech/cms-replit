@@ -2604,6 +2604,70 @@ export const DEFAULT_BOND_PAGE_BLOCKS: BondPageBlock[] = [
 // CRYPTO PAGES MODULE
 // ============================================================
 
+// Crypto Page Module Types
+export type CryptoModuleType = 
+  | 'hero'
+  | 'price_chart'
+  | 'key_stats'
+  | 'markets_table'
+  | 'news_feed'
+  | 'about'
+  | 'how_it_works'
+  | 'use_cases'
+  | 'faq'
+  | 'risk_callout'
+  | 'disclosures'
+  | 'related_assets'
+  | 'quick_trade_cta';
+
+// Crypto Page Module Configuration
+export interface CryptoPageModule {
+  id: string;
+  type: CryptoModuleType;
+  enabled: boolean;
+  order: number;
+  titleOverride_en?: string;
+  titleOverride_ar?: string;
+  config?: {
+    // Hero config
+    showPrice?: boolean;
+    showChange?: boolean;
+    showMarketCap?: boolean;
+    ctaText_en?: string;
+    ctaText_ar?: string;
+    ctaUrl?: string;
+    // Chart config
+    chartRanges?: string[];
+    defaultRange?: string;
+    // Table/list config
+    maxRows?: number;
+    maxItems?: number;
+    // Display flags
+    prominent?: boolean;
+    pinToBottom?: boolean;
+    // Related assets config
+    mode?: 'top_by_rank' | 'same_category' | 'manual';
+    relatedSlugs?: string[];
+  };
+}
+
+// Default Crypto Page Modules
+export const DEFAULT_CRYPTO_PAGE_MODULES: CryptoPageModule[] = [
+  { id: 'hero', type: 'hero', enabled: true, order: 0, config: { showPrice: true, showChange: true, showMarketCap: true } },
+  { id: 'price_chart', type: 'price_chart', enabled: true, order: 1, config: { chartRanges: ['7d', '30d', '1y', 'max'], defaultRange: '7d' } },
+  { id: 'key_stats', type: 'key_stats', enabled: true, order: 2 },
+  { id: 'about', type: 'about', enabled: true, order: 3 },
+  { id: 'how_it_works', type: 'how_it_works', enabled: true, order: 4 },
+  { id: 'use_cases', type: 'use_cases', enabled: true, order: 5 },
+  { id: 'markets_table', type: 'markets_table', enabled: true, order: 6, config: { maxRows: 50 } },
+  { id: 'news_feed', type: 'news_feed', enabled: true, order: 7, config: { maxItems: 10 } },
+  { id: 'related_assets', type: 'related_assets', enabled: true, order: 8, config: { mode: 'top_by_rank', maxItems: 10 } },
+  { id: 'risk_callout', type: 'risk_callout', enabled: true, order: 9, config: { prominent: true } },
+  { id: 'faq', type: 'faq', enabled: true, order: 10, config: { maxItems: 5 } },
+  { id: 'disclosures', type: 'disclosures', enabled: true, order: 11, config: { pinToBottom: true } },
+  { id: 'quick_trade_cta', type: 'quick_trade_cta', enabled: true, order: 12, config: { ctaText_en: 'Trade Now', ctaText_ar: 'تداول الآن', ctaUrl: '/signup' } },
+];
+
 // Crypto Market Data Provider
 export type CryptoDataProvider = 'coingecko' | 'coincap';
 
@@ -2717,11 +2781,19 @@ export interface CryptoPage {
   marketData?: CryptoMarketData;
   sourceSnapshotId?: string;
   
+  // Page Modules
+  pageModules?: CryptoPageModule[];
+  languageDefault?: 'en' | 'ar';
+  
   // SEO
   metaTitle_en?: string;
   metaTitle_ar?: string;
   metaDescription_en?: string;
   metaDescription_ar?: string;
+  ogTitle_en?: string;
+  ogTitle_ar?: string;
+  ogDescription_en?: string;
+  ogDescription_ar?: string;
   ogImage?: string;
   indexable: boolean;
   
@@ -2832,10 +2904,25 @@ export const insertCryptoPageSchema = z.object({
   }).optional(),
   sourceSnapshotId: z.string().optional(),
   
+  pageModules: z.array(z.object({
+    id: z.string(),
+    type: z.enum(['hero', 'price_chart', 'key_stats', 'markets_table', 'news_feed', 'about', 'how_it_works', 'use_cases', 'faq', 'risk_callout', 'disclosures', 'related_assets', 'quick_trade_cta']),
+    enabled: z.boolean(),
+    order: z.number(),
+    titleOverride_en: z.string().optional(),
+    titleOverride_ar: z.string().optional(),
+    config: z.record(z.any()).optional(),
+  })).optional(),
+  languageDefault: z.enum(['en', 'ar']).default('en'),
+  
   metaTitle_en: z.string().optional(),
   metaTitle_ar: z.string().optional(),
   metaDescription_en: z.string().optional(),
   metaDescription_ar: z.string().optional(),
+  ogTitle_en: z.string().optional(),
+  ogTitle_ar: z.string().optional(),
+  ogDescription_en: z.string().optional(),
+  ogDescription_ar: z.string().optional(),
   ogImage: z.string().optional(),
   indexable: z.boolean().default(false),
   

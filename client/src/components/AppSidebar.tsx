@@ -15,7 +15,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, Users, ClipboardList, Shield, Landmark } from 'lucide-react';
+import { LayoutDashboard, FileText, Image, Settings, BookOpen, Megaphone, Compass, Layers, BarChart3, Smartphone, Radio, ExternalLink, ChevronDown, Mail, Sparkles, Users, ClipboardList, Shield, Landmark, Bitcoin } from 'lucide-react';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, testId: 'link-dashboard' },
@@ -24,6 +24,7 @@ const menuItems = [
   { title: 'Landing Pages', url: '/admin/pages', icon: Layers, testId: 'link-landing-pages' },
   { title: 'Stock Pages', url: '/admin/stocks', icon: FileText, testId: 'link-stock-pages' },
   { title: 'Bond Pages', url: '/admin/bonds', icon: Landmark, testId: 'link-bond-pages' },
+  { title: 'Crypto Pages', url: '/admin/crypto', icon: Bitcoin, testId: 'link-crypto-pages' },
 ];
 
 const blogSubItems = [

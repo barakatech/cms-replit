@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { cryptoDataService } from "./crypto-data-service";
 import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema, insertBondPageSchema, DEFAULT_BOND_PAGE_BLOCKS, insertCryptoPageSchema, insertCryptoMarketSnapshotSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
@@ -2909,6 +2910,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
       violations,
       scannedAt: new Date().toISOString(),
     });
+  });
+
+  // ============================================
+  // Crypto Live Data API Endpoints
+  // ============================================
+
+  // Get market summary (top coins by market cap)
+  app.get("/api/crypto/live/market", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const currency = (req.query.currency as string) || 'usd';
+      const coins = await cryptoDataService.getMarketSummaryTop({ limit, currency });
+      res.json(coins);
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+      res.status(500).json({ error: 'Failed to fetch market data' });
+    }
+  });
+
+  // Get asset summary by CoinGecko ID
+  app.get("/api/crypto/live/asset/:coingeckoId", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const currency = (req.query.currency as string) || 'usd';
+      const summary = await cryptoDataService.getAssetSummary(coingeckoId, currency);
+      if (!summary) {
+        return res.status(404).json({ error: 'Asset not found' });
+      }
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching asset summary:', error);
+      res.status(500).json({ error: 'Failed to fetch asset summary' });
+    }
+  });
+
+  // Get chart data for an asset
+  app.get("/api/crypto/live/chart/:coingeckoId", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const range = (req.query.range as string) || '7d';
+      const currency = (req.query.currency as string) || 'usd';
+      const chartData = await cryptoDataService.getAssetChart(coingeckoId, range, currency);
+      res.json(chartData);
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      res.status(500).json({ error: 'Failed to fetch chart data' });
+    }
+  });
+
+  // Get markets/tickers for an asset
+  app.get("/api/crypto/live/markets/:coingeckoId", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const markets = await cryptoDataService.getAssetMarkets(coingeckoId, limit);
+      res.json(markets);
+    } catch (error) {
+      console.error('Error fetching markets:', error);
+      res.status(500).json({ error: 'Failed to fetch markets' });
+    }
+  });
+
+  // Get profile/metadata for an asset
+  app.get("/api/crypto/live/profile/:coingeckoId", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const profile = await cryptoDataService.getAssetProfile(coingeckoId);
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  // Refresh market snapshots (for cron jobs or manual refresh)
+  app.post("/api/crypto/live/refresh", async (_req, res) => {
+    try {
+      await cryptoDataService.refreshMarketSnapshots(storage);
+      res.json({ success: true, message: 'Market snapshots refreshed' });
+    } catch (error) {
+      console.error('Error refreshing market snapshots:', error);
+      res.status(500).json({ error: 'Failed to refresh market snapshots' });
+    }
   });
 
   const httpServer = createServer(app);
