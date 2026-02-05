@@ -1,0 +1,145 @@
+You are a senior full-stack engineer working inside my existing Replit CMS + public web app codebase.
+
+IMPORTANT CONTEXT / ISSUE
+Crypto CMS + the requested 100 demo pages are still not implemented. I need them working end-to-end so I can SEE how the pages will look.
+
+ABSOLUTE CONSTRAINTS
+- Do NOT refactor unrelated parts.
+- Follow the same feature patterns as Stocks + Bonds CMS (list, edit, draft/publish, SEO, compliance).
+- Market/live stats MUST come from server-side 3rd-party APIs with caching (CoinGecko primary; CoinCap fallback).
+- Editorial sections ONLY are editable in CMS (WYSIWYG).
+- Slug must be system-generated and NOT editable by users.
+- NO “Generate button” feature in CMS.
+- For demo: create 100 pages via a one-time SEED script that I run once.
+
+========================================================
+TASK 1 — CMS: Add full “Crypto” section (same as Stocks/Bonds)
+========================================================
+1) Add CMS sidebar menu item: Crypto
+2) List view:
+   - Columns: Status, Featured, Rank (lastKnownRank), Symbol, Name, Slug (read-only), UpdatedAt, ComplianceStatus
+   - Filters: Status, Featured, Rank range (1–100), isStablecoin, assetType, complianceStatus
+   - Search: name, symbol, slug, coingeckoId
+   - Bulk actions: publish/unpublish (gated), run compliance scan, toggle featured, set indexable
+3) Editor view tabs:
+   - Basics | Content | Modules | SEO | Compliance | Live Data (read-only)
+4) WYSIWYG for all rich editorial fields.
+5) Compliance scan button scans all editorial fields + SEO fields.
+6) Publish gating:
+   - title.en present
+   - slug present (system)
+   - coingeckoId present
+   - risks.en + risks.ar present
+   - disclaimers.en + disclaimers.ar present
+   - complianceStatus Pass (or existing admin override)
+
+========================================================
+TASK 2 — Slug: lock it (NOT editable)
+========================================================
+- slug is generated on create:
+  slug = `${symbol.toLowerCase()}-${coingeckoId}`
+- slug is immutable:
+  - CMS UI: show read-only + copy
+  - API: ignore incoming slug changes
+  - DB/ORM: reject updates if slug differs from stored value
+
+========================================================
+TASK 3 — Backend: server-only CryptoDataService + caching
+========================================================
+Implement CryptoDataService (server-side only):
+- getTopMarket({limit=1000,currency=usd})
+- getSummary({coingeckoId,currency=usd})
+- getChart({coingeckoId,currency=usd,range=7d|30d|1y|max})
+- getMarkets({coingeckoId,limit=50})
+- getNews({query,limit=10}) via RSS allowlist only
+- getProfile({coingeckoId}) optional (CoinGecko /coins/{id}) cached
+
+Caching requirements:
+- TTL + stale-while-revalidate (SWR) so pages always load.
+- No provider calls from frontend.
+
+Endpoints (frontend calls these):
+- GET /api/crypto/market?limit=&currency=
+- GET /api/crypto/data/:coingeckoId/summary
+- GET /api/crypto/data/:coingeckoId/chart?range=
+- GET /api/crypto/data/:coingeckoId/markets?limit=
+- GET /api/crypto/data/:coingeckoId/news?limit=
+- GET /api/crypto/data/:coingeckoId/profile
+
+========================================================
+TASK 4 — Public pages: /crypto and /crypto/:slug (Stocks-like style)
+========================================================
+A) /crypto index
+- Use live list from /api/crypto/market?limit=1000
+- Join with CMS published crypto pages to decide which are clickable
+- For demo, we will seed + publish 100 so they all open.
+
+B) /crypto/:slug detail
+- Load CryptoPage (CMS editorial + module settings) by slug
+- Use coingeckoId to fetch live data for market modules via internal endpoints
+- Render modules in CMS-defined order:
+  - Hero (live price/rank) + CTA from CMS
+  - PriceChart (live series)
+  - KeyStats (live)
+  - MarketsTable (live cached)
+  - NewsFeed (RSS cached)
+  - About/HowItWorks/UseCases/FAQ/Risk/Disclosures from CMS WYSIWYG
+- Ensure risks + disclosures show prominently.
+
+========================================================
+TASK 5 — DEMO: Create EXACTLY 100 crypto pages now (seed script)
+========================================================
+This is required so I can SEE the pages. Do NOT make it a CMS feature button.
+
+Create script: `npm run seed:crypto-top100`
+
+Seed rules:
+1) Fetch top 100 from CoinGecko /coins/markets (market_cap_desc, vs_currency=usd, per_page=100, page=1).
+2) Upsert 100 CryptoPage CMS records by coingeckoId.
+3) Auto-fill:
+   - symbol, name, coingeckoId, lastKnownRank
+   - slug (system-generated, locked)
+   - status = published for all 100 (demo)
+   - indexable = false (demo safety)
+   - featured = true for ranks 1–10
+   - assetType default Coin (Stablecoin if symbol matches USDT/USDC/DAI/FDUSD/TUSD/USDE/USDP/PYUSD or name contains “USD”)
+4) Auto-fill editorial content templates (WYSIWYG):
+   - whatIsIt.en/ar (neutral template)
+   - howItWorks.en/ar (neutral template)
+   - risks.en/ar (mandatory template)
+   - faq (2 Q/A EN+AR)
+   - disclaimers.en/ar (exact)
+5) Auto-fill modules template so every page looks “complete”:
+   - Hero, PriceChart, KeyStats, About, HowItWorks, UseCases, MarketsTable, NewsFeed, RelatedAssets, RiskCallout, FAQ, Disclosures, QuickTradeCTA
+6) Run compliance scan after writing each page:
+   - If complianceStatus != Pass, set status = draft (do not publish) and mark NeedsReview.
+7) Print a summary + sample URLs:
+   - createdCount, updatedCount, publishedCount, needsReviewCount
+   - print first 20 URLs like: /crypto/{slug}
+
+MANDATORY DISCLAIMERS (exact)
+- disclaimers.en: ["This page is for information only and is not investment advice."]
+- disclaimers.ar: ["هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."]
+
+========================================================
+TASK 6 — “Clear understanding”: add a Preview Gallery page
+========================================================
+Add a simple public preview route to visually confirm the 100 pages:
+- Route: /crypto/demo-gallery
+- Show the top 100 seeded pages as cards in the same style as /crypto index, but sourced from CMS (not provider list):
+  - Card: rank, name, symbol, slug, status, link to /crypto/:slug
+This is only for demo; indexable=false and hidden from main nav.
+
+========================================================
+FINAL OUTPUT REQUIREMENTS
+After implementation, print exact commands:
+1) run migrations
+2) run seed: `npm run seed:crypto-top100`
+3) start dev server
+4) run tests
+
+And confirm these URLs work:
+- CMS: /admin (or your CMS path) -> Crypto list shows 100 entries
+- /crypto
+- /crypto/:slug (e.g., btc-bitcoin)
+- /crypto/demo-gallery
