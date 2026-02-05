@@ -82,7 +82,14 @@ The CMS provides:
   - **Demo Gallery**: `/crypto/demo-gallery` route for visual preview of seeded pages
   - **CryptoDataService**: Server-side API aggregation with intelligent caching (TTL + stale-while-revalidate), CoinGecko primary provider with CoinCap fallback
   - **Public Landing Page** (`/crypto`): Browse all cryptocurrencies with search, featured cryptos, market data display
-  - **Public Detail Page** (`/crypto/:slug`): Price, 24h change, market cap, volume, supply info, editorial content
+  - **Public Detail Page** (`/crypto/:symbol`): Binance-inspired dark theme with:
+    - CoinHeader: Logo, title, HOT badge, contract address with copy-to-clipboard
+    - PriceRow: Price in USD with percentage change (green/red color coding)
+    - TimeframeTabs: 1D, 7D, 1M, 3M, 1Y, YTD selection
+    - PriceChart: Yellow line chart on dark background with fallback data generation
+    - BuyPanel: Buy/Trade tabs, amount inputs, yellow CTA with SignUpCTA modal
+    - NewsSection: Latest crypto news from CryptoCompare API with RSS fallback
+  - **Legacy Detail Page** (`/crypto/legacy/:slug`): Original tabbed CMS-style page
   - **Bilingual Support**: English/Arabic language toggle with RTL layout support
   - **Market Data**: CryptoMarketSnapshot entities for real-time price data from CoinGecko
   - **Editorial Content**: CryptoPage entities with whatIsIt, howItWorks, useCases, risks, disclaimers (EN/AR)
@@ -106,6 +113,7 @@ The CMS provides:
     - GET `/api/crypto/live/markets/:coingeckoId` - Exchange tickers (legacy)
     - GET `/api/crypto/live/profile/:coingeckoId` - Asset profile/metadata (legacy)
     - POST `/api/crypto/live/refresh` - Refresh market snapshots
+    - GET `/api/crypto/news` - Crypto news aggregation (CryptoCompare + RSS fallback)
   - **Editorial Lock**: editorialLocked flag prevents auto-generation from overwriting human edits
   - **Compliance Integration**: Uses existing compliance rules for content scanning
   - **Navigation**: Crypto link in BarakaHeader nav bar + CMS sidebar navigation
