@@ -42,6 +42,7 @@ const cryptoFormSchema = z.object({
   status: z.enum(['draft', 'published', 'archived']),
   featured: z.boolean().default(false),
   tags: z.array(z.string()).default([]),
+  logoUrl: z.string().optional(),
   
   symbol: z.string().min(1, 'Symbol is required'),
   name: z.string().min(1, 'Name is required'),
@@ -53,9 +54,27 @@ const cryptoFormSchema = z.object({
   
   editorialLocked: z.boolean().default(false),
   
+  // Hero Editorial
+  heroKicker_en: z.string().optional(),
+  heroKicker_ar: z.string().optional(),
   heroSummary_en: z.string().optional(),
   heroSummary_ar: z.string().optional(),
+  primaryCtaText_en: z.string().optional(),
+  primaryCtaText_ar: z.string().optional(),
+  primaryCtaUrl: z.string().optional(),
+  secondaryCtaText_en: z.string().optional(),
+  secondaryCtaText_ar: z.string().optional(),
+  secondaryCtaUrl: z.string().optional(),
   
+  // Overview Content
+  highlights_en: z.array(z.string()).default([]),
+  highlights_ar: z.array(z.string()).default([]),
+  aboutExcerpt_en: z.string().optional(),
+  aboutExcerpt_ar: z.string().optional(),
+  aboutFull_en: z.string().optional(),
+  aboutFull_ar: z.string().optional(),
+  
+  // Legacy
   whatIsIt_en: z.string().optional(),
   whatIsIt_ar: z.string().optional(),
   howItWorks_en: z.string().optional(),
@@ -63,9 +82,25 @@ const cryptoFormSchema = z.object({
   risks_en: z.string().optional(),
   risks_ar: z.string().optional(),
   
+  // Use Cases
+  useCases_en: z.array(z.string()).default([]),
+  useCases_ar: z.array(z.string()).default([]),
+  
+  // Disclaimers
   disclaimers_en: z.array(z.string()).default([]),
   disclaimers_ar: z.array(z.string()).default([]),
+  disclosuresFooterNote_en: z.string().optional(),
+  disclosuresFooterNote_ar: z.string().optional(),
   
+  // FAQ
+  faq: z.array(z.object({
+    question_en: z.string(),
+    question_ar: z.string(),
+    answer_en: z.string(),
+    answer_ar: z.string(),
+  })).default([]),
+  
+  // SEO
   metaTitle_en: z.string().optional(),
   metaTitle_ar: z.string().optional(),
   metaDescription_en: z.string().optional(),
@@ -95,13 +130,35 @@ const defaultFormValues: Partial<CryptoFormData> = {
   status: 'draft',
   featured: false,
   tags: [],
+  logoUrl: '',
   symbol: '',
   name: '',
   isStablecoin: false,
   assetType: 'coin',
   editorialLocked: false,
+  heroKicker_en: '',
+  heroKicker_ar: '',
+  heroSummary_en: '',
+  heroSummary_ar: '',
+  primaryCtaText_en: '',
+  primaryCtaText_ar: '',
+  primaryCtaUrl: '',
+  secondaryCtaText_en: '',
+  secondaryCtaText_ar: '',
+  secondaryCtaUrl: '',
+  highlights_en: [],
+  highlights_ar: [],
+  aboutExcerpt_en: '',
+  aboutExcerpt_ar: '',
+  aboutFull_en: '',
+  aboutFull_ar: '',
+  useCases_en: [],
+  useCases_ar: [],
   disclaimers_en: [],
   disclaimers_ar: [],
+  disclosuresFooterNote_en: '',
+  disclosuresFooterNote_ar: '',
+  faq: [],
   indexable: false,
 };
 
@@ -122,6 +179,10 @@ export default function AdminCryptoEditor() {
   const [isProMode, setIsProMode] = useState(false);
   const [disclaimerEn, setDisclaimerEn] = useState('');
   const [disclaimerAr, setDisclaimerAr] = useState('');
+  const [highlightEn, setHighlightEn] = useState('');
+  const [highlightAr, setHighlightAr] = useState('');
+  const [useCaseEn, setUseCaseEn] = useState('');
+  const [useCaseAr, setUseCaseAr] = useState('');
   const [pageModules, setPageModules] = useState<CryptoPageModule[]>(() => 
     DEFAULT_CRYPTO_PAGE_MODULES.map(m => ({ ...m, config: m.config ? { ...m.config } : undefined }))
   );
