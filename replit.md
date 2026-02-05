@@ -69,12 +69,17 @@ The CMS provides:
 - **Crypto Pages Module** (`/admin/crypto`): Full CMS for cryptocurrency landing pages:
   - **Admin List Page** (`/admin/crypto`): Multi-dimensional filters (status, asset type, compliance, featured) with stats dashboard, search, bulk actions
   - **Admin Editor Page** (`/admin/crypto/:id/edit`): Multi-tab editor with Simple/Pro mode toggle:
-    - **Basics Tab**: Identity (name, symbol, title EN/AR, slug), CoinGecko ID, asset type, market cap rank, featured/stablecoin/editorial lock toggles
+    - **Basics Tab**: Identity (name, symbol, title EN/AR, slug - read-only), CoinGecko ID, asset type, market cap rank, featured/stablecoin/editorial lock toggles
     - **Content Tab**: Hero summary, WYSIWYG editors for whatIsIt, howItWorks, risks (EN/AR), disclaimers management
     - **Modules Tab** (Pro): Page module configuration for flexible layout (hero, price_chart, key_stats, markets_table, news_feed, about, how_it_works, use_cases, faq, risk_callout, disclosures, related_assets, quick_trade_cta)
     - **SEO Tab**: Meta titles, descriptions, OG tags for both EN/AR languages
     - **Compliance Tab**: Run compliance scans, view violations, compliance status
     - **Live Data Tab** (Pro): Read-only view of real-time market data from CoinGecko
+  - **Slug Immutability**: Slug is system-generated as `{symbol}-{coingeckoId}` on create and cannot be edited in UI or updated via API
+  - **Publish Gating**: API validates required fields (title_en, slug, coingeckoId, risks_en, disclaimers_en, complianceStatus='pass') before allowing status='published'
+  - **Seed Data**: 3 sample crypto pages (Bitcoin, Ethereum, Tether) auto-loaded on startup for testing
+  - **Seed Script**: `scripts/seed-crypto-top100.ts` generates pages for top 100 cryptos from CoinGecko with editorial content, bilingual support, and mandatory disclaimers
+  - **Demo Gallery**: `/crypto/demo-gallery` route for visual preview of seeded pages
   - **CryptoDataService**: Server-side API aggregation with intelligent caching (TTL + stale-while-revalidate), CoinGecko primary provider with CoinCap fallback
   - **Public Landing Page** (`/crypto`): Browse all cryptocurrencies with search, featured cryptos, market data display
   - **Public Detail Page** (`/crypto/:slug`): Price, 24h change, market cap, volume, supply info, editorial content
@@ -85,18 +90,21 @@ The CMS provides:
     - GET `/api/crypto/pages` - List all crypto pages
     - GET `/api/crypto/pages/:id` - Get single crypto page by ID
     - GET `/api/crypto/pages/slug/:slug` - Get crypto page by slug
-    - POST `/api/crypto/pages` - Create new crypto page
-    - PUT `/api/crypto/pages/:id` - Update crypto page
+    - POST `/api/crypto/pages` - Create new crypto page (auto-generates slug)
+    - PUT `/api/crypto/pages/:id` - Update crypto page (slug updates rejected)
     - DELETE `/api/crypto/pages/:id` - Delete crypto page
-    - POST `/api/crypto/generate` - Generate pages for top 100 cryptos from CoinGecko
     - POST `/api/crypto/pages/:id/scan` - Run compliance check
     - POST `/api/crypto/pages/:id/toggle-lock` - Toggle editorial lock
     - GET `/api/crypto/snapshots` - Get market data snapshots
-    - GET `/api/crypto/live/market` - Live market summary with caching
-    - GET `/api/crypto/live/asset/:coingeckoId` - Live asset details
-    - GET `/api/crypto/live/chart/:coingeckoId` - Live price chart data
-    - GET `/api/crypto/live/markets/:coingeckoId` - Exchange tickers
-    - GET `/api/crypto/live/profile/:coingeckoId` - Asset profile/metadata
+    - GET `/api/crypto/data/:coingeckoId/summary` - Asset summary data
+    - GET `/api/crypto/data/:coingeckoId/chart` - Price chart data
+    - GET `/api/crypto/data/:coingeckoId/markets` - Exchange tickers
+    - GET `/api/crypto/data/:coingeckoId/profile` - Asset profile/metadata
+    - GET `/api/crypto/live/market` - Live market summary with caching (legacy)
+    - GET `/api/crypto/live/asset/:coingeckoId` - Live asset details (legacy)
+    - GET `/api/crypto/live/chart/:coingeckoId` - Live price chart data (legacy)
+    - GET `/api/crypto/live/markets/:coingeckoId` - Exchange tickers (legacy)
+    - GET `/api/crypto/live/profile/:coingeckoId` - Asset profile/metadata (legacy)
     - POST `/api/crypto/live/refresh` - Refresh market snapshots
   - **Editorial Lock**: editorialLocked flag prevents auto-generation from overwriting human edits
   - **Compliance Integration**: Uses existing compliance rules for content scanning
