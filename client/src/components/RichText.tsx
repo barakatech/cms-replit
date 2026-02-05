@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 
 const ALLOWED_TAGS = ['p', 'strong', 'em', 'b', 'i', 'br', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'span'];
-const ALLOWED_ATTR = ['href', 'target', 'rel', 'class', 'style'];
+const ALLOWED_ATTR = ['href', 'target', 'rel', 'class'];
 
 interface RichTextProps {
   html?: string | null;

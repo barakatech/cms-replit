@@ -45,6 +45,37 @@ const MANDATORY_DISCLAIMERS = {
 
 function generateEditorialContent(name: string, symbol: string, rank: number) {
   return {
+    // Hero Section
+    heroKicker_en: `#${rank} by Market Cap`,
+    heroKicker_ar: `المرتبة #${rank} حسب القيمة السوقية`,
+    heroSummary_en: `${name} (${symbol}) is ranked #${rank} by market capitalization. Track real-time price, market data, and learn more about ${name}.`,
+    heroSummary_ar: `${name} (${symbol}) تحتل المرتبة #${rank} من حيث القيمة السوقية. تتبع السعر في الوقت الفعلي وبيانات السوق.`,
+    primaryCtaText_en: 'Trade Now',
+    primaryCtaText_ar: 'تداول الآن',
+    primaryCtaUrl: `/trade/${symbol.toLowerCase()}`,
+    secondaryCtaText_en: 'Learn More',
+    secondaryCtaText_ar: 'اعرف المزيد',
+    secondaryCtaUrl: '#about',
+    
+    // Highlights
+    highlights_en: [
+      `Ranked #${rank} by market capitalization`,
+      'Trade 24/7 with real-time price updates',
+      'Secure storage with institutional-grade custody',
+    ],
+    highlights_ar: [
+      `المرتبة #${rank} من حيث القيمة السوقية`,
+      'تداول على مدار الساعة مع تحديثات الأسعار في الوقت الفعلي',
+      'تخزين آمن مع حفظ مؤسسي',
+    ],
+    
+    // About Section
+    aboutExcerpt_en: `${name} is a cryptocurrency that enables secure, transparent transactions on the blockchain.`,
+    aboutExcerpt_ar: `${name} هي عملة رقمية تتيح معاملات آمنة وشفافة على البلوكتشين.`,
+    aboutFull_en: `<p><strong>${name} (${symbol})</strong> is a cryptocurrency ranked #${rank} by market capitalization. It operates on blockchain technology, enabling secure and transparent transactions without the need for intermediaries.</p><p>As with all cryptocurrencies, ${name} is subject to market volatility and regulatory developments. Investors should conduct their own research before making any investment decisions.</p>`,
+    aboutFull_ar: `<p><strong>${name} (${symbol})</strong> هي عملة رقمية تحتل المرتبة #${rank} من حيث القيمة السوقية. تعمل على تقنية البلوكتشين، مما يتيح معاملات آمنة وشفافة دون الحاجة إلى وسطاء.</p>`,
+    
+    // Legacy (deprecated but kept for compatibility)
     whatIsIt_en: `<p><strong>${name} (${symbol})</strong> is a cryptocurrency ranked #${rank} by market capitalization. It operates on blockchain technology, enabling secure and transparent transactions without the need for intermediaries.</p><p>As with all cryptocurrencies, ${name} is subject to market volatility and regulatory developments. Investors should conduct their own research before making any investment decisions.</p>`,
     whatIsIt_ar: `<p><strong>${name} (${symbol})</strong> هي عملة رقمية تحتل المرتبة #${rank} من حيث القيمة السوقية. تعمل على تقنية البلوكتشين، مما يتيح معاملات آمنة وشفافة دون الحاجة إلى وسطاء.</p>`,
     
@@ -54,9 +85,23 @@ function generateEditorialContent(name: string, symbol: string, rank: number) {
     risks_en: `<p><strong>Important Risk Disclosures:</strong></p><ul><li><strong>Market Volatility:</strong> Cryptocurrency prices can fluctuate significantly in short periods.</li><li><strong>Regulatory Risk:</strong> Regulations vary by jurisdiction and may change.</li><li><strong>Technology Risk:</strong> Smart contracts may contain vulnerabilities.</li><li><strong>Loss of Capital:</strong> You may lose some or all of your invested capital.</li></ul>`,
     risks_ar: `<p><strong>إفصاحات المخاطر المهمة:</strong></p><ul><li><strong>تقلبات السوق:</strong> يمكن أن تتقلب أسعار العملات الرقمية بشكل كبير.</li><li><strong>المخاطر التنظيمية:</strong> تختلف اللوائح حسب الولاية القضائية.</li><li><strong>خسارة رأس المال:</strong> قد تخسر بعض أو كل رأس المال المستثمر.</li></ul>`,
     
-    heroSummary_en: `${name} (${symbol}) is ranked #${rank} by market capitalization. Track real-time price, market data, and learn more about ${name}.`,
-    heroSummary_ar: `${name} (${symbol}) تحتل المرتبة #${rank} من حيث القيمة السوقية. تتبع السعر في الوقت الفعلي وبيانات السوق.`,
+    // Use Cases
+    useCases_en: [
+      'Store of value and investment',
+      'Cross-border payments',
+      'Decentralized finance (DeFi)',
+    ],
+    useCases_ar: [
+      'تخزين القيمة والاستثمار',
+      'المدفوعات عبر الحدود',
+      'التمويل اللامركزي',
+    ],
     
+    // Disclosures Footer
+    disclosuresFooterNote_en: 'Trading cryptocurrency involves significant risk. Consult a financial advisor before investing.',
+    disclosuresFooterNote_ar: 'ينطوي تداول العملات الرقمية على مخاطر كبيرة. استشر مستشاراً مالياً قبل الاستثمار.',
+    
+    // SEO
     metaTitle_en: `${name} (${symbol}) Price, Charts & Market Data | baraka`,
     metaTitle_ar: `سعر ${name} (${symbol}) والرسوم البيانية | بركة`,
     metaDescription_en: `Get the latest ${name} price, market cap, volume, and trading information. Track ${symbol} live on baraka.`,
@@ -143,16 +188,41 @@ export async function seedTop100Crypto(storage: IStorage): Promise<{ created: nu
         languageDefault: 'en' as const,
         complianceStatus: 'pass' as const,
         requiredDisclosuresPresent: true,
+        // Hero Section
+        heroKicker_en: content.heroKicker_en,
+        heroKicker_ar: content.heroKicker_ar,
         heroSummary_en: content.heroSummary_en,
         heroSummary_ar: content.heroSummary_ar,
+        primaryCtaText_en: content.primaryCtaText_en,
+        primaryCtaText_ar: content.primaryCtaText_ar,
+        primaryCtaUrl: content.primaryCtaUrl,
+        secondaryCtaText_en: content.secondaryCtaText_en,
+        secondaryCtaText_ar: content.secondaryCtaText_ar,
+        secondaryCtaUrl: content.secondaryCtaUrl,
+        // Highlights
+        highlights_en: content.highlights_en,
+        highlights_ar: content.highlights_ar,
+        // About Section
+        aboutExcerpt_en: content.aboutExcerpt_en,
+        aboutExcerpt_ar: content.aboutExcerpt_ar,
+        aboutFull_en: content.aboutFull_en,
+        aboutFull_ar: content.aboutFull_ar,
+        // Legacy fields
         whatIsIt_en: content.whatIsIt_en,
         whatIsIt_ar: content.whatIsIt_ar,
         howItWorks_en: content.howItWorks_en,
         howItWorks_ar: content.howItWorks_ar,
         risks_en: content.risks_en,
         risks_ar: content.risks_ar,
+        // Use Cases
+        useCases_en: content.useCases_en,
+        useCases_ar: content.useCases_ar,
+        // Disclaimers
         disclaimers_en: MANDATORY_DISCLAIMERS.en,
         disclaimers_ar: MANDATORY_DISCLAIMERS.ar,
+        disclosuresFooterNote_en: content.disclosuresFooterNote_en,
+        disclosuresFooterNote_ar: content.disclosuresFooterNote_ar,
+        // SEO
         metaTitle_en: content.metaTitle_en,
         metaTitle_ar: content.metaTitle_ar,
         metaDescription_en: content.metaDescription_en,
@@ -162,10 +232,12 @@ export async function seedTop100Crypto(storage: IStorage): Promise<{ created: nu
           { id: 'hero', type: 'hero' as const, enabled: true, order: 1 },
           { id: 'price_chart', type: 'price_chart' as const, enabled: true, order: 2 },
           { id: 'key_stats', type: 'key_stats' as const, enabled: true, order: 3 },
-          { id: 'about', type: 'about' as const, enabled: true, order: 4 },
-          { id: 'how_it_works', type: 'how_it_works' as const, enabled: true, order: 5 },
-          { id: 'risk_callout', type: 'risk_callout' as const, enabled: true, order: 6 },
-          { id: 'disclosures', type: 'disclosures' as const, enabled: true, order: 7 },
+          { id: 'overview', type: 'overview' as const, enabled: true, order: 4 },
+          { id: 'about', type: 'about' as const, enabled: true, order: 5 },
+          { id: 'how_it_works', type: 'how_it_works' as const, enabled: true, order: 6 },
+          { id: 'use_cases', type: 'use_cases' as const, enabled: true, order: 7 },
+          { id: 'risk_callout', type: 'risk_callout' as const, enabled: true, order: 8 },
+          { id: 'disclosures', type: 'disclosures' as const, enabled: true, order: 9 },
         ],
       };
 
@@ -345,16 +417,41 @@ async function seedFallbackData(storage: IStorage): Promise<{ created: number; u
       languageDefault: 'en' as const,
       complianceStatus: 'pass' as const,
       requiredDisclosuresPresent: true,
+      // Hero Section
+      heroKicker_en: content.heroKicker_en,
+      heroKicker_ar: content.heroKicker_ar,
       heroSummary_en: content.heroSummary_en,
       heroSummary_ar: content.heroSummary_ar,
+      primaryCtaText_en: content.primaryCtaText_en,
+      primaryCtaText_ar: content.primaryCtaText_ar,
+      primaryCtaUrl: content.primaryCtaUrl,
+      secondaryCtaText_en: content.secondaryCtaText_en,
+      secondaryCtaText_ar: content.secondaryCtaText_ar,
+      secondaryCtaUrl: content.secondaryCtaUrl,
+      // Highlights
+      highlights_en: content.highlights_en,
+      highlights_ar: content.highlights_ar,
+      // About Section
+      aboutExcerpt_en: content.aboutExcerpt_en,
+      aboutExcerpt_ar: content.aboutExcerpt_ar,
+      aboutFull_en: content.aboutFull_en,
+      aboutFull_ar: content.aboutFull_ar,
+      // Legacy fields
       whatIsIt_en: content.whatIsIt_en,
       whatIsIt_ar: content.whatIsIt_ar,
       howItWorks_en: content.howItWorks_en,
       howItWorks_ar: content.howItWorks_ar,
       risks_en: content.risks_en,
       risks_ar: content.risks_ar,
+      // Use Cases
+      useCases_en: content.useCases_en,
+      useCases_ar: content.useCases_ar,
+      // Disclaimers
       disclaimers_en: MANDATORY_DISCLAIMERS.en,
       disclaimers_ar: MANDATORY_DISCLAIMERS.ar,
+      disclosuresFooterNote_en: content.disclosuresFooterNote_en,
+      disclosuresFooterNote_ar: content.disclosuresFooterNote_ar,
+      // SEO
       metaTitle_en: content.metaTitle_en,
       metaTitle_ar: content.metaTitle_ar,
       metaDescription_en: content.metaDescription_en,
@@ -364,10 +461,12 @@ async function seedFallbackData(storage: IStorage): Promise<{ created: number; u
         { id: 'hero', type: 'hero' as const, enabled: true, order: 1 },
         { id: 'price_chart', type: 'price_chart' as const, enabled: true, order: 2 },
         { id: 'key_stats', type: 'key_stats' as const, enabled: true, order: 3 },
-        { id: 'about', type: 'about' as const, enabled: true, order: 4 },
-        { id: 'how_it_works', type: 'how_it_works' as const, enabled: true, order: 5 },
-        { id: 'risk_callout', type: 'risk_callout' as const, enabled: true, order: 6 },
-        { id: 'disclosures', type: 'disclosures' as const, enabled: true, order: 7 },
+        { id: 'overview', type: 'overview' as const, enabled: true, order: 4 },
+        { id: 'about', type: 'about' as const, enabled: true, order: 5 },
+        { id: 'how_it_works', type: 'how_it_works' as const, enabled: true, order: 6 },
+        { id: 'use_cases', type: 'use_cases' as const, enabled: true, order: 7 },
+        { id: 'risk_callout', type: 'risk_callout' as const, enabled: true, order: 8 },
+        { id: 'disclosures', type: 'disclosures' as const, enabled: true, order: 9 },
       ],
     };
 

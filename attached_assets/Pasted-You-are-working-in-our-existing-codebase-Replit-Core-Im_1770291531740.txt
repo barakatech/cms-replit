@@ -1,0 +1,75 @@
+You are working in our existing codebase (Replit Core). Implement the SOL coin detail page “first fold” to match the attached reference screenshot EXACTLY in layout, spacing, typography, and component structure.
+
+GOAL
+Create the hero / first fold of a Coin Detail page that visually matches the screenshot:
+- Left: coin header + price row + timeframe tabs + main price chart
+- Right: “Buy” panel with buy inputs + primary CTA + fee comparison mini-table
+
+ROUTING
+- Route: /crypto/:symbol (example: /crypto/SOL)
+- Use symbol param to load coin data.
+
+DESIGN / LAYOUT (PIXEL-FIDELITY)
+1) Page background: dark gradient/solid like screenshot.
+2) Top-left header block:
+   - Coin icon (circular), “Solana Price (SOL)” title, HOT badge, and contract address line with copy icon.
+   - Contract address truncation: “So1111...11111” style with copy-to-clipboard.
+3) Price line under header:
+   - “SOL to USD: 1 Solana equals $90.33 USD” and a red percentage “-5.49%” with “1D” label near it.
+   - Price is prominent, % change colored (red for negative, green for positive).
+4) Timeframe tabs: 1D, 7D, 1M, 3M, 1Y, YTD (match order and compact spacing).
+5) Chart area:
+   - Left occupies ~70% width; Right panel ~30% width (match screenshot proportions).
+   - Chart line is bright yellow on dark background.
+   - Y-axis ticks on the right edge, faint gridlines, minimal clutter.
+   - Under chart, show “Page last updated: <timestamp> (UTC+0)” like screenshot.
+6) Right “Buy SOL / Trade SOL” panel:
+   - Two tabs at top: “Buy SOL” selected, “Trade SOL” unselected.
+   - “You Buy” input row (coin icon at right inside field).
+   - Helper row showing “1 SOL ~ USD $<price>”.
+   - “You Spend” input with currency switch pill “USD”.
+   - Large primary yellow CTA button: “Buy SOL”.
+   - Fee comparison section: “Binance has the lowest transaction fee rate…” and rows for Binance/Kraken/Coinbase with progress bars and % values (0.1%, 0.26%, 1.99%) matching the visual hierarchy.
+
+IMPORTANT: This first fold must match the screenshot’s layout and hierarchy. Do not invent a different layout. Reuse existing design tokens/components if available; if not, create minimal reusable components.
+
+BEHAVIOR — CTA POPUP (REUSE STOCK MODAL PATTERN)
+When user clicks the “Buy SOL” CTA:
+- Show a popup/modal identical in behavior to what we show on stock pages when clicking “Sign up to trade” on the stock detail page.
+- Reuse the same modal component (do not create a new modal UI).
+- Only change the modal copy to be crypto-contextual:
+  - Title: “Sign up to buy SOL”
+  - Body: “Create an account to trade crypto on Baraka.” (or our equivalent tone)
+  - Primary button: “Sign up”
+  - Secondary: “Log in”
+- If user is already logged in, CTA should route them to the buy flow (or show the buy drawer) using existing navigation patterns.
+
+DATA REQUIREMENTS (LIVE DATA + FALLBACK)
+Data sources:
+- We have an API endpoint that returns current price + 24h change for the coin (use whatever exists in the project).
+- We may or may not have an endpoint for historical chart candles.
+
+Implement this logic:
+1) Current price (headline price) MUST come from the API if available.
+2) Chart data handling:
+   - If historical API data exists: render it.
+   - If historical API data does NOT exist or fails: generate fallback data locally.
+3) Fallback chart generation rules:
+   - Generate a realistic intraday series (e.g., 60–150 points) using a seeded random walk around the current price.
+   - Ensure the LAST data point EXACTLY equals the current API price.
+   - Ensure the min/max stay within a reasonable band (e.g., ±3–8% unless timeframe implies more).
+   - Timeframe changes (1D/7D/1M/3M/1Y/YTD) should re-generate or re-map data accordingly.
+4) UI must never break if data is missing: always show chart + price line.
+
+ENGINEERING REQUIREMENTS
+- No hard dependency on paid providers.
+- Add loading and error states that still preserve layout skeleton (no layout shifts).
+- Keep components modular: CoinHeader, PriceRow, TimeframeTabs, PriceChart, BuyPanel.
+- Make styling match screenshot (dark mode, yellow accent, subtle borders, rounded corners, spacing).
+- Ensure responsiveness: on smaller screens stack buy panel below chart but keep same sections.
+
+ACCEPTANCE CRITERIA
+- The first fold visually matches the screenshot at desktop width (layout, spacing, sections).
+- Clicking Buy SOL opens the SAME modal pattern as stocks’ “Sign up to trade”.
+- If live chart data is unavailable, chart still renders with generated data whose last point equals API price.
+- Contract address supports copy-to-clipboard and truncation.

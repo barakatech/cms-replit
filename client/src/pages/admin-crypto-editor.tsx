@@ -300,6 +300,42 @@ export default function AdminCryptoEditor() {
     form.setValue(field, current.filter((_, i) => i !== index));
   };
 
+  const addHighlight = (lang: 'en' | 'ar') => {
+    const value = lang === 'en' ? highlightEn : highlightAr;
+    if (!value.trim()) return;
+    
+    const field = lang === 'en' ? 'highlights_en' : 'highlights_ar';
+    const current = form.getValues(field) || [];
+    form.setValue(field, [...current, value.trim()]);
+    
+    if (lang === 'en') setHighlightEn('');
+    else setHighlightAr('');
+  };
+
+  const removeHighlight = (lang: 'en' | 'ar', index: number) => {
+    const field = lang === 'en' ? 'highlights_en' : 'highlights_ar';
+    const current = form.getValues(field) || [];
+    form.setValue(field, current.filter((_, i) => i !== index));
+  };
+
+  const addUseCase = (lang: 'en' | 'ar') => {
+    const value = lang === 'en' ? useCaseEn : useCaseAr;
+    if (!value.trim()) return;
+    
+    const field = lang === 'en' ? 'useCases_en' : 'useCases_ar';
+    const current = form.getValues(field) || [];
+    form.setValue(field, [...current, value.trim()]);
+    
+    if (lang === 'en') setUseCaseEn('');
+    else setUseCaseAr('');
+  };
+
+  const removeUseCase = (lang: 'en' | 'ar', index: number) => {
+    const field = lang === 'en' ? 'useCases_en' : 'useCases_ar';
+    const current = form.getValues(field) || [];
+    form.setValue(field, current.filter((_, i) => i !== index));
+  };
+
   if (!isNew && isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -609,10 +645,39 @@ export default function AdminCryptoEditor() {
               <TabsContent value="content" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Hero Summary</CardTitle>
-                    <CardDescription>Brief summary shown in the hero section</CardDescription>
+                    <CardTitle>Hero Section</CardTitle>
+                    <CardDescription>Main hero content with kicker, summary, and call-to-action buttons</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="heroKicker_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Kicker (English)</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., Digital Gold" data-testid="input-hero-kicker-en" />
+                            </FormControl>
+                            <FormDescription>Short tagline above the title</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="heroKicker_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Kicker (Arabic)</FormLabel>
+                            <FormControl>
+                              <Input {...field} dir="rtl" placeholder="مثال: الذهب الرقمي" data-testid="input-hero-kicker-ar" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
                       name="heroSummary_en"
@@ -639,6 +704,305 @@ export default function AdminCryptoEditor() {
                         </FormItem>
                       )}
                     />
+                    
+                    <Separator />
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Call-to-Action Buttons</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="primaryCtaText_en"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Primary CTA (EN)</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Trade Now" data-testid="input-primary-cta-en" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="primaryCtaText_ar"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Primary CTA (AR)</FormLabel>
+                              <FormControl>
+                                <Input {...field} dir="rtl" placeholder="تداول الآن" data-testid="input-primary-cta-ar" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="primaryCtaUrl"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Primary CTA URL</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="/trade/btc" data-testid="input-primary-cta-url" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="secondaryCtaText_en"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Secondary CTA (EN)</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Learn More" data-testid="input-secondary-cta-en" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="secondaryCtaText_ar"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Secondary CTA (AR)</FormLabel>
+                              <FormControl>
+                                <Input {...field} dir="rtl" placeholder="اعرف المزيد" data-testid="input-secondary-cta-ar" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="secondaryCtaUrl"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Secondary CTA URL</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="#about" data-testid="input-secondary-cta-url" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Highlights</CardTitle>
+                    <CardDescription>Key bullet points shown in Overview section</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Highlights (English)</Label>
+                      <div className="mt-2 space-y-2">
+                        {form.watch('highlights_en')?.map((h, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded">
+                            <p className="flex-1 text-sm">{h}</p>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => removeHighlight('en', i)}
+                              data-testid={`button-remove-highlight-en-${i}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex gap-2">
+                          <Input 
+                            value={highlightEn} 
+                            onChange={e => setHighlightEn(e.target.value)} 
+                            placeholder="Add highlight..."
+                            data-testid="input-highlight-en"
+                          />
+                          <Button type="button" variant="outline" onClick={() => addHighlight('en')} data-testid="button-add-highlight-en">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Highlights (Arabic)</Label>
+                      <div className="mt-2 space-y-2">
+                        {form.watch('highlights_ar')?.map((h, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded" dir="rtl">
+                            <p className="flex-1 text-sm">{h}</p>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => removeHighlight('ar', i)}
+                              data-testid={`button-remove-highlight-ar-${i}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex gap-2" dir="rtl">
+                          <Input 
+                            value={highlightAr} 
+                            onChange={e => setHighlightAr(e.target.value)} 
+                            placeholder="أضف نقطة مميزة..."
+                            dir="rtl"
+                            data-testid="input-highlight-ar"
+                          />
+                          <Button type="button" variant="outline" onClick={() => addHighlight('ar')} data-testid="button-add-highlight-ar">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>About Section</CardTitle>
+                    <CardDescription>Short excerpt and full content for the About tab</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="aboutExcerpt_en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>About Excerpt (English)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Short summary for Overview section..." rows={2} data-testid="textarea-about-excerpt-en" />
+                          </FormControl>
+                          <FormDescription>Shown in Overview tab, links to full About</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="aboutExcerpt_ar"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>About Excerpt (Arabic)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} dir="rtl" placeholder="ملخص قصير للقسم العام..." rows={2} data-testid="textarea-about-excerpt-ar" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="aboutFull_en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full About (English)</FormLabel>
+                          <FormControl>
+                            <RichTextEditor
+                              content={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Full description for About tab..."
+                              dir="ltr"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="aboutFull_ar"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full About (Arabic)</FormLabel>
+                          <FormControl>
+                            <RichTextEditor
+                              content={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="الوصف الكامل لقسم حول..."
+                              dir="rtl"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Use Cases</CardTitle>
+                    <CardDescription>Common use cases for this cryptocurrency</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Use Cases (English)</Label>
+                      <div className="mt-2 space-y-2">
+                        {form.watch('useCases_en')?.map((u, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded">
+                            <p className="flex-1 text-sm">{u}</p>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => removeUseCase('en', i)}
+                              data-testid={`button-remove-usecase-en-${i}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex gap-2">
+                          <Input 
+                            value={useCaseEn} 
+                            onChange={e => setUseCaseEn(e.target.value)} 
+                            placeholder="Add use case..."
+                            data-testid="input-usecase-en"
+                          />
+                          <Button type="button" variant="outline" onClick={() => addUseCase('en')} data-testid="button-add-usecase-en">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Use Cases (Arabic)</Label>
+                      <div className="mt-2 space-y-2">
+                        {form.watch('useCases_ar')?.map((u, i) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-muted rounded" dir="rtl">
+                            <p className="flex-1 text-sm">{u}</p>
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => removeUseCase('ar', i)}
+                              data-testid={`button-remove-usecase-ar-${i}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex gap-2" dir="rtl">
+                          <Input 
+                            value={useCaseAr} 
+                            onChange={e => setUseCaseAr(e.target.value)} 
+                            placeholder="أضف حالة استخدام..."
+                            dir="rtl"
+                            data-testid="input-usecase-ar"
+                          />
+                          <Button type="button" variant="outline" onClick={() => addUseCase('ar')} data-testid="button-add-usecase-ar">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -842,6 +1206,35 @@ export default function AdminCryptoEditor() {
                         </div>
                       </div>
                     </div>
+                    
+                    <Separator />
+                    <FormField
+                      control={form.control}
+                      name="disclosuresFooterNote_en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Footer Note (English)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Additional regulatory footnote..." rows={2} data-testid="textarea-footer-note-en" />
+                          </FormControl>
+                          <FormDescription>Appears at the bottom of the Risks/Disclosures tab</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="disclosuresFooterNote_ar"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Footer Note (Arabic)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} dir="rtl" placeholder="ملاحظة تنظيمية إضافية..." rows={2} data-testid="textarea-footer-note-ar" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
