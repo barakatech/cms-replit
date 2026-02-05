@@ -2984,6 +2984,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // Crypto News API (free sources with caching)
+  // ============================================
+  
+  const cryptoNewsCache = new Map<string, { data: any[]; timestamp: number }>();
+  const NEWS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+  app.get("/api/crypto/news", async (req, res) => {
+    try {
+      const { symbol, name } = req.query;
+      if (!symbol || !name) {
+        return res.status(400).json({ error: 'symbol and name are required' });
+      }
+
+      const cacheKey = `${symbol}-${name}`;
+      const cached = cryptoNewsCache.get(cacheKey);
+      
+      if (cached && Date.now() - cached.timestamp < NEWS_CACHE_TTL) {
+        return res.json(cached.data);
+      }
+
+      // Try CryptoCompare News API (free tier)
+      let newsItems: any[] = [];
+      
+      try {
+        const ccUrl = `https://min-api.cryptocompare.com/data/v2/news/?categories=${encodeURIComponent(String(name))}&excludeCategories=Sponsored`;
+        const ccResponse = await fetch(ccUrl);
+        
+        if (ccResponse.ok) {
+          const ccData = await ccResponse.json();
+          if (ccData.Data && Array.isArray(ccData.Data)) {
+            newsItems = ccData.Data.slice(0, 10).map((item: any) => ({
+              title: item.title,
+              description: item.body?.slice(0, 200),
+              url: item.url,
+              source: item.source_info?.name || item.source || 'CryptoCompare',
+              publishedAt: new Date(item.published_on * 1000).toISOString(),
+            }));
+          }
+        }
+      } catch (err) {
+        console.log('CryptoCompare news fetch failed, trying fallback');
+      }
+
+      // Fallback: RSS feeds from reliable crypto news sources
+      if (newsItems.length === 0) {
+        try {
+          // Use CoinTelegraph RSS as fallback (general crypto news)
+          const rssUrl = 'https://cointelegraph.com/rss';
+          const rssResponse = await fetch(rssUrl);
+          
+          if (rssResponse.ok) {
+            const rssText = await rssResponse.text();
+            // Simple RSS parsing for items
+            const itemMatches = rssText.match(/<item>[\s\S]*?<\/item>/g) || [];
+            const symbolLower = String(symbol).toLowerCase();
+            const nameLower = String(name).toLowerCase();
+            
+            for (const item of itemMatches.slice(0, 20)) {
+              const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/);
+              const linkMatch = item.match(/<link>(.*?)<\/link>/);
+              const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
+              
+              const title = titleMatch?.[1] || '';
+              const titleLower = title.toLowerCase();
+              
+              // Filter for relevant news
+              if (titleLower.includes(symbolLower) || titleLower.includes(nameLower) || titleLower.includes('crypto') || titleLower.includes('bitcoin')) {
+                newsItems.push({
+                  title: title,
+                  description: '',
+                  url: linkMatch?.[1] || '#',
+                  source: 'CoinTelegraph',
+                  publishedAt: pubDateMatch?.[1] ? new Date(pubDateMatch[1]).toISOString() : new Date().toISOString(),
+                });
+                
+                if (newsItems.length >= 10) break;
+              }
+            }
+          }
+        } catch (err) {
+          console.log('RSS fallback failed');
+        }
+      }
+
+      // Cache the results
+      cryptoNewsCache.set(cacheKey, { data: newsItems, timestamp: Date.now() });
+      
+      res.json(newsItems);
+    } catch (error) {
+      console.error('Error fetching crypto news:', error);
+      res.json([]); // Return empty array on error to avoid breaking UI
+    }
+  });
+
   const httpServer = createServer(app);
 
   // ============================================

@@ -1,0 +1,128 @@
+You are working in our existing codebase (Replit Core). Implement a reusable Crypto Detail Page template (not SOL-only) that renders the “first fold” EXACTLY like the attached reference screenshot, and also adds a free crypto news integration that fetches and displays recent news for the current crypto.
+
+SCOPE
+- This is a TEMPLATE used for all crypto pages, not only SOL.
+- Route: /crypto/:symbol (examples: /crypto/SOL, /crypto/BTC, /crypto/ETH)
+- The page must be pixel-faithful to the screenshot for desktop, and responsive on mobile.
+
+PRIMARY GOAL — FIRST FOLD (PIXEL-FIDELITY)
+Create the hero/first fold split layout:
+- LEFT (~70%): Coin header + price row + timeframe tabs + main chart
+- RIGHT (~30%): Buy/Trade panel with inputs + primary CTA + fee comparison
+
+Do NOT invent a different layout. Reuse existing design tokens/components if available; otherwise create minimal new components that match screenshot.
+
+COMPONENTS (REUSABLE)
+Create these components (or equivalent) and use them for all symbols:
+1) <CoinHeader />
+   - Circular coin icon
+   - Title: “{CoinName} Price ({SYMBOL})”
+   - HOT badge (optional; show if coin is trending OR always show for now but keep logic easily swappable)
+   - Contract address row (when available): “Contract Address: {truncated}” with copy icon
+   - Truncation format: first 6 chars + “...” + last 5 chars (e.g., So1111...11111)
+   - Copy-to-clipboard with toast (reuse existing toast pattern)
+2) <PriceRow />
+   - Text: “{SYMBOL} to USD: 1 {CoinName} equals ${price} USD”
+   - Show % change and timeframe label (1D) aligned like screenshot
+   - % color: red if negative, green if positive
+3) <TimeframeTabs />
+   - Tabs: 1D, 7D, 1M, 3M, 1Y, YTD (exact order, compact spacing)
+   - Tab selection controls chart series
+4) <PriceChart />
+   - Dark chart area, bright yellow line, subtle gridlines, minimal clutter
+   - Y-axis ticks on right edge
+   - Under chart: “Page last updated: <timestamp> (UTC+0)” like screenshot
+5) <BuyPanel />
+   - Tabs: “Buy {SYMBOL}” selected, “Trade {SYMBOL}” unselected
+   - “You Buy” input with coin icon at right inside the input
+   - Helper: “1 {SYMBOL} ~ USD ${price}”
+   - “You Spend” input with currency pill “USD”
+   - Primary CTA button (yellow): “Buy {SYMBOL}”
+   - Fee comparison section exactly like screenshot:
+     - Title sentence: “Binance has the lowest transaction fee rate amongst all major trading platforms.”
+     - Rows: Binance 0.1%, Kraken 0.26%, Coinbase 1.99%
+     - Each row has a progress bar that visually matches hierarchy; highlight Binance row as best
+
+LAYOUT / STYLING REQUIREMENTS
+- Background: dark gradient/solid like screenshot
+- Use subtle borders, rounded corners, and spacing matching screenshot
+- Typography hierarchy should match screenshot: large title, prominent price, smaller meta text
+- Desktop: 2-column layout (70/30)
+- Mobile: stack right panel under chart, but keep the same sections in the same order
+- Add skeleton loading placeholders to avoid layout shifts
+
+BEHAVIOR — CTA POPUP (REUSE STOCK MODAL PATTERN)
+When “Buy {SYMBOL}” CTA is clicked:
+- Show the SAME popup/modal behavior and component used on stock detail pages for “Sign up to trade”.
+- REUSE that modal component; do not create a new modal UI.
+- Only override copy:
+  - Title: “Sign up to buy {SYMBOL}”
+  - Body: “Create an account to trade crypto on Baraka.”
+  - Primary: “Sign up”
+  - Secondary: “Log in”
+- If user is already logged in:
+  - Route them to the existing buy flow for crypto (or open existing buy drawer) using our current navigation pattern.
+  - If crypto buy flow is not implemented yet, route to the closest existing buy/trade entrypoint but keep TODO clearly marked.
+
+DATA REQUIREMENTS (PRICE + CHART FALLBACK)
+We have an API endpoint that returns current price + 24h change (use existing project endpoints/services).
+We may or may not have historical candles.
+
+Implement:
+1) Headline price MUST come from API (if available).
+2) Chart series:
+   - If historical API data exists: render it.
+   - If not available OR fails: generate fallback series locally.
+3) Fallback series rules:
+   - Generate realistic series (60–150 points) using a seeded random walk around current API price.
+   - LAST point MUST equal the current API price exactly.
+   - Keep min/max within reasonable band (±3–8% for 1D; expand band for longer timeframes).
+   - Switching timeframe regenerates/re-maps series with appropriate volatility.
+4) Page must never break if data missing:
+   - If price API fails, show “—” placeholders and still render chart with dummy series (still keep stable layout).
+   - If price returns but chart fails, use fallback.
+
+CONTRACT ADDRESS HANDLING
+- Support showing contract address only when available (mainly for tokens). For BTC/ETH where contract isn’t relevant, hide this line gracefully.
+- If contract is present, enable copy-to-clipboard.
+
+FREE NEWS INTEGRATION (RECENT CRYPTO NEWS)
+Add a “Latest News” section BELOW the first fold (do NOT change first fold layout).
+This section shows recent news for the current crypto based on symbol/name.
+
+Requirements:
+1) Use a FREE news source with no paid dependency. Prefer CryptoCompare News API first.
+   - Fetch endpoint should be server-side (to avoid exposing API keys if any), with caching.
+   - If CryptoCompare requires a key in our environment, support running without a key by using RSS fallback.
+2) Implement a unified internal endpoint: GET /api/crypto/news?symbol=SOL&name=Solana
+   - It should attempt sources in this order:
+     A) CryptoCompare News (filter by categories or search if supported)
+     B) RSS fallback if CryptoCompare fails/no key (choose at least one reliable crypto RSS feed and parse server-side)
+     C) If all fail, return an empty array and UI shows “No recent news available” (do not break layout)
+3) Matching logic:
+   - Fetch based on symbol + name. Use name as keyword and symbol as secondary (avoid false positives).
+   - If slug exists in our crypto metadata, use it to enhance search query.
+4) Display:
+   - Show 5–10 most recent items
+   - Each item: title, source, published time, and link (open in new tab)
+   - Keep styling consistent with dark theme, and use compact cards/list like our existing patterns
+5) Performance:
+   - Cache results for ~10 minutes per symbol
+   - Add loading skeleton and error handling
+
+CRYPTO METADATA
+- Use existing coin metadata in the project if present (name, icon, contract, slug).
+- If not present, create a minimal mapping for SOL/BTC/ETH to prove the template works, but design it to support future expansion.
+
+ENGINEERING NOTES
+- No paid APIs.
+- No layout shift. Use skeletons.
+- Modularize components and keep template reusable.
+- Keep code clean and consistent with existing project patterns.
+
+ACCEPTANCE CRITERIA
+- First fold matches screenshot at desktop width (layout + hierarchy + spacing).
+- Works for multiple symbols via /crypto/:symbol without being hardcoded to SOL.
+- Clicking “Buy” uses the same stock modal component behavior.
+- Chart always renders (live candles if available, otherwise fallback series whose last point equals API price).
+- Latest News loads recent crypto-specific news via free source with caching and graceful fallback.
