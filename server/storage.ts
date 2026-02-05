@@ -86,7 +86,11 @@ import {
   BARAKA_STORE_URLS,
   type BondPage,
   type InsertBondPage,
-  DEFAULT_BOND_PAGE_BLOCKS
+  DEFAULT_BOND_PAGE_BLOCKS,
+  type CryptoMarketSnapshot,
+  type InsertCryptoMarketSnapshot,
+  type CryptoPage,
+  type InsertCryptoPage
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { 
@@ -2910,6 +2914,22 @@ export interface IStorage {
   createBondPage(page: InsertBondPage): Promise<BondPage>;
   updateBondPage(id: string, page: Partial<BondPage>): Promise<BondPage | undefined>;
   deleteBondPage(id: string): Promise<boolean>;
+  
+  // Crypto Market Snapshots
+  getCryptoMarketSnapshots(): Promise<CryptoMarketSnapshot[]>;
+  getCryptoMarketSnapshot(id: string): Promise<CryptoMarketSnapshot | undefined>;
+  getCryptoMarketSnapshotByProviderId(provider: string, providerCoinId: string): Promise<CryptoMarketSnapshot | undefined>;
+  upsertCryptoMarketSnapshot(snapshot: InsertCryptoMarketSnapshot): Promise<CryptoMarketSnapshot>;
+  deleteCryptoMarketSnapshot(id: string): Promise<boolean>;
+  
+  // Crypto Pages
+  getCryptoPages(): Promise<CryptoPage[]>;
+  getCryptoPage(id: string): Promise<CryptoPage | undefined>;
+  getCryptoPageBySlug(slug: string): Promise<CryptoPage | undefined>;
+  getCryptoPageByCoingeckoId(coingeckoId: string): Promise<CryptoPage | undefined>;
+  createCryptoPage(page: InsertCryptoPage): Promise<CryptoPage>;
+  updateCryptoPage(id: string, page: Partial<CryptoPage>): Promise<CryptoPage | undefined>;
+  deleteCryptoPage(id: string): Promise<boolean>;
 }
 
 // Dashboard Summary Types
@@ -3096,6 +3116,8 @@ export class MemStorage implements IStorage {
   private schemaBlockDefinitions: Map<string, SchemaBlockDefinition>;
   private templateBlockOverrides: Map<string, NewsletterTemplateBlockOverride>;
   private bondPages: Map<string, BondPage>;
+  private cryptoMarketSnapshots: Map<string, CryptoMarketSnapshot>;
+  private cryptoPages: Map<string, CryptoPage>;
 
   constructor() {
     this.users = new Map();
@@ -3155,6 +3177,8 @@ export class MemStorage implements IStorage {
     this.schemaBlockDefinitions = new Map();
     this.templateBlockOverrides = new Map();
     this.bondPages = new Map(seedBondPages.map(b => [b.id, b]));
+    this.cryptoMarketSnapshots = new Map();
+    this.cryptoPages = new Map();
     
     // Seed schema block definitions with default settings
     const defaultSchemaBlockDefinitions: SchemaBlockDefinition[] = [
@@ -5174,6 +5198,91 @@ export class MemStorage implements IStorage {
 
   async deleteBondPage(id: string): Promise<boolean> {
     return this.bondPages.delete(id);
+  }
+
+  // Crypto Market Snapshots
+  async getCryptoMarketSnapshots(): Promise<CryptoMarketSnapshot[]> {
+    return Array.from(this.cryptoMarketSnapshots.values()).sort((a, b) => a.rank - b.rank);
+  }
+
+  async getCryptoMarketSnapshot(id: string): Promise<CryptoMarketSnapshot | undefined> {
+    return this.cryptoMarketSnapshots.get(id);
+  }
+
+  async getCryptoMarketSnapshotByProviderId(provider: string, providerCoinId: string): Promise<CryptoMarketSnapshot | undefined> {
+    return Array.from(this.cryptoMarketSnapshots.values()).find(
+      s => s.provider === provider && s.providerCoinId === providerCoinId
+    );
+  }
+
+  async upsertCryptoMarketSnapshot(snapshot: InsertCryptoMarketSnapshot): Promise<CryptoMarketSnapshot> {
+    const existing = await this.getCryptoMarketSnapshotByProviderId(snapshot.provider, snapshot.providerCoinId);
+    const now = new Date().toISOString();
+    
+    if (existing) {
+      const updated: CryptoMarketSnapshot = {
+        ...existing,
+        ...snapshot,
+        fetchedAt: now,
+      };
+      this.cryptoMarketSnapshots.set(existing.id, updated);
+      return updated;
+    }
+    
+    const newSnapshot: CryptoMarketSnapshot = {
+      ...snapshot,
+      id: randomUUID(),
+      fetchedAt: now,
+    };
+    this.cryptoMarketSnapshots.set(newSnapshot.id, newSnapshot);
+    return newSnapshot;
+  }
+
+  async deleteCryptoMarketSnapshot(id: string): Promise<boolean> {
+    return this.cryptoMarketSnapshots.delete(id);
+  }
+
+  // Crypto Pages
+  async getCryptoPages(): Promise<CryptoPage[]> {
+    return Array.from(this.cryptoPages.values()).sort((a, b) => 
+      (a.marketCapRank || 999999) - (b.marketCapRank || 999999)
+    );
+  }
+
+  async getCryptoPage(id: string): Promise<CryptoPage | undefined> {
+    return this.cryptoPages.get(id);
+  }
+
+  async getCryptoPageBySlug(slug: string): Promise<CryptoPage | undefined> {
+    return Array.from(this.cryptoPages.values()).find(p => p.slug === slug);
+  }
+
+  async getCryptoPageByCoingeckoId(coingeckoId: string): Promise<CryptoPage | undefined> {
+    return Array.from(this.cryptoPages.values()).find(p => p.coingeckoId === coingeckoId);
+  }
+
+  async createCryptoPage(page: InsertCryptoPage): Promise<CryptoPage> {
+    const now = new Date().toISOString();
+    const newPage: CryptoPage = {
+      ...page,
+      id: randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.cryptoPages.set(newPage.id, newPage);
+    return newPage;
+  }
+
+  async updateCryptoPage(id: string, updates: Partial<CryptoPage>): Promise<CryptoPage | undefined> {
+    const page = this.cryptoPages.get(id);
+    if (!page) return undefined;
+    const updated: CryptoPage = { ...page, ...updates, updatedAt: new Date().toISOString() };
+    this.cryptoPages.set(id, updated);
+    return updated;
+  }
+
+  async deleteCryptoPage(id: string): Promise<boolean> {
+    return this.cryptoPages.delete(id);
   }
 }
 

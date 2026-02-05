@@ -1,0 +1,248 @@
+You are a senior full-stack engineer working inside my existing Replit CMS codebase.
+
+ABSOLUTE CONSTRAINTS
+- Do NOT refactor unrelated parts.
+- Reuse existing patterns for models, RBAC, draft/publish workflow, menu, public routes, and the existing compliance checker.
+- Do NOT call any external crypto API during public page render. All live market data must come from DB cache.
+
+====================================================
+TASK: Generate Crypto landing pages for TOP 100 by current ranking
+====================================================
+
+WHAT “TOP 100” MEANS
+- “Current ranking” = top 100 by market cap rank at the time of generation, using CoinGecko’s /coins/markets endpoint ordered by market_cap_desc.
+- Use vs_currency=usd, per_page=100, page=1.
+- Capture the provider’s market_cap_rank field as the rank.
+
+DATA SOURCE (PRIMARY)
+- CoinGecko: GET /api/v3/coins/markets
+  Params: vs_currency=usd, order=market_cap_desc, per_page=100, page=1, sparkline=false, price_change_percentage=24h
+- If CoinGecko fails (429/5xx), fallback to CoinCap (limit=100, sorted by market cap if available in their response).
+
+====================================================
+1) BACKEND: Ingestion cache for top 1000 (already required) + top 100 generator
+====================================================
+
+A) Ensure you have (or create) CryptoMarketSnapshot table/cache (do NOT bloat CryptoPage itself):
+- provider (CoinGecko|CoinCap)
+- providerCoinId
+- symbol
+- name
+- rank (market_cap_rank)
+- priceUsd
+- priceChange24hPct
+- marketCapUsd
+- volume24hUsd
+- circulatingSupply
+- totalSupply
+- maxSupply
+- athUsd, athDate
+- atlUsd, atlDate
+- lastUpdatedAt (from provider)
+- fetchedAt (our timestamp)
+- raw (optional capped)
+
+Unique index: (provider, providerCoinId)
+
+B) Ingestion job (already planned) should refresh TOP 1000 on a schedule and update CryptoMarketSnapshot.
+C) Add a NEW generator function that uses the latest snapshot (preferred) OR fetches live once if snapshot is empty:
+- generateTopCryptoPages({count=100, publishMode}) -> creates/updates CryptoPage entries
+- It should use the latest available CoinGecko snapshot for rank 1..100. If snapshot not found, fetch CoinGecko /coins/markets for the top 100 and write snapshots first, then generate pages.
+
+====================================================
+2) CMS MODEL: CryptoPage (assume already implemented from prior prompt)
+====================================================
+Use the CryptoPage schema you already created (localized fields, marketData read-only, WYSIWYG rich fields, compliance fields).
+
+IMPORTANT: WYSIWYG for content
+- whatIsIt{en,ar} is RICH TEXT
+- howItWorks{en,ar} is RICH TEXT
+- risks{en,ar} is RICH TEXT
+Use the global RichTextEditor format the CMS uses (JSON or sanitized HTML). Do not introduce a second format.
+
+====================================================
+3) GENERATION: Create / update TOP 100 Crypto landing pages
+====================================================
+
+A) Where to expose generation
+- Add an admin-only action button in CMS > Crypto list view:
+  “Generate Top 100 Pages”
+- Optional secondary action:
+  “Generate Top 100 (Draft)”
+  “Generate Top 100 (Published)”
+Default: Draft (safer).
+
+B) Idempotency rules (non-negotiable)
+- Upsert by coingeckoId if present, otherwise by slug.
+- If a CryptoPage already exists:
+  - Do NOT overwrite editorial content fields if an editor has modified them (see “editorial lock” below).
+  - DO update identifiers, ranking fields, and marketData mapping.
+- Never create duplicates.
+
+C) Slug rules
+- slug = `${symbol.toLowerCase()}-${coingeckoId}` (stable + unique), e.g. “btc-bitcoin”
+- If slug already taken, append “-v2” only if absolutely necessary; prefer stable deterministic slugs.
+
+D) Editorial lock (prevents generator from nuking human edits)
+Add a boolean field if it exists (or create only if you already have similar patterns):
+- editorialLocked (default false)
+Behavior:
+- If editorialLocked=true, generator updates only:
+  - marketCapRank, symbol, coingeckoId, coincapId, and market data links
+  - does NOT touch whatIsIt/howItWorks/risks/faq/disclaimers/etc.
+
+E) Default content template (Compliance-safe, neutral)
+For each generated coin, fill these fields:
+
+Identity
+- title.en: “{Name} ({SYMBOL})”
+- title.ar: “{Name} ({SYMBOL})”  (keep name in Latin if you don’t have Arabic name mapping)
+- status: draft (or published if publishMode=published)
+- featured: true for ranks 1–10, else false
+- tags: include assetType guess, e.g. ["crypto", "top-100", "market-data"]
+
+Classification
+- rankingSource: CoinGecko
+- marketCapRank: from snapshot
+- isStablecoin: true if name/symbol matches common stablecoin patterns OR CoinGecko categories if you fetch /coins/{id} later (optional). For generation, use a simple heuristic:
+  - true if symbol in ["USDT","USDC","DAI","FDUSD","TUSD","USDE","USDP","PYUSD"] OR name contains "USD"
+  - else false
+- assetType:
+  - Stablecoin if isStablecoin=true
+  - Otherwise default “Coin” (do not try to over-classify in v1)
+
+Identifiers
+- symbol: snapshot.symbol uppercased
+- name: snapshot.name
+- coingeckoId: snapshot.providerCoinId
+
+Content (RICH TEXT via WYSIWYG format)
+- heroSummary.en:
+  “A crypto asset page with market data, basic context, and risk disclosures.”
+- heroSummary.ar:
+  “صفحة أصل رقمي تعرض بيانات السوق ونبذة عامة وإفصاحات المخاطر.”
+
+- highlights.en (array):
+  - “Market cap rank: #{rank}”
+  - “Price and market stats update periodically”
+  - “Risk disclosures included”
+- highlights.ar:
+  - “الترتيب حسب القيمة السوقية: #{rank}”
+  - “يتم تحديث السعر وإحصاءات السوق بشكل دوري”
+  - “تتضمن الصفحة إفصاحات المخاطر”
+
+- whatIsIt.en (RICH TEXT):
+  Title H2: “What is {Name}?”
+  Paragraph: “{Name} ({SYMBOL}) is a cryptocurrency. This page provides market data and general educational context.”
+  Bullets:
+   - “Symbol: {SYMBOL}”
+   - “Market cap rank: #{rank}”
+   - “Prices can be volatile.”
+
+- whatIsIt.ar (RICH TEXT):
+  H2: “ما هو {Name}؟”
+  Paragraph: “{Name} ({SYMBOL}) هو أصل رقمي. تعرض هذه الصفحة بيانات السوق وسياقًا تعليميًا عامًا.”
+  Bullets:
+   - “الرمز: {SYMBOL}”
+   - “الترتيب حسب القيمة السوقية: #{rank}”
+   - “قد تكون الأسعار متقلبة.”
+
+- howItWorks.en (RICH TEXT):
+  H2: “How it works”
+  Paragraph: “Crypto assets trade on exchanges and prices can change quickly. Market data shown here is sourced from third parties and may update on a schedule.”
+  Bullets:
+   - “Live data is cached and refreshed periodically”
+   - “Different venues may show different prices”
+- howItWorks.ar (RICH TEXT):
+  H2: “كيف يعمل”
+  Paragraph: “يتم تداول الأصول الرقمية في الأسواق وقد تتغير الأسعار بسرعة. يتم عرض بيانات السوق من مصادر خارجية وقد يتم تحديثها وفق جدول زمني.”
+  Bullets:
+   - “يتم تخزين البيانات مؤقتًا وتحديثها بشكل دوري”
+   - “قد تختلف الأسعار بين الجهات”
+
+- useCases.en (array):
+  - “Market participation”
+  - “Portfolio diversification (context-dependent)”
+  - “Learning and research”
+- useCases.ar:
+  - “المشاركة في السوق”
+  - “تنويع المحفظة (حسب السياق)”
+  - “التعلّم والبحث”
+
+- risks.en (RICH TEXT) [MANDATORY]:
+  H2: “Risks”
+  Bullets:
+   - “Prices can be highly volatile.”
+   - “Liquidity can vary by asset and venue.”
+   - “Market data may be delayed or differ across providers.”
+   - “Crypto markets can be affected by technical, regulatory, and operational factors.”
+  Paragraph: “Capital is at risk.”
+
+- risks.ar (RICH TEXT):
+  H2: “المخاطر”
+  Bullets:
+   - “قد تكون الأسعار شديدة التقلب.”
+   - “قد تختلف السيولة حسب الأصل والجهة.”
+   - “قد تتأخر بيانات السوق أو تختلف بين المصادر.”
+   - “قد تتأثر أسواق الأصول الرقمية بعوامل تقنية وتنظيمية وتشغيلية.”
+  Paragraph: “رأس المال معرّض للمخاطر.”
+
+FAQ (keep minimal)
+- Q/A 1 EN: “Where does the price data come from?” -> “From third-party market data providers and refreshed on a schedule.”
+- Q/A 1 AR: equivalent
+
+Disclaimers (exact)
+- disclaimers.en: ["This page is for information only and is not investment advice."]
+- disclaimers.ar: ["هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."]
+
+SEO defaults
+- metaTitle.en: “{Name} ({SYMBOL}) Price & Market Data | Crypto”
+- metaTitle.ar: “{Name} ({SYMBOL}) السعر وبيانات السوق | كريبتو”
+- metaDescription.en: “Market data, key stats, and risk disclosures for {Name} ({SYMBOL}).”
+- metaDescription.ar: “بيانات السوق وإحصاءات أساسية وإفصاحات المخاطر لـ {Name} ({SYMBOL}).”
+- indexable:
+  - true if published, false if draft
+
+Compliance fields
+- On generation: run the existing compliance checker across ALL text/rich fields (extract plain text from rich content).
+- Store:
+  complianceStatus, complianceScanResults, blockedKeywordsHit, requiredDisclosuresPresent, lastComplianceScanAt
+- Publishing must be blocked unless Pass (unless your existing admin override flow is used).
+
+====================================================
+4) MARKET DATA MAPPING INTO CryptoPage.marketData
+====================================================
+When generating or updating CryptoPages, populate marketData from snapshot:
+- priceUsd -> marketData.priceUsd
+- priceChange24hPct -> marketData.priceChange24hPct
+- marketCapUsd -> marketData.marketCapUsd
+- volume24hUsd -> marketData.volume24hUsd
+- circulatingSupply -> marketData.circulatingSupply
+- totalSupply -> marketData.totalSupply
+- maxSupply -> marketData.maxSupply
+- athUsd, athDate, atlUsd, atlDate
+- lastUpdatedAt + source
+
+Make marketData read-only in the CMS UI.
+
+====================================================
+5) DELIVERABLES
+====================================================
+A) Admin “Generate Top 100 Pages” action in CMS Crypto list view
+- Default: Draft
+- Optional: Published mode
+B) Implementation is idempotent and respects editorialLocked
+C) Uses CoinGecko /coins/markets market_cap_desc to determine top 100 ranking
+D) Runs compliance scan and saves results for each generated page
+E) After generation, print a console table:
+  slug | symbol | name | rank | status | complianceStatus
+F) Confirm public URLs that should work (for published):
+  /crypto/:slug
+
+RUN INSTRUCTIONS (must output)
+- Command to run generation (one-time):
+  e.g. `npm run crypto:generate-top100` OR `node scripts/generate-top100-crypto-pages.js`
+- If you add an API route for this action:
+  POST /api/admin/crypto/generate-top100 (admin-only)
+
+IMPORTANT: Do not fetch external APIs on page views. Only the scheduled ingestion job + admin action should call providers.

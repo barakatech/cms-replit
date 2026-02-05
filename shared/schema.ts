@@ -2599,3 +2599,251 @@ export const DEFAULT_BOND_PAGE_BLOCKS: BondPageBlock[] = [
   { id: 'faq', type: 'faq', visible: true, order: 9, showAll: false, maxItems: 5 },
   { id: 'disclosures', type: 'disclosures', visible: true, order: 10, showRiskDisclosure: true, showDisclaimers: true },
 ];
+
+// ============================================================
+// CRYPTO PAGES MODULE
+// ============================================================
+
+// Crypto Market Data Provider
+export type CryptoDataProvider = 'coingecko' | 'coincap';
+
+// Crypto Asset Type Classification
+export type CryptoAssetType = 'coin' | 'token' | 'stablecoin' | 'wrapped' | 'defi' | 'nft' | 'meme';
+
+// Crypto Compliance Status
+export type CryptoComplianceStatus = 'pending' | 'pass' | 'fail' | 'override';
+
+// Crypto Market Snapshot - Cache for market data from providers
+export interface CryptoMarketSnapshot {
+  id: string;
+  provider: CryptoDataProvider;
+  providerCoinId: string;
+  symbol: string;
+  name: string;
+  rank: number;
+  priceUsd: number;
+  priceChange24hPct: number;
+  marketCapUsd: number;
+  volume24hUsd: number;
+  circulatingSupply?: number;
+  totalSupply?: number;
+  maxSupply?: number;
+  athUsd?: number;
+  athDate?: string;
+  atlUsd?: number;
+  atlDate?: string;
+  image?: string;
+  lastUpdatedAt: string;
+  fetchedAt: string;
+  raw?: Record<string, unknown>;
+}
+
+// Crypto Page Market Data (read-only, synced from snapshot)
+export interface CryptoMarketData {
+  priceUsd?: number;
+  priceChange24hPct?: number;
+  marketCapUsd?: number;
+  volume24hUsd?: number;
+  circulatingSupply?: number;
+  totalSupply?: number;
+  maxSupply?: number;
+  athUsd?: number;
+  athDate?: string;
+  atlUsd?: number;
+  atlDate?: string;
+  lastUpdatedAt?: string;
+  source?: CryptoDataProvider;
+}
+
+// Crypto FAQ Item
+export interface CryptoFaqItem {
+  question_en: string;
+  question_ar: string;
+  answer_en: string;
+  answer_ar: string;
+}
+
+// Crypto Page - Main entity for crypto landing pages
+export interface CryptoPage {
+  id: string;
+  
+  // Identity
+  title_en: string;
+  title_ar: string;
+  slug: string;
+  status: 'draft' | 'published' | 'archived';
+  featured: boolean;
+  tags: string[];
+  
+  // Classification
+  symbol: string;
+  name: string;
+  coingeckoId?: string;
+  coincapId?: string;
+  rankingSource?: CryptoDataProvider;
+  marketCapRank?: number;
+  isStablecoin: boolean;
+  assetType: CryptoAssetType;
+  
+  // Editorial Lock (prevents generator from overwriting human edits)
+  editorialLocked: boolean;
+  
+  // Content - Hero
+  heroSummary_en?: string;
+  heroSummary_ar?: string;
+  highlights_en?: string[];
+  highlights_ar?: string[];
+  
+  // Content - WYSIWYG Rich Text Fields
+  whatIsIt_en?: string;
+  whatIsIt_ar?: string;
+  howItWorks_en?: string;
+  howItWorks_ar?: string;
+  risks_en?: string;
+  risks_ar?: string;
+  
+  // Use Cases
+  useCases_en?: string[];
+  useCases_ar?: string[];
+  
+  // FAQ
+  faq?: CryptoFaqItem[];
+  
+  // Disclaimers
+  disclaimers_en?: string[];
+  disclaimers_ar?: string[];
+  
+  // Market Data (read-only, synced from snapshot)
+  marketData?: CryptoMarketData;
+  sourceSnapshotId?: string;
+  
+  // SEO
+  metaTitle_en?: string;
+  metaTitle_ar?: string;
+  metaDescription_en?: string;
+  metaDescription_ar?: string;
+  ogImage?: string;
+  indexable: boolean;
+  
+  // Compliance
+  complianceStatus: CryptoComplianceStatus;
+  complianceScanResults?: Array<{
+    keyword: string;
+    severity: string;
+    field: string;
+    matchType: string;
+    category?: string;
+  }>;
+  blockedKeywordsHit?: string[];
+  requiredDisclosuresPresent: boolean;
+  lastComplianceScanAt?: string;
+  complianceOverrideReason?: string;
+  complianceOverrideBy?: string;
+  
+  // Timestamps
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Insert schemas for validation
+export const insertCryptoMarketSnapshotSchema = z.object({
+  provider: z.enum(['coingecko', 'coincap']),
+  providerCoinId: z.string().min(1),
+  symbol: z.string().min(1),
+  name: z.string().min(1),
+  rank: z.number().int().min(1),
+  priceUsd: z.number(),
+  priceChange24hPct: z.number(),
+  marketCapUsd: z.number(),
+  volume24hUsd: z.number(),
+  circulatingSupply: z.number().optional(),
+  totalSupply: z.number().optional(),
+  maxSupply: z.number().optional(),
+  athUsd: z.number().optional(),
+  athDate: z.string().optional(),
+  atlUsd: z.number().optional(),
+  atlDate: z.string().optional(),
+  image: z.string().optional(),
+  lastUpdatedAt: z.string(),
+  raw: z.record(z.unknown()).optional(),
+});
+
+export type InsertCryptoMarketSnapshot = z.infer<typeof insertCryptoMarketSnapshotSchema>;
+
+export const insertCryptoPageSchema = z.object({
+  title_en: z.string().min(1),
+  title_ar: z.string().min(1),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+  status: z.enum(['draft', 'published', 'archived']).default('draft'),
+  featured: z.boolean().default(false),
+  tags: z.array(z.string()).default([]),
+  
+  symbol: z.string().min(1),
+  name: z.string().min(1),
+  coingeckoId: z.string().optional(),
+  coincapId: z.string().optional(),
+  rankingSource: z.enum(['coingecko', 'coincap']).optional(),
+  marketCapRank: z.number().int().optional(),
+  isStablecoin: z.boolean().default(false),
+  assetType: z.enum(['coin', 'token', 'stablecoin', 'wrapped', 'defi', 'nft', 'meme']).default('coin'),
+  
+  editorialLocked: z.boolean().default(false),
+  
+  heroSummary_en: z.string().optional(),
+  heroSummary_ar: z.string().optional(),
+  highlights_en: z.array(z.string()).optional(),
+  highlights_ar: z.array(z.string()).optional(),
+  
+  whatIsIt_en: z.string().optional(),
+  whatIsIt_ar: z.string().optional(),
+  howItWorks_en: z.string().optional(),
+  howItWorks_ar: z.string().optional(),
+  risks_en: z.string().optional(),
+  risks_ar: z.string().optional(),
+  
+  useCases_en: z.array(z.string()).optional(),
+  useCases_ar: z.array(z.string()).optional(),
+  
+  faq: z.array(z.object({
+    question_en: z.string(),
+    question_ar: z.string(),
+    answer_en: z.string(),
+    answer_ar: z.string(),
+  })).optional(),
+  
+  disclaimers_en: z.array(z.string()).optional(),
+  disclaimers_ar: z.array(z.string()).optional(),
+  
+  marketData: z.object({
+    priceUsd: z.number().optional(),
+    priceChange24hPct: z.number().optional(),
+    marketCapUsd: z.number().optional(),
+    volume24hUsd: z.number().optional(),
+    circulatingSupply: z.number().optional(),
+    totalSupply: z.number().optional(),
+    maxSupply: z.number().optional(),
+    athUsd: z.number().optional(),
+    athDate: z.string().optional(),
+    atlUsd: z.number().optional(),
+    atlDate: z.string().optional(),
+    lastUpdatedAt: z.string().optional(),
+    source: z.enum(['coingecko', 'coincap']).optional(),
+  }).optional(),
+  sourceSnapshotId: z.string().optional(),
+  
+  metaTitle_en: z.string().optional(),
+  metaTitle_ar: z.string().optional(),
+  metaDescription_en: z.string().optional(),
+  metaDescription_ar: z.string().optional(),
+  ogImage: z.string().optional(),
+  indexable: z.boolean().default(false),
+  
+  complianceStatus: z.enum(['pending', 'pass', 'fail', 'override']).default('pending'),
+  complianceScanResults: z.array(z.any()).optional(),
+  blockedKeywordsHit: z.array(z.string()).optional(),
+  requiredDisclosuresPresent: z.boolean().default(false),
+  complianceOverrideReason: z.string().optional(),
+});
+
+export type InsertCryptoPage = z.infer<typeof insertCryptoPageSchema>;
