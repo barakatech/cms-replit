@@ -2606,20 +2606,23 @@ export const DEFAULT_BOND_PAGE_BLOCKS: BondPageBlock[] = [
 
 // Crypto Page Module Types
 export type CryptoModuleType = 
-  | 'hero'
-  | 'price_chart'
-  | 'key_stats'
-  | 'overview'
-  | 'markets_table'
-  | 'news_feed'
-  | 'about'
-  | 'how_it_works'
-  | 'use_cases'
-  | 'faq'
-  | 'risk_callout'
-  | 'disclosures'
-  | 'related_assets'
-  | 'quick_trade_cta';
+  | 'sticky_top_bar'      // Compact top bar with price + trade CTA
+  | 'hero'                // Large price display with summary
+  | 'price_chart'         // Interactive klines chart
+  | 'key_stats'           // Binance 24hr stats grid
+  | 'depth_trades'        // Order book + recent trades tabs
+  | 'overview'            // About excerpt + highlights
+  | 'markets_table'       // Exchange tickers
+  | 'news_feed'           // Crypto news
+  | 'about'               // Full about content
+  | 'how_it_works'        // How it works section
+  | 'use_cases'           // Use cases list
+  | 'faq'                 // FAQ accordion
+  | 'risk_callout'        // Risk disclosure callout
+  | 'disclosures'         // Legal disclaimers
+  | 'related_assets'      // Related crypto assets
+  | 'quick_trade_cta'     // Trade button
+  | 'bottom_sticky_cta';  // Mobile sticky bottom CTA
 
 // Crypto Page Module Configuration
 export interface CryptoPageModule {
@@ -2652,18 +2655,18 @@ export interface CryptoPageModule {
   };
 }
 
-// Default Crypto Page Modules
+// Default Crypto Page Modules (Binance-powered layout)
 export const DEFAULT_CRYPTO_PAGE_MODULES: CryptoPageModule[] = [
-  { id: 'hero', type: 'hero', enabled: true, order: 0, config: { showPrice: true, showChange: true, showMarketCap: true } },
-  { id: 'price_chart', type: 'price_chart', enabled: true, order: 1, config: { chartRanges: ['1d', '7d', '1m', '3m', '1y', 'max'], defaultRange: '7d' } },
-  { id: 'key_stats', type: 'key_stats', enabled: true, order: 2 },
-  { id: 'overview', type: 'overview', enabled: true, order: 3, config: { showHighlights: true, showAboutExcerpt: true, showRelatedAssets: true, relatedMode: 'top_by_rank', maxRelated: 5 } },
-  { id: 'markets_table', type: 'markets_table', enabled: true, order: 4, config: { maxRows: 50 } },
-  { id: 'news_feed', type: 'news_feed', enabled: true, order: 5, config: { maxItems: 10 } },
-  { id: 'about', type: 'about', enabled: true, order: 6 },
-  { id: 'risk_callout', type: 'risk_callout', enabled: true, order: 7, config: { prominent: true } },
-  { id: 'faq', type: 'faq', enabled: true, order: 8, config: { maxItems: 10 } },
-  { id: 'disclosures', type: 'disclosures', enabled: true, order: 9, config: { pinToBottom: true } },
+  { id: 'sticky_top_bar', type: 'sticky_top_bar', enabled: true, order: 0, config: { ctaText_en: 'Trade', ctaText_ar: 'تداول' } },
+  { id: 'hero', type: 'hero', enabled: true, order: 1, config: { showPrice: true, showChange: true, showMarketCap: false } },
+  { id: 'price_chart', type: 'price_chart', enabled: true, order: 2, config: { chartRanges: ['1h', '1d', '1w', '1m', '1y'], defaultRange: '1d' } },
+  { id: 'key_stats', type: 'key_stats', enabled: true, order: 3 },
+  { id: 'depth_trades', type: 'depth_trades', enabled: true, order: 4, config: { maxRows: 10 } },
+  { id: 'about', type: 'about', enabled: true, order: 5 },
+  { id: 'related_assets', type: 'related_assets', enabled: true, order: 6, config: { mode: 'top_by_rank' as const, maxItems: 6 } },
+  { id: 'faq', type: 'faq', enabled: true, order: 7, config: { maxItems: 10 } },
+  { id: 'disclosures', type: 'disclosures', enabled: true, order: 8, config: { pinToBottom: true } },
+  { id: 'bottom_sticky_cta', type: 'bottom_sticky_cta', enabled: true, order: 9, config: { ctaText_en: 'Trade', ctaText_ar: 'تداول' } },
 ];
 
 // Crypto Market Data Provider
@@ -2749,6 +2752,71 @@ export interface CryptoApiPrefillIdentity {
   imageUrl?: string;
   marketCapRank?: number;
   slug?: string;
+}
+
+// ========== BINANCE LOCKED DATA (Read-Only, from Binance API) ==========
+
+// Binance Locked Identity (primary key for API calls)
+export interface BinancePrefillIdentity {
+  binanceSymbol: string;       // e.g., "SOLUSDT" - primary identifier
+  baseAsset: string;           // e.g., "SOL"
+  quoteAsset: string;          // e.g., "USDT"
+  status: string;              // e.g., "TRADING"
+  tickSize?: string;           // from exchangeInfo filters
+  stepSize?: string;           // from exchangeInfo filters
+  minNotional?: string;        // from exchangeInfo filters
+  fetchedAt?: string;
+}
+
+// Binance Locked Market Summary (24hr stats)
+export interface BinancePrefillMarketSummary {
+  lastPrice: number;
+  priceChange: number;
+  priceChangePercent: number;
+  openPrice: number;
+  highPrice: number;
+  lowPrice: number;
+  volume: number;              // base volume
+  quoteVolume: number;         // quote volume
+  bidPrice: number;
+  bidQty: number;
+  askPrice: number;
+  askQty: number;
+  weightedAvgPrice: number;
+  count: number;               // number of trades
+  closeTime: number;           // as-of timestamp
+  spreadPct: number;           // computed: (ask-bid)/mid * 100
+  fetchedAt?: string;
+}
+
+// Binance Chart Data Meta
+export interface BinancePrefillChartMeta {
+  interval?: string;
+  dataPointsCount?: number;
+  fetchedAt?: string;
+}
+
+// Binance Order Book Meta
+export interface BinancePrefillOrderBookMeta {
+  lastUpdateId?: number;
+  bidsCount?: number;
+  asksCount?: number;
+  fetchedAt?: string;
+}
+
+// Binance Trades Meta
+export interface BinancePrefillTradesMeta {
+  tradesCount?: number;
+  fetchedAt?: string;
+}
+
+// Complete Binance Prefill object (all locked/read-only data)
+export interface BinancePrefill {
+  lockedIdentity?: BinancePrefillIdentity;
+  lockedMarketSummary?: BinancePrefillMarketSummary;
+  lockedChartMeta?: BinancePrefillChartMeta;
+  lockedOrderBookMeta?: BinancePrefillOrderBookMeta;
+  lockedTradesMeta?: BinancePrefillTradesMeta;
 }
 
 // API Prefill Locked Market Summary (read-only, from API)
@@ -2848,6 +2916,12 @@ export interface CryptoPage {
   isStablecoin: boolean;
   assetType: CryptoAssetType;
   
+  // ========== BINANCE LOCKED FIELDS ==========
+  // binanceSymbol is the primary key for all Binance API calls
+  binanceSymbol?: string;      // e.g., "SOLUSDT" - required for Binance data
+  baseAsset?: string;          // e.g., "SOL" - derived from Binance
+  quoteAsset?: string;         // e.g., "USDT" - derived from Binance
+  
   // Editorial Lock (prevents generator from overwriting human edits)
   editorialLocked: boolean;
   
@@ -2897,6 +2971,9 @@ export interface CryptoPage {
   
   // ========== API-PREFILLED DATA (Read-Only, Locked) ==========
   apiPrefill?: CryptoApiPrefill;
+  
+  // Binance Prefill Data (Read-Only, Locked - for Binance API pages)
+  binancePrefill?: BinancePrefill;
   
   // Legacy Market Data (read-only, synced from snapshot)
   marketData?: CryptoMarketData;
@@ -2982,6 +3059,11 @@ export const insertCryptoPageSchema = z.object({
   isStablecoin: z.boolean().default(false),
   assetType: z.enum(['coin', 'token', 'stablecoin', 'wrapped', 'defi', 'nft', 'meme']).default('coin'),
   
+  // Binance locked fields (required for Binance-powered pages)
+  binanceSymbol: z.string().optional(),    // e.g., "SOLUSDT"
+  baseAsset: z.string().optional(),        // e.g., "SOL"
+  quoteAsset: z.string().optional(),       // e.g., "USDT"
+  
   editorialLocked: z.boolean().default(false),
   
   // Hero Editorial
@@ -3066,7 +3148,7 @@ export const insertCryptoPageSchema = z.object({
   
   pageModules: z.array(z.object({
     id: z.string(),
-    type: z.enum(['hero', 'price_chart', 'key_stats', 'overview', 'markets_table', 'news_feed', 'about', 'how_it_works', 'use_cases', 'faq', 'risk_callout', 'disclosures', 'related_assets', 'quick_trade_cta']),
+    type: z.enum(['sticky_top_bar', 'hero', 'price_chart', 'key_stats', 'depth_trades', 'overview', 'markets_table', 'news_feed', 'about', 'how_it_works', 'use_cases', 'faq', 'risk_callout', 'disclosures', 'related_assets', 'quick_trade_cta', 'bottom_sticky_cta']),
     enabled: z.boolean(),
     order: z.number(),
     titleOverride_en: z.string().optional(),

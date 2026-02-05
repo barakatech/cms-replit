@@ -48,6 +48,7 @@ import BondsLanding from '@/pages/bonds';
 import CryptoLanding from '@/pages/crypto';
 import CryptoDetail from '@/pages/crypto-detail';
 import CryptoCoinDetail from '@/pages/crypto-coin-detail';
+import CryptoDetailV2 from '@/pages/crypto-detail-v2';
 import CryptoDemoGallery from '@/pages/crypto-demo-gallery';
 import PageBuilder from '@/pages/page-builder';
 import NewsletterPreview from '@/pages/newsletter-preview';
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/crypto" component={CryptoLanding} />
       <Route path="/crypto/demo-gallery" component={CryptoDemoGallery} />
       <Route path="/crypto/legacy/:slug" component={CryptoDetail} />
+      <Route path="/crypto/v2/:slug" component={CryptoDetailV2} />
       <Route path="/crypto/:symbol" component={CryptoCoinDetail} />
       <Route path="/blog" component={BlogHome} />
       <Route path="/refer" component={ReferEarnPage} />

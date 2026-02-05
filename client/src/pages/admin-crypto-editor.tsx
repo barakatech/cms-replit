@@ -48,6 +48,7 @@ const cryptoFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   coingeckoId: z.string().optional(),
   coincapId: z.string().optional(),
+  binanceSymbol: z.string().optional(),
   marketCapRank: z.number().int().optional(),
   isStablecoin: z.boolean().default(false),
   assetType: z.enum(['coin', 'token', 'stablecoin', 'wrapped', 'defi', 'nft', 'meme']).default('coin'),
@@ -551,6 +552,20 @@ export default function AdminCryptoEditor() {
                               <Input {...field} placeholder="e.g., bitcoin" data-testid="input-coingecko-id" />
                             </FormControl>
                             <FormDescription>Used to fetch live market data</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="binanceSymbol"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Binance Symbol</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., BTCUSDT" data-testid="input-binance-symbol" />
+                            </FormControl>
+                            <FormDescription>Trading pair symbol for Binance API (e.g., SOLUSDT)</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1581,8 +1596,8 @@ export default function AdminCryptoEditor() {
                 <TabsContent value="livedata" className="space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Live Market Data (Read-Only)</CardTitle>
-                      <CardDescription>Current market data from external providers</CardDescription>
+                      <CardTitle>CoinGecko Market Data (Read-Only)</CardTitle>
+                      <CardDescription>Cached market data from CoinGecko API</CardDescription>
                     </CardHeader>
                     <CardContent>
                       {!isNew && cryptoPage?.marketData ? (
@@ -1623,6 +1638,42 @@ export default function AdminCryptoEditor() {
                           {isNew ? 'Save the page first to see market data.' : 'No market data available. Ensure a valid CoinGecko ID is set.'}
                         </p>
                       )}
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Binance Trading Data</CardTitle>
+                      <CardDescription>
+                        Live trading data from Binance API (Symbol: {form.watch('binanceSymbol') || `${form.watch('symbol')}USDT`})
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Binance API provides real-time trading data including:
+                        </p>
+                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                          <li>24h ticker summary (price, change, volume, high/low)</li>
+                          <li>Order book depth (bid/ask prices and quantities)</li>
+                          <li>Recent trades history</li>
+                          <li>Candlestick chart data (klines)</li>
+                        </ul>
+                        <p className="text-sm text-muted-foreground mt-4">
+                          To view Binance data, visit the public crypto detail page at{' '}
+                          <a 
+                            href={`/crypto/v2/${cryptoPage?.slug || 'btc-bitcoin'}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            /crypto/v2/{cryptoPage?.slug || form.watch('slug')}
+                          </a>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2 italic">
+                          Note: Binance API access may be restricted in some regions.
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>

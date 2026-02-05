@@ -1,0 +1,274 @@
+You are a senior product-minded full-stack engineer working inside my existing Replit CMS + public web app codebase.
+
+CONTEXT / CORRECTION
+Do NOT replicate Binance/Coinbase layouts. The previous approach was too close.
+Instead: take inspiration from multiple crypto players (Binance, Coinbase, Robinhood, eToro, TradingView-style charts) and propose an ORIGINAL layout structure with the important elements users expect.
+
+DATA SOURCE REQUIREMENT
+- Use BINANCE API ONLY for live market data (prices, 24h stats, tickers/markets, klines for charts).
+- No CoinGecko/CoinCap for live data.
+- If Binance cannot provide a field (e.g., market cap rank), omit it or clearly label as “Not available”.
+- Do NOT scrape any website. Do NOT copy wording/sections from other sites.
+
+BRANDING REQUIREMENT
+- Use getbaraka.com branding (colors, typography, buttons, spacing) by reusing the existing design system/components already in the codebase.
+- Do not introduce new brand styles; reuse Baraka UI primitives used for Stocks/Bonds pages.
+
+CMS REQUIREMENT (IMPORTANT)
+- CMS controls editorial content + module ordering/visibility ONLY (About/How it works/Use cases/Risks/FAQ/Disclaimers/SEO/CTAs/labels).
+- Anything that comes from Binance API is predefined and prefilled, shown read-only (locked) in CMS.
+- Slug is system-generated and NOT editable by users.
+
+NO GENERATE BUTTON FEATURE
+- For demo, seed 100 pages once via a seed script. No CMS “generate” UI feature.
+
+========================================================
+A) PROPOSED ORIGINAL CRYPTO DETAIL PAGE LAYOUT (BARAKA STYLE)
+========================================================
+Implement an original, Baraka-branded /crypto/:slug template with these sections (not a copy of any competitor):
+
+PAGE STRUCTURE (Top to bottom)
+1) Sticky Top Bar (compact, Robinhood-like utility)
+- Left: coin icon + Name (SYMBOL)
+- Right: Price + 24h change chip + “Trade” CTA (CMS-controlled URL/text)
+- Optional: Watchlist toggle (if you already have watchlist patterns)
+
+2) Primary Hero (clean, Coinbase-like clarity but original)
+- Large price (from Binance)
+- Secondary metrics row (from Binance):
+  - 24h change % and abs
+  - 24h high / low
+  - 24h volume (quote volume)
+- “As of” timestamp
+- Short editorial intro (CMS heroSummary)
+
+3) Interactive Chart Card (TradingView-inspired but your own UI)
+- Chart area (klines line/candles depending on what you support)
+- Range tabs: 1H / 1D / 1W / 1M / 1Y (CMS-configurable enabled ranges)
+- Toggle: Line / Candles (optional)
+- Tooltip: time, open/high/low/close, volume
+- Mini “Data source: Binance” note (CMS label override)
+
+4) Key Stats Grid (eToro-style info density, Baraka cards)
+Display only what Binance can provide reliably:
+- Last price
+- 24h change
+- 24h high / low
+- 24h base volume + quote volume
+- Best bid / best ask
+- Spread % (computed)
+- Open price 24h (if derived)
+- Number of trades (if available)
+All values come from Binance endpoints.
+
+5) Market Depth + Trades (Binance-inspired conceptually, but simplified)
+- Two-tab mini card:
+  - “Order Book” (top 10 bids/asks) from Binance depth endpoint
+  - “Recent Trades” (latest 20) from Binance trades endpoint
+This section is optional and controlled via CMS module toggle.
+
+6) “About this asset” (editorial + factual links)
+- About (CMS WYSIWYG)
+- How it works (CMS WYSIWYG)
+- Use cases (CMS list)
+- Risks (CMS WYSIWYG, prominent)
+- Disclaimers (CMS list)
+
+7) Related Assets (product discovery, Baraka-style)
+- Show a row of related coins (from Binance 24hr tickers, e.g., top movers or same quote asset like USDT pairs)
+- The selection logic is controlled by CMS:
+  - mode: TopMovers | MostTraded | SameQuoteAsset | Manual list
+
+8) FAQ (CMS)
+- FAQs (CMS editable)
+
+9) Sticky bottom CTA (mobile-first)
+- “Trade {SYMBOL}” CTA (CMS-configurable)
+- Risk note line (CMS)
+
+All text content must be original and controlled by CMS fields (with safe defaults).
+
+========================================================
+B) BINANCE API DATA MODEL (PREFILLED + LOCKED)
+========================================================
+Use Binance REST endpoints only.
+
+For spot market (default):
+- Exchange info: GET /api/v3/exchangeInfo (symbols, base/quote, status, filters)
+- 24h stats: GET /api/v3/ticker/24hr?symbol=BTCUSDT
+- Price: GET /api/v3/ticker/price?symbol=BTCUSDT (optional if 24hr includes lastPrice)
+- Order book: GET /api/v3/depth?symbol=BTCUSDT&limit=10
+- Recent trades: GET /api/v3/trades?symbol=BTCUSDT&limit=20
+- Klines: GET /api/v3/klines?symbol=BTCUSDT&interval=1h&limit=500
+
+Define a canonical locked object in our system: BinancePrefill
+(Everything read-only in CMS)
+
+BinancePrefill.lockedIdentity:
+- binanceSymbol (e.g., SOLUSDT) [primary identifier]
+- baseAsset, quoteAsset
+- status
+- tickSize, stepSize, minNotional (from exchangeInfo filters)
+- fetchedAt
+
+BinancePrefill.lockedMarketSummary:
+- lastPrice
+- priceChange
+- priceChangePercent
+- openPrice
+- highPrice
+- lowPrice
+- volume (base)
+- quoteVolume
+- bidPrice, bidQty
+- askPrice, askQty
+- weightedAvgPrice
+- count (trades)
+- closeTime (asOf)
+- computedSpreadPct = (ask-bid)/mid * 100
+- fetchedAt
+
+BinancePrefill.lockedChart:
+- interval
+- series[] (t, open, high, low, close, volume)
+- fetchedAt
+
+BinancePrefill.lockedOrderBook:
+- bids[] (price, qty)
+- asks[] (price, qty)
+- lastUpdateId
+- fetchedAt
+
+BinancePrefill.lockedTrades:
+- trades[] (price, qty, time, isBuyerMaker)
+- fetchedAt
+
+All fields are predefined and can be null if the endpoint fails; show “Unavailable”.
+
+========================================================
+C) BACKEND SERVICE + CACHING (SERVER-SIDE ONLY)
+========================================================
+Implement BinanceCryptoDataService with caching + SWR:
+- getTopPairs({quoteAsset="USDT", limit=1000}) from exchangeInfo + 24hr stats
+- getSummary(symbol)
+- getKlines(symbol, interval)
+- getDepth(symbol)
+- getTrades(symbol)
+
+Caching rules:
+- Summary TTL 30–60s, SWR 10–30m
+- Klines TTL 2–5m (depending on interval), SWR 1h
+- Depth TTL 5–15s, SWR 1–5m
+- Trades TTL 10–30s, SWR 5–15m
+- ExchangeInfo TTL 12–24h
+
+Important:
+- Never call Binance from frontend.
+- Rate limit handling: backoff and serve stale.
+
+Internal endpoints:
+- GET /api/crypto/market?limit=100&quoteAsset=USDT  (returns list for index)
+- GET /api/crypto/binance/:symbol/summary
+- GET /api/crypto/binance/:symbol/klines?interval=1h
+- GET /api/crypto/binance/:symbol/depth?limit=10
+- GET /api/crypto/binance/:symbol/trades?limit=20
+
+========================================================
+D) CMS: CRYPTO SECTION (BARAKA CMS PARITY) + PREFILL + SLUG LOCK
+========================================================
+Create CMS “Crypto” section like Stocks/Bonds.
+
+CryptoPage CMS model (editable + locked fields)
+
+Editable (Content tab):
+- title{en,ar} (display name)
+- heroSummary{en,ar}
+- about{en,ar} (WYSIWYG)
+- howItWorks{en,ar} (WYSIWYG)
+- useCases{en[],ar[]}
+- risks{en,ar} (WYSIWYG) [required]
+- faq[] { q{en,ar}, a{en,ar} }
+- disclaimers{en[],ar[]} [required]
+- ctas: { primaryText{en,ar}, primaryUrl, secondaryText{en,ar}, secondaryUrl }
+- labels overrides (optional): dataSourceNote{en,ar}, sectionTitles{...}
+
+Modules tab (controls layout):
+- modules[] with enabled + ordering:
+  - StickyTopBar
+  - Hero
+  - Chart
+  - KeyStats
+  - DepthTrades
+  - About
+  - RelatedAssets
+  - FAQ
+  - Disclosures
+  - BottomStickyCTA
+- Each module has config (ranges enabled, default interval, show candles, related assets mode, etc.)
+
+Locked (Live Data tab, read-only):
+- binanceSymbol (e.g., SOLUSDT) [primary key for API]
+- baseAsset, quoteAsset
+- BinancePrefill snapshots (market summary, chart status, order book meta, trades meta)
+These values are prefilled by the backend service and shown read-only.
+
+Slug rule (NOT editable):
+- slug is generated and immutable, not user editable:
+  slug = `${baseAsset.toLowerCase()}-${quoteAsset.toLowerCase()}-${binanceSymbol.toLowerCase()}`
+  Example: sol-usdt-solusdt
+- CMS shows slug read-only with copy button; backend rejects slug updates.
+
+Creation flow:
+- When creating a crypto page, user selects:
+  - binanceSymbol from a dropdown populated by Binance exchangeInfo (server-side)
+- Everything else (base/quote, filters, etc.) prefilled and locked.
+
+========================================================
+E) DEMO: SEED TOP 100 PAGES (NO CMS GENERATE FEATURE)
+========================================================
+No generate button.
+
+Create one-time seed script:
+- `npm run seed:crypto-top100`
+
+Seed behavior:
+1) Fetch top pairs by quoteVolume from Binance 24hr stats (USDT pairs only)
+2) Choose top 100 tradeable symbols (status=TRADING)
+3) Upsert 100 CryptoPages:
+   - set binanceSymbol, baseAsset, quoteAsset (locked)
+   - generate locked slug
+   - set status=published for demo (indexable=false)
+   - fill editorial defaults (heroSummary/about/howItWorks/risks/faq/disclaimers) with ORIGINAL neutral copy
+4) Run compliance scan; if fails, keep draft.
+
+After seed:
+- /crypto shows 100 clickable demo pages.
+- CMS Crypto list shows 100 entries.
+
+========================================================
+F) PUBLIC ROUTES
+========================================================
+- /crypto (index)
+  - displays top 100 from Binance market endpoint, but links only to CMS pages (seeded 100)
+  - Baraka styling (reuse Stocks list components)
+- /crypto/:slug (detail)
+  - loads CMS CryptoPage by slug
+  - uses binanceSymbol to fetch live data via internal endpoints
+  - renders modules per CMS config
+
+========================================================
+G) GETBARAKA BRANDING
+========================================================
+- Reuse getbaraka.com UI components, colors, typography, spacing.
+- Buttons, cards, chips must match Stocks/Bonds patterns.
+- No Binance/Coinbase visual styling.
+
+========================================================
+OUTPUT REQUIREMENTS
+After implementing, confirm:
+- CMS > Crypto exists with full list + editor + Live Data tab.
+- Seed script exists and works: `npm run seed:crypto-top100`
+- URLs:
+  - /crypto
+  - /crypto/:slug (e.g., sol-usdt-solusdt)
+- Slug is not editable in CMS or via API.

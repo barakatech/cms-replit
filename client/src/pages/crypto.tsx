@@ -135,7 +135,7 @@ export default function CryptoLanding() {
     const isPositive = priceChange && priceChange >= 0;
     
     return (
-      <Link href={`/crypto/${crypto.slug}`}>
+      <Link href={`/crypto/v2/${crypto.slug}`}>
         <Card 
           className={`hover-elevate cursor-pointer h-full ${featured ? 'border-primary/20' : ''}`}
           data-testid={`crypto-card-${crypto.slug}`}

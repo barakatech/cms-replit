@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { cryptoDataService } from "./crypto-data-service";
+import { binanceDataService } from "./binance-data-service";
 import { seedTop100Crypto } from "./seed-top100-crypto";
 import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema, insertBondPageSchema, DEFAULT_BOND_PAGE_BLOCKS, insertCryptoPageSchema, insertCryptoMarketSnapshotSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
@@ -3076,6 +3077,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching crypto news:', error);
       res.json([]); // Return empty array on error to avoid breaking UI
+    }
+  });
+
+  // ============================================
+  // Binance API Routes (Primary Crypto Data Source)
+  // ============================================
+
+  // Get market list (top pairs by volume)
+  app.get("/api/crypto/market", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const quoteAsset = (req.query.quoteAsset as string) || 'USDT';
+      const pairs = await binanceDataService.getTopPairs({ quoteAsset, limit });
+      res.json(pairs);
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+      res.status(500).json({ error: 'Failed to fetch market data' });
+    }
+  });
+
+  // Get tradeable pairs list (for CMS dropdown)
+  app.get("/api/crypto/binance/pairs", async (req, res) => {
+    try {
+      const quoteAsset = (req.query.quoteAsset as string) || 'USDT';
+      const pairs = await binanceDataService.getTradeablePairs(quoteAsset);
+      res.json(pairs);
+    } catch (error) {
+      console.error('Error fetching tradeable pairs:', error);
+      res.status(500).json({ error: 'Failed to fetch tradeable pairs' });
+    }
+  });
+
+  // Get 24hr summary for a symbol
+  app.get("/api/crypto/binance/:symbol/summary", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const summary = await binanceDataService.getSummary(symbol.toUpperCase());
+      if (!summary) {
+        return res.status(404).json({ error: 'Symbol not found' });
+      }
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching summary:', error);
+      res.status(500).json({ error: 'Failed to fetch summary' });
+    }
+  });
+
+  // Get klines (candlestick) data
+  app.get("/api/crypto/binance/:symbol/klines", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const interval = (req.query.interval as string) || '1h';
+      const limit = parseInt(req.query.limit as string) || 500;
+      const klines = await binanceDataService.getKlines(symbol.toUpperCase(), interval, limit);
+      res.json(klines);
+    } catch (error) {
+      console.error('Error fetching klines:', error);
+      res.status(500).json({ error: 'Failed to fetch klines' });
+    }
+  });
+
+  // Get order book depth
+  app.get("/api/crypto/binance/:symbol/depth", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const depth = await binanceDataService.getDepth(symbol.toUpperCase(), limit);
+      if (!depth) {
+        return res.status(404).json({ error: 'Depth data not found' });
+      }
+      res.json(depth);
+    } catch (error) {
+      console.error('Error fetching depth:', error);
+      res.status(500).json({ error: 'Failed to fetch depth' });
+    }
+  });
+
+  // Get recent trades
+  app.get("/api/crypto/binance/:symbol/trades", async (req, res) => {
+    try {
+      const { symbol } = req.params;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const trades = await binanceDataService.getTrades(symbol.toUpperCase(), limit);
+      if (!trades) {
+        return res.status(404).json({ error: 'Trades data not found' });
+      }
+      res.json(trades);
+    } catch (error) {
+      console.error('Error fetching trades:', error);
+      res.status(500).json({ error: 'Failed to fetch trades' });
     }
   });
 
