@@ -172,8 +172,8 @@ export default function CryptoDetail() {
             <div className={isRTL ? 'text-right' : ''}>
               <div className={`flex items-center gap-4 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                  {snapshot?.image ? (
-                    <img src={snapshot.image} alt={crypto.name} className="w-14 h-14" />
+                  {crypto.logoUrl || snapshot?.image ? (
+                    <img src={crypto.logoUrl || snapshot?.image} alt={crypto.name} className="w-14 h-14" />
                   ) : (
                     <Bitcoin className="h-8 w-8 text-primary" />
                   )}

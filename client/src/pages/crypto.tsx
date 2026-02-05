@@ -143,8 +143,8 @@ export default function CryptoLanding() {
           <CardContent className={`p-5 ${featured ? 'pb-6' : ''}`}>
             <div className={`flex items-start gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                {snapshot?.image ? (
-                  <img src={snapshot.image} alt={crypto.name} className="w-10 h-10" />
+                {crypto.logoUrl || snapshot?.image ? (
+                  <img src={crypto.logoUrl || snapshot?.image} alt={crypto.name} className="w-10 h-10" />
                 ) : (
                   <Bitcoin className="h-6 w-6 text-primary" />
                 )}

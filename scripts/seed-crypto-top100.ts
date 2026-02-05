@@ -126,6 +126,7 @@ async function seedCryptoTop100() {
       symbol,
       name: coin.name,
       slug,
+      logoUrl: coin.image,
       title_en: coin.name,
       title_ar: coin.name,
       marketCapRank: rank,
