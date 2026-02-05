@@ -2908,6 +2908,9 @@ export class MemStorage implements IStorage {
       enableEnglishQualityScoring: false,
       englishScoringProvider: 'openai',
       openaiModel: 'gpt-4o',
+      autoScanOnSave: true,
+      blockPublishOnHighSeverity: true,
+      scanOnPublishAlways: true,
       complianceThresholds: { compliant: 85, needsReview: 60 },
       englishThresholds: { excellent: 90, good: 70 },
     };
@@ -3042,60 +3045,90 @@ export class MemStorage implements IStorage {
     // Seed block library templates
     seedBlockLibraryTemplates.forEach(template => this.blockLibraryTemplates.set(template.id, template));
     
-    // Seed default DFSA compliance rules
+    // Seed default DFSA compliance rules (50+ rules for Baraka fintech context)
+    const now = new Date().toISOString();
     const defaultComplianceRules: ComplianceRule[] = [
-      {
-        id: randomUUID(),
-        name: 'Guaranteed Returns Claim',
-        description: 'Detects claims of guaranteed investment returns',
-        dfsaRef: 'COB 3.2.1',
-        pattern: '\\b(guaranteed|guarantee)\\s+(returns?|profit|income)\\b',
-        severity: 'critical',
-        message: 'Claims of guaranteed returns are prohibited under DFSA regulations',
-        suggestedFix: 'Remove guarantee language or replace with "potential returns"',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: randomUUID(),
-        name: 'Misleading Performance Claims',
-        description: 'Detects potentially misleading past performance claims',
-        dfsaRef: 'COB 3.4.2',
-        pattern: '\\b(always|never fails?|risk[- ]?free|100%|cannot lose)\\b',
-        severity: 'high',
-        message: 'This language may be considered misleading under DFSA guidelines',
-        suggestedFix: 'Use balanced language that acknowledges investment risks',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: randomUUID(),
-        name: 'Missing Risk Disclosure',
-        description: 'Checks for absence of risk disclosure language',
-        dfsaRef: 'COB 3.2.3',
-        pattern: '',
-        severity: 'medium',
-        message: 'Content should include appropriate risk disclosures',
-        suggestedFix: 'Add standard risk disclosure statement',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        id: randomUUID(),
-        name: 'Unqualified Expert Claims',
-        description: 'Detects expert recommendation claims without proper qualifications',
-        dfsaRef: 'COB 3.5.1',
-        pattern: '\\b(experts? (say|recommend|agree)|industry experts?)\\b',
-        severity: 'medium',
-        message: 'Expert claims should be substantiated with proper qualifications',
-        suggestedFix: 'Provide source attribution or remove expert claims',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
+      // Guaranteed / Risk-free category (High severity)
+      { id: randomUUID(), name: 'Guaranteed Returns', phrase: 'guaranteed returns', description: 'Claims of guaranteed investment returns', category: 'guaranteed_returns', matchType: 'contains', pattern: 'guaranteed returns', severity: 'high', message: 'No guaranteed outcomes; markets involve risk.', suggestedFix: 'Use "potential returns" or "historical returns"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Guaranteed Profit', phrase: 'guaranteed profit', description: 'Claims of guaranteed profit', category: 'guaranteed_returns', matchType: 'contains', pattern: 'guaranteed profit', severity: 'high', message: 'No guaranteed outcomes; markets involve risk.', suggestedFix: 'Use "potential profit" instead', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Risk-free', phrase: 'risk-free', description: 'Claims of risk-free investments', category: 'guaranteed_returns', matchType: 'contains', pattern: 'risk-free', severity: 'high', message: 'All investments carry some level of risk.', suggestedFix: 'Use "lower risk" or describe specific risk factors', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Zero Risk', phrase: 'zero risk', description: 'Claims of zero risk', category: 'guaranteed_returns', matchType: 'contains', pattern: 'zero risk', severity: 'high', message: 'All investments carry some level of risk.', suggestedFix: 'Remove or qualify with actual risk disclosure', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'No Risk', phrase: 'no risk', description: 'Claims of no risk', category: 'guaranteed_returns', matchType: 'regex', pattern: '\\bno\\s+risk\\b', severity: 'high', message: 'All investments carry some level of risk.', suggestedFix: 'Include appropriate risk disclosure', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: "Can't Lose", phrase: "can't lose", description: 'Claims that you cannot lose', category: 'guaranteed_returns', matchType: 'contains', pattern: "can't lose", severity: 'high', message: 'Investment losses are always possible.', suggestedFix: 'Remove this claim entirely', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Cannot Lose', phrase: 'cannot lose', description: 'Claims that you cannot lose', category: 'guaranteed_returns', matchType: 'contains', pattern: 'cannot lose', severity: 'high', message: 'Investment losses are always possible.', suggestedFix: 'Remove this claim entirely', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Sure-shot', phrase: 'sure-shot', description: 'Claims of sure-shot returns', category: 'guaranteed_returns', matchType: 'contains', pattern: 'sure-shot', severity: 'high', message: 'No investment outcome is guaranteed.', suggestedFix: 'Remove guarantee language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Sureshot', phrase: 'sureshot', description: 'Claims of sureshot returns', category: 'guaranteed_returns', matchType: 'contains', pattern: 'sureshot', severity: 'high', message: 'No investment outcome is guaranteed.', suggestedFix: 'Remove guarantee language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Fail-proof', phrase: 'fail-proof', description: 'Claims of fail-proof investments', category: 'guaranteed_returns', matchType: 'contains', pattern: 'fail-proof', severity: 'high', message: 'All investments carry risk of loss.', suggestedFix: 'Remove or add risk disclosure', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: '100% Safe', phrase: '100% safe', description: 'Claims of 100% safety', category: 'guaranteed_returns', matchType: 'contains', pattern: '100% safe', severity: 'high', message: 'No investment is 100% safe.', suggestedFix: 'Use "relatively stable" with context', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Locked-in Returns', phrase: 'locked-in returns', description: 'Claims of locked-in returns', category: 'guaranteed_returns', matchType: 'contains', pattern: 'locked-in returns', severity: 'high', message: 'Returns cannot be locked in for most investments.', suggestedFix: 'Use "target returns" or "historical returns"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Assured Returns', phrase: 'assured returns', description: 'Claims of assured returns', category: 'guaranteed_returns', matchType: 'contains', pattern: 'assured returns', severity: 'high', message: 'Returns are not assured in investing.', suggestedFix: 'Use "expected returns" with disclaimers', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Guaranteed Income', phrase: 'guaranteed income', description: 'Claims of guaranteed income', category: 'guaranteed_returns', matchType: 'contains', pattern: 'guaranteed income', severity: 'high', message: 'Investment income is not guaranteed.', suggestedFix: 'Use "potential income" or "dividend history"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Guaranteed Yield', phrase: 'guaranteed yield', description: 'Claims of guaranteed yield', category: 'guaranteed_returns', matchType: 'contains', pattern: 'guaranteed yield', severity: 'high', message: 'Yields are not guaranteed.', suggestedFix: 'Use "current yield" or "historical yield"', enabled: true, createdAt: now, updatedAt: now },
+      
+      // Unrealistic performance claims (High severity)
+      { id: randomUUID(), name: 'Double Your Money', phrase: 'double your money', description: 'Unrealistic doubling claims', category: 'performance_claims', matchType: 'contains', pattern: 'double your money', severity: 'high', message: 'Unrealistic performance promises are misleading.', suggestedFix: 'Focus on historical data with proper context', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Triple Your Money', phrase: 'triple your money', description: 'Unrealistic tripling claims', category: 'performance_claims', matchType: 'contains', pattern: 'triple your money', severity: 'high', message: 'Unrealistic performance promises are misleading.', suggestedFix: 'Focus on historical data with proper context', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Get Rich Quick', phrase: 'get rich quick', description: 'Get rich quick schemes', category: 'performance_claims', matchType: 'contains', pattern: 'get rich quick', severity: 'high', message: 'Wealth building takes time; avoid quick-rich language.', suggestedFix: 'Focus on long-term investing benefits', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Instant Profit', phrase: 'instant profit', description: 'Claims of instant profit', category: 'performance_claims', matchType: 'contains', pattern: 'instant profit', severity: 'high', message: 'Profits are never instant or guaranteed.', suggestedFix: 'Use "potential returns over time"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Instant Returns', phrase: 'instant returns', description: 'Claims of instant returns', category: 'performance_claims', matchType: 'contains', pattern: 'instant returns', severity: 'high', message: 'Returns take time to materialize.', suggestedFix: 'Focus on investment timeline expectations', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Consistent Profits', phrase: 'consistent profits', description: 'Claims of consistent profits', category: 'performance_claims', matchType: 'contains', pattern: 'consistent profits', severity: 'high', message: 'Market returns vary; consistency is not guaranteed.', suggestedFix: 'Use "historically stable" with context', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Predictable Profits', phrase: 'predictable profits', description: 'Claims of predictable profits', category: 'performance_claims', matchType: 'contains', pattern: 'predictable profits', severity: 'high', message: 'Market outcomes are inherently unpredictable.', suggestedFix: 'Remove or add uncertainty disclosure', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Beat the Market', phrase: 'beat the market', description: 'Promises to beat the market', category: 'performance_claims', matchType: 'contains', pattern: 'beat the market', severity: 'medium', message: 'Outperforming the market is not guaranteed.', suggestedFix: 'Use "aim to match market performance"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Guaranteed to Outperform', phrase: 'guaranteed to outperform', description: 'Guarantees of outperformance', category: 'performance_claims', matchType: 'contains', pattern: 'guaranteed to outperform', severity: 'high', message: 'No investment is guaranteed to outperform.', suggestedFix: 'Remove guarantee language entirely', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Highest Returns', phrase: 'highest returns', description: 'Claims of highest returns', category: 'performance_claims', matchType: 'contains', pattern: 'highest returns', severity: 'high', message: 'Comparative return claims require substantiation.', suggestedFix: 'Use "competitive returns" or cite sources', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Best Returns', phrase: 'best returns', description: 'Claims of best returns', category: 'performance_claims', matchType: 'contains', pattern: 'best returns', severity: 'high', message: 'Comparative return claims require substantiation.', suggestedFix: 'Use "strong historical returns" with data', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Unbeatable Returns', phrase: 'unbeatable returns', description: 'Claims of unbeatable returns', category: 'performance_claims', matchType: 'contains', pattern: 'unbeatable returns', severity: 'high', message: 'Such claims are misleading and unsubstantiated.', suggestedFix: 'Focus on factual performance data', enabled: true, createdAt: now, updatedAt: now },
+      
+      // Advice / directive language (Medium/High severity)
+      { id: randomUUID(), name: 'Buy Now', phrase: 'buy now', description: 'Pressure to buy immediately', category: 'advice_language', matchType: 'exact', pattern: '\\bbuy now\\b', severity: 'high', message: 'Avoid telling users what to buy; use neutral phrasing.', suggestedFix: 'Use "learn more" or "explore options"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Sell Now', phrase: 'sell now', description: 'Pressure to sell immediately', category: 'advice_language', matchType: 'exact', pattern: '\\bsell now\\b', severity: 'high', message: 'Avoid telling users what to sell; use neutral phrasing.', suggestedFix: 'Use "review your portfolio" instead', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'You Should Buy', phrase: 'you should buy', description: 'Direct advice to buy', category: 'advice_language', matchType: 'contains', pattern: 'you should buy', severity: 'medium', message: 'Avoid direct investment advice.', suggestedFix: 'Use "you may consider" or "research shows"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'You Should Sell', phrase: 'you should sell', description: 'Direct advice to sell', category: 'advice_language', matchType: 'contains', pattern: 'you should sell', severity: 'medium', message: 'Avoid direct investment advice.', suggestedFix: 'Use "you may consider reviewing" instead', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Must Buy', phrase: 'must buy', description: 'Imperative to buy', category: 'advice_language', matchType: 'contains', pattern: 'must buy', severity: 'high', message: 'Avoid imperative investment language.', suggestedFix: 'Remove or use informational language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Must Invest', phrase: 'must invest', description: 'Imperative to invest', category: 'advice_language', matchType: 'contains', pattern: 'must invest', severity: 'high', message: 'Avoid imperative investment language.', suggestedFix: 'Use "may want to consider investing"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Do This Trade', phrase: 'do this trade', description: 'Direct trade instruction', category: 'advice_language', matchType: 'contains', pattern: 'do this trade', severity: 'high', message: 'Direct trade instructions are not appropriate.', suggestedFix: 'Use educational/informational language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Copy This Trade', phrase: 'copy this trade', description: 'Copy trade instruction', category: 'advice_language', matchType: 'contains', pattern: 'copy this trade', severity: 'high', message: 'Copy trading suggestions require proper disclosure.', suggestedFix: 'Include risk warnings and disclaimers', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Follow This Strategy', phrase: 'follow this strategy for profit', description: 'Strategy promises profit', category: 'advice_language', matchType: 'contains', pattern: 'follow this strategy for profit', severity: 'high', message: 'Strategy outcomes are not guaranteed.', suggestedFix: 'Use "this strategy may help" with disclaimers', enabled: true, createdAt: now, updatedAt: now },
+      
+      // FOMO / urgency / pressure (High severity)
+      { id: randomUUID(), name: 'Last Chance', phrase: 'last chance', description: 'Creates urgency', category: 'fomo_urgency', matchType: 'contains', pattern: 'last chance', severity: 'high', message: 'Avoid pressure tactics; keep language informational.', suggestedFix: 'Remove urgency language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Final Hours', phrase: 'final hours', description: 'Creates urgency', category: 'fomo_urgency', matchType: 'contains', pattern: 'final hours', severity: 'high', message: 'Avoid pressure tactics; keep language informational.', suggestedFix: 'Remove time pressure language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Limited Time Only', phrase: 'limited time only', description: 'Creates urgency', category: 'fomo_urgency', matchType: 'contains', pattern: 'limited time only', severity: 'high', message: 'Avoid artificial scarcity tactics.', suggestedFix: 'Remove or specify actual limitations', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: "Don't Miss Out", phrase: "don't miss out", description: 'FOMO language', category: 'fomo_urgency', matchType: 'contains', pattern: "don't miss out", severity: 'high', message: 'FOMO tactics are inappropriate for financial content.', suggestedFix: 'Use "learn more about this opportunity"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Act Now', phrase: 'act now', description: 'Pressure to act immediately', category: 'fomo_urgency', matchType: 'exact', pattern: '\\bact now\\b', severity: 'high', message: 'Avoid pressure tactics; keep language informational.', suggestedFix: 'Use "get started when ready"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Hurry', phrase: 'hurry', description: 'Creates urgency', category: 'fomo_urgency', matchType: 'exact', pattern: '\\bhurry\\b', severity: 'high', message: 'Avoid pressure tactics in financial content.', suggestedFix: 'Remove urgency language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: "Before It's Too Late", phrase: "before it's too late", description: 'Creates fear', category: 'fomo_urgency', matchType: 'contains', pattern: "before it's too late", severity: 'high', message: 'Fear-based language is inappropriate.', suggestedFix: 'Focus on benefits rather than missed opportunities', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Seats Limited', phrase: 'seats limited', description: 'Artificial scarcity', category: 'fomo_urgency', matchType: 'contains', pattern: 'seats limited', severity: 'high', message: 'Artificial scarcity is misleading.', suggestedFix: 'Remove or specify actual capacity', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Ending Soon', phrase: 'ending soon', description: 'Creates urgency', category: 'fomo_urgency', matchType: 'contains', pattern: 'ending soon', severity: 'medium', message: 'Urgency language should be factual.', suggestedFix: 'Specify actual end date if applicable', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Only Today', phrase: 'only today', description: 'Time pressure', category: 'fomo_urgency', matchType: 'contains', pattern: 'only today', severity: 'high', message: 'Artificial time pressure is inappropriate.', suggestedFix: 'Remove or be specific about timing', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Offer Expires', phrase: 'offer expires', description: 'Creates urgency', category: 'fomo_urgency', matchType: 'contains', pattern: 'offer expires', severity: 'medium', message: 'Include specific expiration date if true.', suggestedFix: 'Specify actual expiration date', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Once in a Lifetime', phrase: 'once in a lifetime', description: 'Exaggerated urgency', category: 'fomo_urgency', matchType: 'contains', pattern: 'once in a lifetime', severity: 'high', message: 'Hyperbolic claims are misleading.', suggestedFix: 'Use factual descriptions of opportunities', enabled: true, createdAt: now, updatedAt: now },
+      
+      // Misleading certainty (High severity)
+      { id: randomUUID(), name: 'Guaranteed Winner', phrase: 'guaranteed winner', description: 'Guarantees winning', category: 'misleading_claims', matchType: 'contains', pattern: 'guaranteed winner', severity: 'high', message: 'No investment is a guaranteed winner.', suggestedFix: 'Use "historically strong performer"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Winning Stock', phrase: 'winning stock', description: 'Claims stock will win', category: 'misleading_claims', matchType: 'contains', pattern: 'winning stock', severity: 'medium', message: 'Future performance is uncertain.', suggestedFix: 'Use "stock with strong fundamentals"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: "Can't Go Wrong", phrase: "can't go wrong", description: 'Claims infallibility', category: 'misleading_claims', matchType: 'contains', pattern: "can't go wrong", severity: 'high', message: 'All investments carry risk.', suggestedFix: 'Add appropriate risk disclosure', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Sure Profit', phrase: 'sure profit', description: 'Promises sure profit', category: 'misleading_claims', matchType: 'contains', pattern: 'sure profit', severity: 'high', message: 'Profits are never certain.', suggestedFix: 'Use "potential profit" with disclaimers', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Profit Guaranteed', phrase: 'profit guaranteed', description: 'Guarantees profit', category: 'misleading_claims', matchType: 'contains', pattern: 'profit guaranteed', severity: 'high', message: 'Profits cannot be guaranteed.', suggestedFix: 'Remove guarantee language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Safe Bet', phrase: 'safe bet', description: 'Claims safety', category: 'misleading_claims', matchType: 'contains', pattern: 'safe bet', severity: 'high', message: 'No investment is completely safe.', suggestedFix: 'Use "relatively stable investment"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Foolproof Strategy', phrase: 'foolproof strategy', description: 'Claims infallible strategy', category: 'misleading_claims', matchType: 'contains', pattern: 'foolproof strategy', severity: 'high', message: 'No strategy is foolproof.', suggestedFix: 'Use "tested strategy" with disclaimers', enabled: true, createdAt: now, updatedAt: now },
+      
+      // Regulatory / authority claims (High severity)
+      { id: randomUUID(), name: 'DFSA Approved', phrase: 'DFSA approved', description: 'May be misleading regulatory claim', category: 'regulatory_claims', matchType: 'contains', pattern: 'DFSA approved', severity: 'high', message: 'Verify accuracy of regulatory claims.', suggestedFix: 'Use "DFSA regulated" with proper context', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Government Backed', phrase: 'government backed', description: 'May be misleading', category: 'regulatory_claims', matchType: 'contains', pattern: 'government backed', severity: 'high', message: 'Government backing claims require verification.', suggestedFix: 'Specify which government program if accurate', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Officially Endorsed', phrase: 'officially endorsed', description: 'Endorsement claim', category: 'regulatory_claims', matchType: 'contains', pattern: 'officially endorsed', severity: 'high', message: 'Endorsement claims require substantiation.', suggestedFix: 'Cite specific endorsement source', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Regulator Guaranteed', phrase: 'regulator guaranteed', description: 'False regulatory claim', category: 'regulatory_claims', matchType: 'contains', pattern: 'regulator guaranteed', severity: 'high', message: 'Regulators do not guarantee investments.', suggestedFix: 'Remove this claim entirely', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Regulator Approved', phrase: 'regulator approved', description: 'May be misleading', category: 'regulatory_claims', matchType: 'contains', pattern: 'regulator approved', severity: 'high', message: 'Clarify what regulation means.', suggestedFix: 'Use "regulated by" with specific regulator', enabled: true, createdAt: now, updatedAt: now },
+      
+      // Over-personalized claims (Medium severity)
+      { id: randomUUID(), name: 'Perfect For You', phrase: 'perfect for you', description: 'Over-personalized', category: 'personalized_claims', matchType: 'contains', pattern: 'perfect for you', severity: 'medium', message: 'Personalized claims should be substantiated.', suggestedFix: 'Use "may be suitable based on your profile"', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Tailored For You', phrase: 'tailored for you', description: 'May be misleading', category: 'personalized_claims', matchType: 'contains', pattern: 'tailored for you', severity: 'medium', message: 'Only use if actually personalized.', suggestedFix: 'Explain personalization methodology', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'We Guarantee You Will', phrase: 'we guarantee you will', description: 'Personal guarantee', category: 'personalized_claims', matchType: 'contains', pattern: 'we guarantee you will', severity: 'high', message: 'Personal guarantees are inappropriate.', suggestedFix: 'Remove guarantee language', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'You Will Definitely', phrase: 'you will definitely', description: 'Certainty claim', category: 'personalized_claims', matchType: 'contains', pattern: 'you will definitely', severity: 'high', message: 'Certainty claims are misleading.', suggestedFix: 'Use "you may" or "there is potential to"', enabled: true, createdAt: now, updatedAt: now },
+      
+      // Pattern-based rules (Regex)
+      { id: randomUUID(), name: 'Percentage Guarantee', phrase: '\\b\\d{2,3}%\\s*(guaranteed|sure)\\b', description: 'Percentage with guarantee', category: 'guaranteed_returns', matchType: 'regex', pattern: '\\b\\d{2,3}%\\s*(guaranteed|sure)\\b', severity: 'high', message: 'Percentage guarantees are prohibited.', suggestedFix: 'Remove percentage guarantee claims', enabled: true, createdAt: now, updatedAt: now },
+      { id: randomUUID(), name: 'Guarantee Word', phrase: '\\b(guarantee|guaranteed)\\b', description: 'General guarantee language', category: 'guaranteed_returns', matchType: 'regex', pattern: '\\b(guarantee|guaranteed)\\b', severity: 'medium', message: 'Review context of guarantee language.', suggestedFix: 'Consider if guarantee claim is appropriate', enabled: true, createdAt: now, updatedAt: now },
     ];
     defaultComplianceRules.forEach(rule => this.complianceRules.set(rule.id, rule));
     
@@ -4555,11 +4588,38 @@ export class MemStorage implements IStorage {
 
   private runComplianceRules(text: string): ComplianceFinding[] {
     const findings: ComplianceFinding[] = [];
-    const rules = Array.from(this.complianceRules.values()).filter(r => r.isActive && r.pattern);
+    const rules = Array.from(this.complianceRules.values()).filter(r => r.enabled && (r.pattern || r.phrase));
     
     for (const rule of rules) {
       try {
-        const regex = new RegExp(rule.pattern, 'gi');
+        let pattern: string;
+        
+        // Build regex pattern based on matchType
+        if (rule.matchType === 'regex' && rule.pattern) {
+          // Use pattern as-is for regex rules
+          pattern = rule.pattern;
+        } else if (rule.phrase) {
+          // Escape special regex chars for phrase-based matching
+          const escapedPhrase = rule.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          
+          switch (rule.matchType) {
+            case 'exact':
+              // Word boundary matching for exact phrase
+              pattern = `\\b${escapedPhrase}\\b`;
+              break;
+            case 'contains':
+            default:
+              // Simple contains matching (case-insensitive)
+              pattern = escapedPhrase;
+              break;
+          }
+        } else if (rule.pattern) {
+          pattern = rule.pattern;
+        } else {
+          continue; // No pattern or phrase, skip
+        }
+        
+        const regex = new RegExp(pattern, 'gi');
         let match;
         while ((match = regex.exec(text)) !== null) {
           findings.push({
@@ -4632,10 +4692,27 @@ export class MemStorage implements IStorage {
   async createComplianceRule(rule: InsertComplianceRule): Promise<ComplianceRule> {
     const id = randomUUID();
     const now = new Date().toISOString();
+    // Auto-generate pattern from phrase and matchType if not provided
+    let pattern = rule.pattern || '';
+    if (!pattern && rule.phrase) {
+      const escapedPhrase = rule.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      switch (rule.matchType) {
+        case 'exact':
+          pattern = `\\b${escapedPhrase}\\b`;
+          break;
+        case 'contains':
+          pattern = escapedPhrase;
+          break;
+        case 'regex':
+          pattern = rule.phrase; // Use phrase as-is for regex
+          break;
+      }
+    }
     const newRule: ComplianceRule = {
       ...rule,
       id,
-      isActive: true,
+      pattern,
+      enabled: true,
       createdAt: now,
       updatedAt: now,
     };

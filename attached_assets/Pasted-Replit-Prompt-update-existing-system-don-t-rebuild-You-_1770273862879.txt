@@ -1,0 +1,580 @@
+Replit Prompt (update existing system, don’t rebuild)
+You are working inside my existing CMS that already has a Compliance feature for blog content.
+Do not redesign the CMS, do not remove features, and do not change existing data models or routes unless absolutely necessary. This is an incremental enhancement to the current compliance checker.
+Goal
+Upgrade the compliance checker to function like a “content compliance scanner” inside the CMS:
+
+
+Scan blog drafts, published blog content, and any pasted URL (internal or external).
+
+
+Flag non-compliance-friendly keywords/phrases (Baraka investing/fintech context).
+
+
+Provide clear reasons, severity, and suggested safer rewrites.
+
+
+Allow admins to maintain the keyword/rule list from the Compliance section (add/edit/disable rules).
+
+
+Ensure scans can run automatically (on save/publish) and manually (click “Run scan”).
+
+
+Hard constraints
+
+
+No breaking changes: keep existing UI flows and existing compliance feature working.
+
+
+Extend the current feature with minimal, clean additions.
+
+
+Keep scanning fast and safe (timeouts, rate limits for URL fetching).
+
+
+Store only what’s needed for compliance results (no full-page mirroring).
+
+
+
+Functional Requirements
+1) Compliance Section UI (additive)
+Inside the existing Compliance section, add 3 tabs:
+A) Rules / Keywords
+
+
+Display a table/list of compliance rules.
+
+
+Each rule has:
+
+
+phrase (string)
+
+
+category (e.g., “Guaranteed returns”, “FOMO”, “Misleading”, “Advice language”, “Regulatory claims”)
+
+
+severity (Low / Medium / High)
+
+
+matchType (Exact / Contains / Regex)
+
+
+enabled (boolean)
+
+
+exampleFix (optional: suggested replacement or rewrite guidance)
+
+
+
+
+Actions: Add new rule, edit rule, disable/enable, bulk import (CSV paste), export (CSV).
+
+
+B) Scan Content
+
+
+Input options:
+
+
+Select existing CMS content item (blog post) from dropdown/search
+
+
+OR paste raw text
+
+
+OR enter one or more URLs (textarea, one per line)
+
+
+
+
+Button: Run Scan
+
+
+Output:
+
+
+Summary score/status: “Pass / Needs Review / Fail”
+
+
+Counts by severity
+
+
+Highlighted matches (show snippet with the term highlighted)
+
+
+Suggested safer rewrites per flagged item (short, practical)
+
+
+Allow “Mark as acknowledged” with note (for compliance team)
+
+
+
+
+C) Scan History
+
+
+List of scans with:
+
+
+scanned entity (post id/title or URL)
+
+
+timestamp
+
+
+result summary
+
+
+who ran it (user id)
+
+
+link to full report
+
+
+
+
+Filters: date range, severity, status, content type.
+
+
+
+2) Blog Editor Integration (minimal changes)
+In the existing blog editor (where compliance already exists):
+
+
+Add a “Compliance status” badge: Pass / Needs Review / Fail.
+
+
+Add “Run compliance scan” button.
+
+
+On “Save draft” and “Publish”:
+
+
+Automatically run scan if enabled in settings.
+
+
+If High severity items exist:
+
+
+Block publish by default (configurable), and show the list of violations.
+
+
+
+
+
+
+Add a simple toggle in Compliance settings:
+
+
+autoScanOnSave (on/off)
+
+
+blockPublishOnHighSeverity (on/off)
+
+
+scanOnPublishAlways (on/off)
+
+
+
+3) URL scanning behavior
+When user enters URLs:
+
+
+Fetch the page HTML with safe guards:
+
+
+timeout (e.g., 8–12 seconds)
+
+
+size cap (e.g., 1MB)
+
+
+user-agent identifiable
+
+
+
+
+Extract readable text (strip scripts/styles/nav).
+
+
+Scan the extracted text and show results per URL.
+
+
+Store:
+
+
+URL
+
+
+title (if available)
+
+
+excerpt (first ~600 chars)
+
+
+scan results (violations + summary)
+Do NOT store full scraped content.
+
+
+
+
+
+4) Matching logic
+Implement robust matching:
+
+
+Case-insensitive matching by default
+
+
+Word boundary support for short phrases where needed
+
+
+Support regex rules for patterns like “guarantee(d)?”, “\d+% return”
+
+
+Avoid false positives for partial words (e.g., “risk” inside “brisk”)
+
+
+Each violation should include:
+
+
+rule id
+
+
+matched text
+
+
+location/snippet
+
+
+severity
+
+
+reason
+
+
+suggested rewrite
+
+
+
+5) Output: “Why it’s flagged” + “Safer alternative”
+For each category, include a consistent reason and rewrite guidance, for example:
+
+
+Guaranteed returns → “No guaranteed outcomes; markets involve risk.”
+
+
+FOMO / urgency → “Avoid pressure tactics; keep language informational.”
+
+
+Advice language → “Avoid telling users what to buy/sell; use neutral phrasing.”
+
+
+
+6) Seed rules: add at least 50 non-compliance-friendly keywords/phrases (Baraka context)
+Seed the database/config with the following initial list (admins can edit later).
+Use Contains match unless stated otherwise; severity shown.
+Guaranteed / risk-free (High)
+
+
+guaranteed returns
+
+
+guaranteed profit
+
+
+risk-free
+
+
+zero risk
+
+
+no risk
+
+
+can’t lose
+
+
+cannot lose
+
+
+sure-shot
+
+
+sureshot
+
+
+fail-proof
+
+
+100% safe
+
+
+locked-in returns
+
+
+assured returns
+
+
+guaranteed income
+
+
+guaranteed yield
+
+
+Unrealistic performance claims (High)
+
+
+double your money
+
+
+triple your money
+
+
+get rich quick
+
+
+instant profit
+
+
+instant returns
+
+
+consistent profits
+
+
+predictable profits
+
+
+beat the market (as a promise)
+
+
+guaranteed to outperform
+
+
+highest returns
+
+
+best returns
+
+
+unbeatable returns
+
+
+Advice / directive language (Medium/High depending on context)
+
+
+buy now (High if urgent/pressure)
+
+
+sell now (High if urgent/pressure)
+
+
+you should buy
+
+
+you should sell
+
+
+must buy
+
+
+must invest
+
+
+do this trade
+
+
+copy this trade
+
+
+follow this strategy for profit
+
+
+FOMO / urgency / pressure (High)
+
+
+last chance
+
+
+final hours
+
+
+limited time only
+
+
+don’t miss out
+
+
+act now
+
+
+hurry
+
+
+before it’s too late
+
+
+seats limited
+
+
+ending soon
+
+
+only today
+
+
+offer expires
+
+
+once in a lifetime
+
+
+Misleading certainty / outcome framing (High)
+
+
+guaranteed winner
+
+
+winning stock
+
+
+can’t go wrong
+
+
+sure profit
+
+
+profit guaranteed
+
+
+safe bet
+
+
+foolproof strategy
+
+
+Regulatory / misleading authority claims (High)
+
+
+DFSA approved (unless strictly accurate + properly phrased)
+
+
+government backed (unless strictly accurate)
+
+
+officially endorsed
+
+
+regulator guaranteed
+
+
+regulator approved
+
+
+Over-personalized claims (Medium)
+
+
+perfect for you
+
+
+tailored for you (if not actually personalized)
+
+
+we guarantee you will
+
+
+you will definitely
+
+
+Pattern-based rules (Regex suggested)
+
+
+\b\d{2,3}%\s*(guaranteed|sure)\b (High)
+
+
+\b(guarantee|guaranteed)\b (Medium/High depending on usage)
+
+
+\bno\s+risk\b (High)
+
+
+Seed these as default rules with categories + severity + exampleFix.
+
+Engineering Notes (do this cleanly)
+
+
+Reuse the existing compliance-checker code path; extend it into a “rules engine”.
+
+
+Add a compliance_rules store/table (or config file) only if it doesn’t exist.
+
+
+Add compliance_scans history store with minimal fields.
+
+
+Implement scanning as a service function:
+
+
+scanText(text, rules) -> {summary, violations}
+
+
+scanUrl(url, rules) -> {title, excerpt, summary, violations}
+
+
+
+
+Keep endpoints RESTful and aligned with current code style.
+
+
+Add unit tests for:
+
+
+case-insensitivity
+
+
+word boundary behavior
+
+
+regex rules
+
+
+URL fetch timeout + size cap
+
+
+
+
+Security:
+
+
+sanitize URLs
+
+
+prevent SSRF (block private IP ranges / localhost)
+
+
+enforce max redirects
+
+
+
+
+
+Acceptance Criteria
+
+
+I can manage rules from Compliance → Rules/Keywords (add/edit/disable/export/import).
+
+
+I can scan a blog post from the editor and see highlighted issues + suggestions.
+
+
+Publishing is blocked when High severity items exist (if setting enabled).
+
+
+I can paste multiple URLs and get separate scan reports.
+
+
+Scan history is visible with filters and drill-down.
+
+

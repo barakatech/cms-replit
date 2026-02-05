@@ -1932,6 +1932,271 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Compliance Checker Settings
+  // Helper function to check if an IP is in a private/reserved range
+  function isPrivateOrReservedIP(ip: string): boolean {
+    // Normalize IPv4-mapped IPv6 addresses
+    const normalized = ip.replace(/^::ffff:/, '');
+    
+    // Check for IPv4 addresses
+    const ipv4Match = normalized.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const [, a, b, c, d] = ipv4Match.map(Number);
+      
+      // Loopback (127.0.0.0/8)
+      if (a === 127) return true;
+      
+      // Private ranges
+      if (a === 10) return true; // 10.0.0.0/8
+      if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+      if (a === 192 && b === 168) return true; // 192.168.0.0/16
+      
+      // Link-local (169.254.0.0/16) - includes cloud metadata
+      if (a === 169 && b === 254) return true;
+      
+      // Broadcast/Reserved
+      if (a === 0) return true; // 0.0.0.0/8
+      if (a === 255) return true;
+      if (a >= 224 && a <= 239) return true; // Multicast 224.0.0.0/4
+      if (a >= 240) return true; // Reserved/experimental
+      
+      return false;
+    }
+    
+    // Check for IPv6 addresses
+    const lowerIp = normalized.toLowerCase();
+    if (lowerIp === '::1' || lowerIp === '::') return true; // Loopback and unspecified
+    if (lowerIp.startsWith('fc') || lowerIp.startsWith('fd')) return true; // Unique local (ULA)
+    if (lowerIp.startsWith('fe80')) return true; // Link-local
+    if (lowerIp.startsWith('ff')) return true; // Multicast
+    
+    return false;
+  }
+
+  // URL Scanning endpoint with safe fetch
+  app.post("/api/compliance/scan-url", async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ error: 'URL is required' });
+      }
+
+      // Validate URL
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
+
+      // Only allow http/https protocols
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return res.status(400).json({ error: 'Only HTTP/HTTPS URLs are allowed' });
+      }
+
+      // SSRF protection: comprehensive hostname checks
+      const hostname = parsedUrl.hostname.toLowerCase();
+      
+      // Block obvious dangerous hostnames
+      const blockedHostnames = ['localhost', 'internal', 'intranet', 'metadata', 'metadata.google.internal'];
+      if (blockedHostnames.some(blocked => hostname === blocked || hostname.endsWith('.' + blocked))) {
+        return res.status(400).json({ error: 'URL not allowed: internal addresses are blocked' });
+      }
+      
+      // Check if hostname looks like an IP address and validate it
+      const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+      const ipv6Pattern = /^\[?([a-f0-9:]+)\]?$/i;
+      
+      if (ipv4Pattern.test(hostname)) {
+        if (isPrivateOrReservedIP(hostname)) {
+          return res.status(400).json({ error: 'URL not allowed: private/reserved IP addresses are blocked' });
+        }
+      } else if (ipv6Pattern.test(hostname)) {
+        const ipv6 = hostname.replace(/^\[|\]$/g, '');
+        if (isPrivateOrReservedIP(ipv6)) {
+          return res.status(400).json({ error: 'URL not allowed: private/reserved IP addresses are blocked' });
+        }
+      }
+      
+      // Block numeric IP representations (octal, hex, decimal)
+      if (/^0x[0-9a-f]+$/i.test(hostname) || /^0\d+$/.test(hostname) || /^\d{10,}$/.test(hostname)) {
+        return res.status(400).json({ error: 'URL not allowed: numeric IP representations are blocked' });
+      }
+
+      // Fetch URL with timeout, size cap, and NO redirects (to prevent redirect-based SSRF)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      try {
+        // First request with no redirects to check target
+        let response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'BarakaCMS-ComplianceScanner/1.0',
+            'Accept': 'text/html, text/plain',
+          },
+          redirect: 'manual', // Don't follow redirects automatically
+        });
+        
+        // Handle redirects manually with validation (max 5 redirects)
+        let redirectCount = 0;
+        const maxRedirects = 5;
+        let currentUrl = url;
+        
+        while (response.status >= 300 && response.status < 400 && redirectCount < maxRedirects) {
+          const location = response.headers.get('location');
+          if (!location) break;
+          
+          // Resolve relative URLs
+          const redirectUrl = new URL(location, currentUrl);
+          
+          // Validate redirect target
+          if (!['http:', 'https:'].includes(redirectUrl.protocol)) {
+            return res.status(400).json({ error: 'Redirect blocked: non-HTTP protocol' });
+          }
+          
+          const redirectHostname = redirectUrl.hostname.toLowerCase();
+          
+          // Re-apply all SSRF checks on redirect target
+          if (blockedHostnames.some(blocked => redirectHostname === blocked || redirectHostname.endsWith('.' + blocked))) {
+            return res.status(400).json({ error: 'Redirect blocked: internal address' });
+          }
+          
+          if (ipv4Pattern.test(redirectHostname) && isPrivateOrReservedIP(redirectHostname)) {
+            return res.status(400).json({ error: 'Redirect blocked: private IP address' });
+          }
+          
+          if (ipv6Pattern.test(redirectHostname)) {
+            const ipv6 = redirectHostname.replace(/^\[|\]$/g, '');
+            if (isPrivateOrReservedIP(ipv6)) {
+              return res.status(400).json({ error: 'Redirect blocked: private IP address' });
+            }
+          }
+          
+          currentUrl = redirectUrl.href;
+          response = await fetch(currentUrl, {
+            signal: controller.signal,
+            headers: {
+              'User-Agent': 'BarakaCMS-ComplianceScanner/1.0',
+              'Accept': 'text/html, text/plain',
+            },
+            redirect: 'manual',
+          });
+          redirectCount++;
+        }
+        
+        if (redirectCount >= maxRedirects) {
+          return res.status(400).json({ error: 'Too many redirects' });
+        }
+        
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          return res.status(400).json({ error: `Failed to fetch URL: ${response.status} ${response.statusText}` });
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
+          return res.status(400).json({ error: 'URL must return HTML or plain text content' });
+        }
+
+        // Read with size cap (1MB)
+        const reader = response.body?.getReader();
+        if (!reader) {
+          return res.status(400).json({ error: 'Unable to read response body' });
+        }
+
+        let html = '';
+        const decoder = new TextDecoder();
+        const maxSize = 1024 * 1024; // 1MB
+        let totalSize = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          totalSize += value?.length || 0;
+          if (totalSize > maxSize) {
+            reader.cancel();
+            break;
+          }
+          html += decoder.decode(value, { stream: true });
+        }
+
+        // Extract text content (strip HTML tags, scripts, styles)
+        let textContent = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+          .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, ' ')
+          .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, ' ')
+          .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, ' ')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        // Extract title
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const title = titleMatch ? titleMatch[1].trim() : parsedUrl.hostname;
+
+        // Get excerpt (first 600 chars)
+        const excerpt = textContent.substring(0, 600);
+
+        // Run compliance scan on extracted text
+        const scanResult = await storage.createComplianceScanRun({
+          contentType: 'blog',
+          contentId: url,
+          contentTitle: title,
+          originalText: textContent,
+          locale: 'en',
+          scannedBy: 'url-scanner',
+        });
+
+        res.json({
+          url,
+          title,
+          excerpt,
+          textLength: textContent.length,
+          scan: scanResult,
+        });
+
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          return res.status(408).json({ error: 'Request timeout: URL took too long to respond' });
+        }
+        return res.status(400).json({ error: `Failed to fetch URL: ${fetchError.message}` });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to scan URL' });
+    }
+  });
+
+  // Scan text directly (without creating a full scan record)
+  app.post("/api/compliance/scan-text", async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text || typeof text !== 'string') {
+        return res.status(400).json({ error: 'Text is required' });
+      }
+
+      // Create a quick scan
+      const scan = await storage.createComplianceScanRun({
+        contentType: 'social',
+        contentId: 'text-scan-' + Date.now(),
+        contentTitle: 'Text Scan',
+        originalText: text,
+        locale: 'en',
+        scannedBy: 'text-scanner',
+      });
+
+      res.json(scan);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to scan text' });
+    }
+  });
+
   app.get("/api/compliance/settings", async (_req, res) => {
     const settings = await storage.getComplianceCheckerSettings();
     res.json(settings);

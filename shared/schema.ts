@@ -1949,9 +1949,12 @@ export const insertComplianceScanRunSchema = z.object({
 
 export const insertComplianceRuleSchema = z.object({
   name: z.string().min(1),
+  phrase: z.string().min(1),
   description: z.string(),
+  category: z.enum(['guaranteed_returns', 'fomo_urgency', 'misleading_claims', 'advice_language', 'regulatory_claims', 'personalized_claims', 'performance_claims', 'other']),
+  matchType: z.enum(['exact', 'contains', 'regex']),
   dfsaRef: z.string().optional(),
-  pattern: z.string(),
+  pattern: z.string().optional(),
   severity: z.enum(['low', 'medium', 'high', 'critical']),
   message: z.string().min(1),
   suggestedFix: z.string().optional(),
@@ -1980,12 +1983,31 @@ export interface InsertWritingAssistantIntegration {
   applyPath?: string;
 }
 
+// Compliance Rule Match Types
+export type ComplianceMatchType = 'exact' | 'contains' | 'regex';
+
+// Compliance Rule Categories
+export type ComplianceRuleCategory = 
+  | 'guaranteed_returns'
+  | 'fomo_urgency'
+  | 'misleading_claims'
+  | 'advice_language'
+  | 'regulatory_claims'
+  | 'personalized_claims'
+  | 'performance_claims'
+  | 'other';
+
 // Compliance Checker Settings
 export interface ComplianceCheckerSettings {
   enableEnglishQualityScoring: boolean;
   englishScoringProvider: 'writing_assistant' | 'openai';
   openaiModel?: string;
   writingAssistantIntegrationId?: string;
+  
+  // Auto-scan settings
+  autoScanOnSave: boolean;
+  blockPublishOnHighSeverity: boolean;
+  scanOnPublishAlways: boolean;
   
   // DFSA Rule thresholds
   complianceThresholds: {
@@ -2006,22 +2028,28 @@ export interface ComplianceCheckerSettings {
 export interface ComplianceRule {
   id: string;
   name: string;
+  phrase: string; // The keyword/phrase to match
   description: string;
+  category: ComplianceRuleCategory;
+  matchType: ComplianceMatchType;
   dfsaRef?: string;
-  pattern: string; // regex pattern
+  pattern: string; // regex pattern (auto-generated from phrase + matchType)
   severity: ComplianceFindingSeverity;
-  message: string;
-  suggestedFix?: string;
-  isActive: boolean;
+  message: string; // Why it's flagged
+  suggestedFix?: string; // Safer alternative
+  enabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface InsertComplianceRule {
   name: string;
+  phrase: string;
   description: string;
+  category: ComplianceRuleCategory;
+  matchType: ComplianceMatchType;
   dfsaRef?: string;
-  pattern: string;
+  pattern?: string; // Optional - will be auto-generated if not provided
   severity: ComplianceFindingSeverity;
   message: string;
   suggestedFix?: string;

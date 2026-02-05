@@ -40,6 +40,15 @@ The CMS provides:
   - Article search integrated into content blocks (searches BlogPost entities)
   - NewsletterBlockInstances for per-newsletter block editing with add/update/delete/reorder
   - **Template Default Merging**: When adding blocks, template defaults are merged with base block defaults
+- **Compliance Scanner Module** (`/admin/compliance`): Content compliance checking for fintech regulatory requirements:
+  - **Rules & Keywords Tab**: Manage 60+ compliance rules with categories (guaranteed_returns, fomo_urgency, misleading_claims, advice_language, regulatory_claims, personalized_claims, performance_claims)
+  - **Match Types**: Exact (word boundaries), Contains (substring), Regex (custom patterns)
+  - **Scan Content Tab**: Scan blog posts, custom text, or external URLs for compliance issues
+  - **URL Scanner**: Fetches and extracts text from URLs with SSRF protection (blocks private IPs, metadata endpoints, validates redirects)
+  - **Scan History Tab**: Review past scans with approve/reject workflow
+  - **Severity Levels**: low, medium, high, critical with visual indicators
+  - **CSV Export**: Export all rules for backup/analysis
+  - **Security Note**: URL scanning includes SSRF protections but does not perform DNS resolution validation; for maximum security in production, consider using an allowlist of trusted domains
 
 ## User Preferences
 
