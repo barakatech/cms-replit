@@ -1,0 +1,214 @@
+You are a senior full-stack engineer working inside my existing Replit CMS + public web app codebase.
+
+OBJECTIVE (VERY SPECIFIC)
+Implement the mixed Binance + Coinbase inspired crypto landing page template for /crypto/:slug AND ensure the CMS mirrors the page 1:1:
+
+1) EVERYTHING that is editorial content on the page must exist as fields in the CMS “Content” area (editable via WYSIWYG / lists).
+2) EVERYTHING that comes from 3rd-party APIs (price, rank, stats, chart, markets, profile links, contracts, etc.) must:
+   - be predefined in the data model
+   - be automatically prefilled server-side
+   - be displayed in CMS as READ-ONLY (locked)
+   - NOT be editable by CMS users
+3) Slug must be system generated and immutable (not editable).
+
+DO NOT SCRAPE. DO NOT COPY TEXT FROM BINANCE/COINBASE. ORIGINAL COPY ONLY.
+
+========================================================
+A) PAGE TEMPLATE: /crypto/:slug (BINANCE + COINBASE MIX)
+========================================================
+Build one reusable template used for every crypto page (Solana is just an example).
+
+Modules (render order controlled by CMS “Modules” tab):
+1) Hero (live API)
+   - icon, name, symbol, rank badge
+   - price, 24h change %, 24h change absolute
+   - last updated
+   - CTA buttons (text+url from CMS)
+2) Chart (live API)
+   - range toggles: 1D/7D/1M/3M/1Y/MAX
+3) Key Stats grid (live API)
+   - market cap, volume 24h, FDV, high/low 24h
+   - supplies: circulating/total/max
+   - ATH/ATL + dates + % from ATH/ATL
+   - rank
+4) Tabs/Sections (mixed)
+   - Overview: About excerpt (CMS), highlights (CMS), related assets (live API list + CMS mode)
+   - Markets: markets table (live API)
+   - News: RSS headlines (live API)
+   - About: full whatIsIt + howItWorks + useCases (CMS) + provider links/contracts (live API, read-only)
+   - Risks: risks (CMS) + disclosures (CMS)
+5) Disclosures footer (CMS, always present)
+
+========================================================
+B) CMS MUST MIRROR THE PAGE (1:1)
+========================================================
+Create/Update the Crypto CMS editor so it has these tabs:
+- Basics
+- Content (EDITORIAL ONLY)
+- Modules (page composition)
+- SEO
+- Compliance
+- Live Data (READ-ONLY API PREFILL)
+
+The CMS “Content” tab must contain EXACTLY the editable fields required by the page:
+
+CONTENT FIELDS (EDITABLE, CMS)
+Localized {en,ar} unless noted.
+
+1) Hero editorial
+- heroKicker{en,ar} (optional small line above title)
+- heroSummary{en,ar} (short intro)
+- primaryCtaText{en,ar}
+- primaryCtaUrl
+- secondaryCtaText{en,ar} (optional)
+- secondaryCtaUrl (optional)
+
+2) Overview content
+- highlights{en[],ar[]} (bullets)
+- aboutExcerpt{en,ar} (WYSIWYG)  ← short version shown in Overview
+- aboutFull{en,ar} (WYSIWYG)     ← full “About” tab content
+- howItWorks{en,ar} (WYSIWYG)
+- useCases{en[],ar[]}
+
+3) Risk & disclosures (MANDATORY)
+- risks{en,ar} (WYSIWYG) [required to publish]
+- disclaimers{en[],ar[]} [required to publish]
+- disclosuresFooterNote{en,ar} (optional)
+
+4) FAQ
+- faq[]: { q{en,ar}, a{en,ar} }
+
+5) Labels / microcopy overrides (optional but CMS-controlled)
+- labels: {
+    statsTitle{en,ar},
+    marketsTitle{en,ar},
+    newsTitle{en,ar},
+    aboutTitle{en,ar},
+    risksTitle{en,ar},
+    dataSourceNote{en,ar}
+  }
+
+IMPORTANT:
+- These Content fields must be the ONLY editable content used on the page.
+- No hardcoded section text in code (except fallback defaults if CMS fields empty).
+
+========================================================
+C) API-PREFILLED FIELDS (READ-ONLY, LOCKED IN CMS)
+========================================================
+All API-derived fields must be predefined and auto-filled server-side, then displayed as locked values in CMS “Live Data” tab.
+
+Add a canonical locked data object to CryptoPage (or a linked cache table) called apiPrefill:
+
+apiPrefill.lockedIdentity (read-only)
+- coingeckoId (editable only at creation, then locked)
+- symbol (from API)
+- name (from API)
+- imageUrl (from API)
+- marketCapRank (from API)
+- slug (system generated, immutable)
+
+apiPrefill.lockedMarketSummary (read-only)
+- priceUsd
+- priceChangeAbs24h
+- priceChangePct24h
+- priceChangePct7d
+- marketCapUsd
+- fdvUsd
+- volume24hUsd
+- high24hUsd
+- low24hUsd
+- circulatingSupply
+- totalSupply
+- maxSupply
+- athUsd, athDate, athChangePct
+- atlUsd, atlDate, atlChangePct
+- providerLastUpdatedAt
+- fetchedAt
+
+apiPrefill.lockedChartAvailability (read-only)
+- rangesAvailable[] (1D/7D/1M/3M/1Y/MAX)
+- lastFetchedAt
+
+apiPrefill.lockedMarketsMeta (read-only)
+- topMarketsCount
+- lastFetchedAt
+
+apiPrefill.lockedNewsMeta (read-only)
+- topNewsCount
+- lastFetchedAt
+
+apiPrefill.lockedProfile (read-only)
+- descriptionEn (optional provider text)
+- categories[]
+- links: homepage, whitepaper, github, reddit, telegram, discord, x
+- contracts/platforms[]: chainName, contractAddress, explorerUrl, decimals
+- genesisDate
+
+LOCK RULES
+- CMS UI must show these as read-only (no inputs).
+- API must ignore any attempts to write to these fields from CMS forms.
+- Server updates these fields only via CryptoLiveDataService refresh.
+
+========================================================
+D) SLUG IMMUTABILITY (NON-EDITABLE)
+========================================================
+- slug is generated on create:
+  `${symbol.toLowerCase()}-${coingeckoId}`
+- slug cannot be edited:
+  - CMS: show as read-only with copy button
+  - Backend: reject updates that attempt to change it
+  - DB/ORM: prevent writes to slug after initial insert
+
+========================================================
+E) PREFILL PIPELINE (SERVER-SIDE)
+========================================================
+Implement CryptoLiveDataService + caching (server-side only) to prefill apiPrefill automatically.
+
+- On create of a CryptoPage (admin selects coingeckoId only):
+  - Fetch summary/profile (or use cache)
+  - Set lockedIdentity fields (name/symbol/image/rank)
+  - Set slug
+  - Fill lockedMarketSummary + lockedProfile
+  - Store fetchedAt timestamps
+- Background refresh job keeps lockedMarketSummary fresh (TTL + SWR).
+- Chart/markets/news/profile refresh on schedule (longer TTLs).
+
+No frontend direct provider calls.
+
+========================================================
+F) MODULE CONFIG (CMS “Modules” TAB)
+========================================================
+CMS controls:
+- which modules show/hide
+- ordering
+- module headings (optional override)
+- config for ranges, max rows, etc.
+
+pageModules[]:
+- Hero
+- Chart
+- KeyStats
+- Overview
+- Markets
+- News
+- About
+- Risks
+- Disclosures
+
+Each module config includes:
+- enabled boolean
+- titleOverride{en,ar} optional
+- config json:
+  - Chart: rangesEnabled[] + defaultRange
+  - Markets: maxRows
+  - News: maxItems
+  - Related assets: mode (TopByRank|SameCategory|Manual) + maxItems
+
+========================================================
+G) DELIVERABLES
+========================================================
+1) /crypto/:slug page uses the mixed Binance/Coinbase layout.
+2) CMS Content tab contains all editorial fields listed above, and those fields drive the page 1:1.
+3) CMS Live Data tab shows apiPrefill locked fields (predefined + auto-filled from APIs).
+4) Slug is not editable.
+5) No scraping, no copying of Binance/Coinbase text.

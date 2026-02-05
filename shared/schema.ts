@@ -2609,6 +2609,7 @@ export type CryptoModuleType =
   | 'hero'
   | 'price_chart'
   | 'key_stats'
+  | 'overview'
   | 'markets_table'
   | 'news_feed'
   | 'about'
@@ -2654,18 +2655,15 @@ export interface CryptoPageModule {
 // Default Crypto Page Modules
 export const DEFAULT_CRYPTO_PAGE_MODULES: CryptoPageModule[] = [
   { id: 'hero', type: 'hero', enabled: true, order: 0, config: { showPrice: true, showChange: true, showMarketCap: true } },
-  { id: 'price_chart', type: 'price_chart', enabled: true, order: 1, config: { chartRanges: ['7d', '30d', '1y', 'max'], defaultRange: '7d' } },
+  { id: 'price_chart', type: 'price_chart', enabled: true, order: 1, config: { chartRanges: ['1d', '7d', '1m', '3m', '1y', 'max'], defaultRange: '7d' } },
   { id: 'key_stats', type: 'key_stats', enabled: true, order: 2 },
-  { id: 'about', type: 'about', enabled: true, order: 3 },
-  { id: 'how_it_works', type: 'how_it_works', enabled: true, order: 4 },
-  { id: 'use_cases', type: 'use_cases', enabled: true, order: 5 },
-  { id: 'markets_table', type: 'markets_table', enabled: true, order: 6, config: { maxRows: 50 } },
-  { id: 'news_feed', type: 'news_feed', enabled: true, order: 7, config: { maxItems: 10 } },
-  { id: 'related_assets', type: 'related_assets', enabled: true, order: 8, config: { mode: 'top_by_rank', maxItems: 10 } },
-  { id: 'risk_callout', type: 'risk_callout', enabled: true, order: 9, config: { prominent: true } },
-  { id: 'faq', type: 'faq', enabled: true, order: 10, config: { maxItems: 5 } },
-  { id: 'disclosures', type: 'disclosures', enabled: true, order: 11, config: { pinToBottom: true } },
-  { id: 'quick_trade_cta', type: 'quick_trade_cta', enabled: true, order: 12, config: { ctaText_en: 'Trade Now', ctaText_ar: 'تداول الآن', ctaUrl: '/signup' } },
+  { id: 'overview', type: 'overview', enabled: true, order: 3, config: { showHighlights: true, showAboutExcerpt: true, showRelatedAssets: true, relatedMode: 'top_by_rank', maxRelated: 5 } },
+  { id: 'markets_table', type: 'markets_table', enabled: true, order: 4, config: { maxRows: 50 } },
+  { id: 'news_feed', type: 'news_feed', enabled: true, order: 5, config: { maxItems: 10 } },
+  { id: 'about', type: 'about', enabled: true, order: 6 },
+  { id: 'risk_callout', type: 'risk_callout', enabled: true, order: 7, config: { prominent: true } },
+  { id: 'faq', type: 'faq', enabled: true, order: 8, config: { maxItems: 10 } },
+  { id: 'disclosures', type: 'disclosures', enabled: true, order: 9, config: { pinToBottom: true } },
 ];
 
 // Crypto Market Data Provider
@@ -2727,6 +2725,106 @@ export interface CryptoFaqItem {
   answer_ar: string;
 }
 
+// Crypto Page Labels (optional microcopy overrides)
+export interface CryptoPageLabels {
+  statsTitle_en?: string;
+  statsTitle_ar?: string;
+  marketsTitle_en?: string;
+  marketsTitle_ar?: string;
+  newsTitle_en?: string;
+  newsTitle_ar?: string;
+  aboutTitle_en?: string;
+  aboutTitle_ar?: string;
+  risksTitle_en?: string;
+  risksTitle_ar?: string;
+  dataSourceNote_en?: string;
+  dataSourceNote_ar?: string;
+}
+
+// API Prefill Locked Identity (read-only, from API)
+export interface CryptoApiPrefillIdentity {
+  coingeckoId?: string;
+  symbol?: string;
+  name?: string;
+  imageUrl?: string;
+  marketCapRank?: number;
+  slug?: string;
+}
+
+// API Prefill Locked Market Summary (read-only, from API)
+export interface CryptoApiPrefillMarketSummary {
+  priceUsd?: number;
+  priceChangeAbs24h?: number;
+  priceChangePct24h?: number;
+  priceChangePct7d?: number;
+  marketCapUsd?: number;
+  fdvUsd?: number;
+  volume24hUsd?: number;
+  high24hUsd?: number;
+  low24hUsd?: number;
+  circulatingSupply?: number;
+  totalSupply?: number;
+  maxSupply?: number;
+  athUsd?: number;
+  athDate?: string;
+  athChangePct?: number;
+  atlUsd?: number;
+  atlDate?: string;
+  atlChangePct?: number;
+  providerLastUpdatedAt?: string;
+  fetchedAt?: string;
+}
+
+// API Prefill Chart Availability (read-only)
+export interface CryptoApiPrefillChartMeta {
+  rangesAvailable?: string[];
+  lastFetchedAt?: string;
+}
+
+// API Prefill Markets Meta (read-only)
+export interface CryptoApiPrefillMarketsMeta {
+  topMarketsCount?: number;
+  lastFetchedAt?: string;
+}
+
+// API Prefill News Meta (read-only)
+export interface CryptoApiPrefillNewsMeta {
+  topNewsCount?: number;
+  lastFetchedAt?: string;
+}
+
+// API Prefill Profile (read-only, from API)
+export interface CryptoApiPrefillProfile {
+  descriptionEn?: string;
+  categories?: string[];
+  links?: {
+    homepage?: string;
+    whitepaper?: string;
+    github?: string;
+    reddit?: string;
+    telegram?: string;
+    discord?: string;
+    x?: string;
+  };
+  contracts?: Array<{
+    chainName: string;
+    contractAddress: string;
+    explorerUrl?: string;
+    decimals?: number;
+  }>;
+  genesisDate?: string;
+}
+
+// Complete API Prefill object (all locked/read-only data)
+export interface CryptoApiPrefill {
+  lockedIdentity?: CryptoApiPrefillIdentity;
+  lockedMarketSummary?: CryptoApiPrefillMarketSummary;
+  lockedChartMeta?: CryptoApiPrefillChartMeta;
+  lockedMarketsMeta?: CryptoApiPrefillMarketsMeta;
+  lockedNewsMeta?: CryptoApiPrefillNewsMeta;
+  lockedProfile?: CryptoApiPrefillProfile;
+}
+
 // Crypto Page - Main entity for crypto landing pages
 export interface CryptoPage {
   id: string;
@@ -2738,6 +2836,7 @@ export interface CryptoPage {
   status: 'draft' | 'published' | 'archived';
   featured: boolean;
   tags: string[];
+  logoUrl?: string;
   
   // Classification
   symbol: string;
@@ -2752,32 +2851,54 @@ export interface CryptoPage {
   // Editorial Lock (prevents generator from overwriting human edits)
   editorialLocked: boolean;
   
-  // Content - Hero
+  // ========== EDITORIAL CONTENT (CMS Editable) ==========
+  
+  // Hero Editorial
+  heroKicker_en?: string;
+  heroKicker_ar?: string;
   heroSummary_en?: string;
   heroSummary_ar?: string;
+  primaryCtaText_en?: string;
+  primaryCtaText_ar?: string;
+  primaryCtaUrl?: string;
+  secondaryCtaText_en?: string;
+  secondaryCtaText_ar?: string;
+  secondaryCtaUrl?: string;
+  
+  // Overview Content
   highlights_en?: string[];
   highlights_ar?: string[];
-  
-  // Content - WYSIWYG Rich Text Fields
-  whatIsIt_en?: string;
-  whatIsIt_ar?: string;
+  aboutExcerpt_en?: string;
+  aboutExcerpt_ar?: string;
+  aboutFull_en?: string;
+  aboutFull_ar?: string;
   howItWorks_en?: string;
   howItWorks_ar?: string;
-  risks_en?: string;
-  risks_ar?: string;
-  
-  // Use Cases
   useCases_en?: string[];
   useCases_ar?: string[];
+  
+  // Legacy field (deprecated, use aboutExcerpt/aboutFull instead)
+  whatIsIt_en?: string;
+  whatIsIt_ar?: string;
+  
+  // Risks & Disclosures (MANDATORY for publish)
+  risks_en?: string;
+  risks_ar?: string;
+  disclaimers_en?: string[];
+  disclaimers_ar?: string[];
+  disclosuresFooterNote_en?: string;
+  disclosuresFooterNote_ar?: string;
   
   // FAQ
   faq?: CryptoFaqItem[];
   
-  // Disclaimers
-  disclaimers_en?: string[];
-  disclaimers_ar?: string[];
+  // Labels/Microcopy overrides (optional)
+  labels?: CryptoPageLabels;
   
-  // Market Data (read-only, synced from snapshot)
+  // ========== API-PREFILLED DATA (Read-Only, Locked) ==========
+  apiPrefill?: CryptoApiPrefill;
+  
+  // Legacy Market Data (read-only, synced from snapshot)
   marketData?: CryptoMarketData;
   sourceSnapshotId?: string;
   
@@ -2850,6 +2971,7 @@ export const insertCryptoPageSchema = z.object({
   status: z.enum(['draft', 'published', 'archived']).default('draft'),
   featured: z.boolean().default(false),
   tags: z.array(z.string()).default([]),
+  logoUrl: z.string().optional(),
   
   symbol: z.string().min(1),
   name: z.string().min(1),
@@ -2862,21 +2984,43 @@ export const insertCryptoPageSchema = z.object({
   
   editorialLocked: z.boolean().default(false),
   
+  // Hero Editorial
+  heroKicker_en: z.string().optional(),
+  heroKicker_ar: z.string().optional(),
   heroSummary_en: z.string().optional(),
   heroSummary_ar: z.string().optional(),
+  primaryCtaText_en: z.string().optional(),
+  primaryCtaText_ar: z.string().optional(),
+  primaryCtaUrl: z.string().optional(),
+  secondaryCtaText_en: z.string().optional(),
+  secondaryCtaText_ar: z.string().optional(),
+  secondaryCtaUrl: z.string().optional(),
+  
+  // Overview Content
   highlights_en: z.array(z.string()).optional(),
   highlights_ar: z.array(z.string()).optional(),
-  
-  whatIsIt_en: z.string().optional(),
-  whatIsIt_ar: z.string().optional(),
+  aboutExcerpt_en: z.string().optional(),
+  aboutExcerpt_ar: z.string().optional(),
+  aboutFull_en: z.string().optional(),
+  aboutFull_ar: z.string().optional(),
   howItWorks_en: z.string().optional(),
   howItWorks_ar: z.string().optional(),
-  risks_en: z.string().optional(),
-  risks_ar: z.string().optional(),
-  
   useCases_en: z.array(z.string()).optional(),
   useCases_ar: z.array(z.string()).optional(),
   
+  // Legacy (deprecated)
+  whatIsIt_en: z.string().optional(),
+  whatIsIt_ar: z.string().optional(),
+  
+  // Risks & Disclosures
+  risks_en: z.string().optional(),
+  risks_ar: z.string().optional(),
+  disclaimers_en: z.array(z.string()).optional(),
+  disclaimers_ar: z.array(z.string()).optional(),
+  disclosuresFooterNote_en: z.string().optional(),
+  disclosuresFooterNote_ar: z.string().optional(),
+  
+  // FAQ
   faq: z.array(z.object({
     question_en: z.string(),
     question_ar: z.string(),
@@ -2884,8 +3028,24 @@ export const insertCryptoPageSchema = z.object({
     answer_ar: z.string(),
   })).optional(),
   
-  disclaimers_en: z.array(z.string()).optional(),
-  disclaimers_ar: z.array(z.string()).optional(),
+  // Labels overrides
+  labels: z.object({
+    statsTitle_en: z.string().optional(),
+    statsTitle_ar: z.string().optional(),
+    marketsTitle_en: z.string().optional(),
+    marketsTitle_ar: z.string().optional(),
+    newsTitle_en: z.string().optional(),
+    newsTitle_ar: z.string().optional(),
+    aboutTitle_en: z.string().optional(),
+    aboutTitle_ar: z.string().optional(),
+    risksTitle_en: z.string().optional(),
+    risksTitle_ar: z.string().optional(),
+    dataSourceNote_en: z.string().optional(),
+    dataSourceNote_ar: z.string().optional(),
+  }).optional(),
+  
+  // API Prefill (read-only, ignored on updates)
+  apiPrefill: z.any().optional(),
   
   marketData: z.object({
     priceUsd: z.number().optional(),
@@ -2906,7 +3066,7 @@ export const insertCryptoPageSchema = z.object({
   
   pageModules: z.array(z.object({
     id: z.string(),
-    type: z.enum(['hero', 'price_chart', 'key_stats', 'markets_table', 'news_feed', 'about', 'how_it_works', 'use_cases', 'faq', 'risk_callout', 'disclosures', 'related_assets', 'quick_trade_cta']),
+    type: z.enum(['hero', 'price_chart', 'key_stats', 'overview', 'markets_table', 'news_feed', 'about', 'how_it_works', 'use_cases', 'faq', 'risk_callout', 'disclosures', 'related_assets', 'quick_trade_cta']),
     enabled: z.boolean(),
     order: z.number(),
     titleOverride_en: z.string().optional(),
