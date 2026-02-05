@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   ExternalLink
 } from 'lucide-react';
+import { RichText } from '@/components/RichText';
 import type { BondPage } from '@shared/schema';
 
 export default function BondDetail() {
@@ -97,9 +98,9 @@ export default function BondDetail() {
                 Issued by {bond.issuerName_en}
               </p>
               {bond.heroSummary_en && (
-                <p className="mt-4 text-muted-foreground max-w-2xl">
-                  {bond.heroSummary_en}
-                </p>
+                <div className="mt-4 max-w-2xl">
+                  <RichText html={bond.heroSummary_en} className="text-muted-foreground" />
+                </div>
               )}
             </div>
 
@@ -203,9 +204,7 @@ export default function BondDetail() {
                   <CardTitle>How It Works</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    {bond.howItWorks_en}
-                  </div>
+                  <RichText html={bond.howItWorks_en} className="text-muted-foreground" />
                 </CardContent>
               </Card>
             )}
@@ -257,9 +256,7 @@ export default function BondDetail() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground">
-                    {bond.riskDisclosure_en}
-                  </div>
+                  <RichText html={bond.riskDisclosure_en} className="text-muted-foreground" />
                 </CardContent>
               </Card>
             )}

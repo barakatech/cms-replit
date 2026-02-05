@@ -27,6 +27,7 @@ import {
   Info
 } from 'lucide-react';
 import BarakaHeader from '@/components/BarakaHeader';
+import { RichText } from '@/components/RichText';
 import { useLanguage } from '@/lib/language-context';
 import type { CryptoPage, CryptoMarketSnapshot, CryptoFaqItem } from '@shared/schema';
 
@@ -469,13 +470,15 @@ export default function CryptoDetail() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className={`text-muted-foreground leading-relaxed ${isRTL ? 'text-right' : ''}`}>
-                        {aboutExcerpt || heroSummary}
-                      </p>
+                      <RichText 
+                        html={aboutExcerpt || heroSummary} 
+                        className="text-muted-foreground" 
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                      />
                       {displayAbout && displayAbout !== aboutExcerpt && (
                         <Button 
-                          variant="link" 
-                          className="p-0 h-auto mt-2"
+                          variant="ghost" 
+                          className="p-0 h-auto mt-2 text-primary underline-offset-4 hover:underline"
                           onClick={() => setActiveTab('about')}
                         >
                           {t.seeAll}
@@ -542,9 +545,11 @@ export default function CryptoDetail() {
                     <CardTitle>{t.whatIs} {crypto.name}?</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="prose prose-sm max-w-none text-muted-foreground">
-                      <p className="whitespace-pre-wrap leading-relaxed">{displayAbout}</p>
-                    </div>
+                    <RichText 
+                      html={displayAbout} 
+                      className="text-muted-foreground" 
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -556,7 +561,11 @@ export default function CryptoDetail() {
                     <CardTitle>{t.howItWorks}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{howItWorks}</p>
+                    <RichText 
+                      html={howItWorks} 
+                      className="text-muted-foreground" 
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -622,7 +631,11 @@ export default function CryptoDetail() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{risks}</p>
+                    <RichText 
+                      html={risks} 
+                      className="text-muted-foreground" 
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                    />
                   </CardContent>
                 </Card>
               )}

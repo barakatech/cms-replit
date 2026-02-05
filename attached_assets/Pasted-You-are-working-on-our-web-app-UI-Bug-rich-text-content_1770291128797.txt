@@ -1,0 +1,61 @@
+You are working on our web app UI. Bug: rich-text content is being displayed as literal HTML tags (e.g., "<p><strong>Bitcoin</strong>...") instead of rendered formatting. This is happening in the content cards like “What is Bitcoin?”, “How It Works”, and “Risk Factors” where paragraphs, bold text, and lists should render properly.
+
+GOAL
+Render HTML stored in our CMS/DB as formatted content (paragraphs, <strong>, <ul>/<li>) while keeping the app secure (no XSS).
+
+WHERE TO FIX
+1) Find the component(s) that render these cards/sections (likely a “ContentCard”, “ArticleSection”, “Learn/Asset details”, or “InfoPanel” component).
+2) Find the field being printed (e.g., `description`, `body`, `content`, `riskDisclosureHtml`, etc.) that currently uses `{content}` or `textContent` rendering.
+
+IMPLEMENTATION REQUIREMENTS
+- If the content is trusted HTML from our CMS, render it as HTML (NOT plain text).
+- Sanitize the HTML before rendering (required).
+- Allow only a safe subset of tags/attributes needed for our content:
+  - Tags: p, strong, em, br, ul, ol, li, a, h1-h4 (optional), blockquote (optional)
+  - Attributes: a[href], a[target], a[rel]
+- For links: force `rel="noopener noreferrer"` and `target="_blank"` (optional if we want).
+- If content is empty/null, render nothing or a fallback.
+
+RECOMMENDED APPROACH (React)
+- Add DOMPurify and sanitize before rendering.
+- Render with `dangerouslySetInnerHTML` using sanitized HTML.
+Example:
+
+import DOMPurify from "dompurify";
+
+const ALLOWED_TAGS = ["p","strong","em","br","ul","ol","li","a","h1","h2","h3","h4","blockquote"];
+const ALLOWED_ATTR = ["href","target","rel"];
+
+function RichText({ html }: { html?: string }) {
+  if (!html) return null;
+
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR,
+    USE_PROFILES: { html: true },
+  });
+
+  return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: clean }} />;
+}
+
+Then replace the current `{content}` rendering with:
+<RichText html={content} />
+
+STYLING
+- Use existing typography styles or add a minimal “prose” style (Tailwind typography plugin if already installed, otherwise basic CSS for p/li spacing).
+- Ensure lists look correct (bullets, spacing).
+
+DATA CONTRACT CHECK
+- Confirm whether the CMS field is actually HTML or sometimes plain text.
+  - If sometimes plain text: keep as text (escape) OR wrap plain text in <p> before sanitizing.
+  - Do NOT double-escape HTML.
+
+TEST / ACCEPTANCE CRITERIA
+- On the Bitcoin screen, the HTML tags should no longer appear as text.
+- Paragraphs render as paragraphs, “Bitcoin (BTC)” appears bold, and Risk Factors render as a bulleted list.
+- No console warnings/errors.
+- Add a quick unit test or simple render test (if we have a test setup) verifying that `<strong>` becomes a bold element and that `<ul><li>` renders list items.
+
+DELIVERABLE
+- Commit the fix across all locations where CMS HTML content is rendered as literal tags (search for strings like "<p>" in UI output or search code for components rendering these fields).
+- Provide a short summary of files changed and why.
