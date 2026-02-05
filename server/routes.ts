@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { cryptoDataService } from "./crypto-data-service";
+import { seedTop100Crypto } from "./seed-top100-crypto";
 import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema, insertBondPageSchema, DEFAULT_BOND_PAGE_BLOCKS, insertCryptoPageSchema, insertCryptoMarketSnapshotSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
@@ -72,6 +73,13 @@ function cleanupStalePresences() {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Seed top 100 crypto pages on startup
+  seedTop100Crypto(storage).then(result => {
+    console.log(`[Crypto Seed] Seeded ${result.created} new pages, updated ${result.updated} existing pages`);
+  }).catch(err => {
+    console.error('[Crypto Seed] Failed to seed crypto pages:', err);
+  });
+
   // Discover Settings
   app.get("/api/discover/settings", async (_req, res) => {
     const settings = await storage.getDiscoverSettings();
