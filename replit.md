@@ -66,6 +66,22 @@ The CMS provides:
   - **Public Detail Page** (`/bonds/:slug`): Renders bond metrics, issuer profile, risk disclosures, trading info
   - **Seed Data**: 6 sample bonds auto-loaded on startup (3 featured: US Treasury, UAE Government, High Yield Corp)
   - **Bond Types**: BondInstrumentType, BondIssuerType, BondCouponType, BondSeniority, BondRiskLevel for type safety
+- **Crypto Pages Module** (`/crypto`): Cryptocurrency landing pages mirroring the bonds architecture:
+  - **Public Landing Page** (`/crypto`): Browse all cryptocurrencies with search, featured cryptos, market data display
+  - **Public Detail Page** (`/crypto/:slug`): Price, 24h change, market cap, volume, supply info, editorial content
+  - **Bilingual Support**: English/Arabic language toggle with RTL layout support
+  - **Market Data**: CryptoMarketSnapshot entities for real-time price data from CoinGecko
+  - **Editorial Content**: CryptoPage entities with whatIsIt, howItWorks, useCases, risks, disclaimers (EN/AR)
+  - **API Endpoints**:
+    - GET `/api/crypto/pages` - List all crypto pages
+    - GET `/api/crypto/pages/:id` - Get single crypto page by ID
+    - GET `/api/crypto/pages/slug/:slug` - Get crypto page by slug
+    - POST `/api/crypto/generate` - Generate pages for top 100 cryptos from CoinGecko
+    - POST `/api/crypto/pages/:id/compliance-scan` - Run compliance check
+    - GET `/api/crypto/snapshots` - Get market data snapshots
+  - **Editorial Lock**: editorialLocked flag prevents auto-generation from overwriting human edits
+  - **Compliance Integration**: Uses existing compliance rules for content scanning
+  - **Navigation**: Crypto link in BarakaHeader nav bar
 
 ## User Preferences
 
