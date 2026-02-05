@@ -157,7 +157,7 @@ function CoinHeader({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center overflow-hidden">
           {logoUrl ? (
             <img src={logoUrl} alt={name} className="h-8 w-8" />
           ) : (
@@ -243,9 +243,9 @@ function TimeframeTabs({
         <button
           key={tab}
           onClick={() => onChange(tab)}
-          className={`px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+          className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
             value === tab 
-              ? 'bg-yellow-500 text-black' 
+              ? 'bg-primary text-primary-foreground' 
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
           data-testid={`tab-timeframe-${tab}`}
@@ -309,10 +309,10 @@ function PriceChart({
             <Line 
               type="monotone" 
               dataKey="price" 
-              stroke="#facc15" 
+              stroke="#99FFDD" 
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 4, fill: '#facc15' }}
+              activeDot={{ r: 4, fill: '#99FFDD' }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -359,14 +359,14 @@ function BuyPanel({
           <TabsList className="grid w-full grid-cols-2 bg-gray-700">
             <TabsTrigger 
               value="buy" 
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               data-testid="tab-buy"
             >
               Buy {symbol}
             </TabsTrigger>
             <TabsTrigger 
               value="trade"
-              className="data-[state=active]:bg-yellow-500 data-[state=active]:text-black"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               data-testid="tab-trade"
             >
               Trade {symbol}
@@ -390,7 +390,7 @@ function BuyPanel({
                 {logoUrl ? (
                   <img src={logoUrl} alt={symbol} className="h-5 w-5 rounded-full" />
                 ) : (
-                  <div className="h-5 w-5 rounded-full bg-yellow-500 flex items-center justify-center text-xs font-bold text-black">
+                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
                     {symbol[0]}
                   </div>
                 )}
@@ -425,7 +425,7 @@ function BuyPanel({
         <SignUpCTA
           variant="default"
           size="lg"
-          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold"
+          className="w-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold"
           customText={`Buy ${symbol}`}
           ticker={symbol}
         />
@@ -437,16 +437,16 @@ function BuyPanel({
           <div className="space-y-2">
             {feeComparison.map((item) => (
               <div key={item.name} className="flex items-center gap-3">
-                <span className={`text-xs w-20 ${item.highlight ? 'text-yellow-400 font-medium' : 'text-gray-400'}`}>
+                <span className={`text-xs w-20 ${item.highlight ? 'text-primary font-medium' : 'text-gray-400'}`}>
                   {item.name}
                 </span>
                 <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
                   <div 
-                    className={`h-full rounded-full ${item.highlight ? 'bg-yellow-500' : 'bg-gray-500'}`}
+                    className={`h-full rounded-full ${item.highlight ? 'bg-primary' : 'bg-gray-500'}`}
                     style={{ width: `${Math.min(item.fee * 50, 100)}%` }}
                   />
                 </div>
-                <span className={`text-xs w-12 text-right ${item.highlight ? 'text-yellow-400 font-medium' : 'text-gray-400'}`}>
+                <span className={`text-xs w-12 text-right ${item.highlight ? 'text-primary font-medium' : 'text-gray-400'}`}>
                   {item.fee}%
                 </span>
               </div>
@@ -506,7 +506,7 @@ function NewsSection({ symbol, name }: { symbol: string; name: string }) {
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-white group-hover:text-yellow-400 transition-colors line-clamp-2">
+                <h3 className="font-medium text-white group-hover:text-primary transition-colors line-clamp-2">
                   {item.title}
                 </h3>
                 <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
@@ -515,7 +515,7 @@ function NewsSection({ symbol, name }: { symbol: string; name: string }) {
                   <span>{new Date(item.publishedAt).toLocaleDateString()}</span>
                 </div>
               </div>
-              <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-yellow-400 flex-shrink-0" />
+              <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-primary flex-shrink-0" />
             </div>
           </a>
         ))}
