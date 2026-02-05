@@ -28,7 +28,7 @@ import {
   AreaChart
 } from 'recharts';
 import SignUpCTA from '@/components/SignUpCTA';
-import type { CryptoPage } from '@shared/schema';
+import type { CryptoPage, CryptoMarketSnapshot } from '@shared/schema';
 import {
   Accordion,
   AccordionContent,
@@ -110,13 +110,15 @@ const formatNumber = (num: number, decimals = 2): string => {
 
 function StickyTopBar({ 
   page, 
-  summary 
+  summary,
+  snapshot 
 }: { 
   page: CryptoPage;
   summary?: BinanceSummary | null;
+  snapshot?: CryptoMarketSnapshot | null;
 }) {
-  const price = summary?.lastPrice || page.marketData?.priceUsd || 0;
-  const change = summary?.priceChangePercent || page.marketData?.priceChange24hPct || 0;
+  const price = summary?.lastPrice || snapshot?.priceUsd || page.marketData?.priceUsd || 0;
+  const change = summary?.priceChangePercent || snapshot?.priceChange24hPct || page.marketData?.priceChange24hPct || 0;
   const isPositive = change >= 0;
 
   return (
@@ -156,19 +158,22 @@ function StickyTopBar({
 
 function HeroSection({ 
   page, 
-  summary 
+  summary,
+  snapshot 
 }: { 
   page: CryptoPage;
   summary?: BinanceSummary | null;
+  snapshot?: CryptoMarketSnapshot | null;
 }) {
-  const price = summary?.lastPrice || page.marketData?.priceUsd || 0;
-  const change = summary?.priceChangePercent || page.marketData?.priceChange24hPct || 0;
+  const price = summary?.lastPrice || snapshot?.priceUsd || page.marketData?.priceUsd || 0;
+  const change = summary?.priceChangePercent || snapshot?.priceChange24hPct || page.marketData?.priceChange24hPct || 0;
   const changeAbs = summary?.priceChange || (price * change / 100);
-  const highPrice = summary?.highPrice || page.marketData?.priceUsd || 0;
-  const lowPrice = summary?.lowPrice || 0;
-  const volume = summary?.quoteVolume || page.marketData?.volume24hUsd || 0;
+  const highPrice = summary?.highPrice || snapshot?.athUsd || page.marketData?.priceUsd || 0;
+  const lowPrice = summary?.lowPrice || snapshot?.atlUsd || 0;
+  const volume = summary?.quoteVolume || snapshot?.volume24hUsd || page.marketData?.volume24hUsd || 0;
   const isPositive = change >= 0;
-  const asOfTime = summary?.fetchedAt ? new Date(summary.fetchedAt).toLocaleTimeString() : 'Live';
+  const dataSource = summary?.fetchedAt ? 'Binance' : (snapshot ? 'CoinGecko' : 'Cached');
+  const asOfTime = summary?.fetchedAt ? new Date(summary.fetchedAt).toLocaleTimeString() : (snapshot?.fetchedAt ? new Date(snapshot.fetchedAt).toLocaleTimeString() : 'Cached');
 
   return (
     <section className="py-8" data-testid="hero-section">
@@ -349,22 +354,31 @@ function ChartSection({
 
 function KeyStatsGrid({ 
   summary, 
-  page 
+  page,
+  snapshot 
 }: { 
   summary?: BinanceSummary | null;
   page: CryptoPage;
+  snapshot?: CryptoMarketSnapshot | null;
 }) {
+  const price = summary?.lastPrice || snapshot?.priceUsd;
+  const change24h = summary?.priceChangePercent ?? snapshot?.priceChange24hPct;
+  const volume = summary?.quoteVolume || snapshot?.volume24hUsd;
+  const marketCap = snapshot?.marketCapUsd;
+  const circulatingSupply = snapshot?.circulatingSupply;
+  const maxSupply = snapshot?.maxSupply;
+  
   const stats = [
-    { label: 'Last Price', value: summary?.lastPrice ? `$${formatPrice(summary.lastPrice)}` : 'N/A' },
-    { label: '24h Change', value: summary?.priceChangePercent ? `${summary.priceChangePercent >= 0 ? '+' : ''}${summary.priceChangePercent.toFixed(2)}%` : 'N/A', highlight: summary?.priceChangePercent },
+    { label: 'Last Price', value: price ? `$${formatPrice(price)}` : 'N/A' },
+    { label: '24h Change', value: change24h != null ? `${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%` : 'N/A', highlight: change24h },
     { label: '24h High', value: summary?.highPrice ? `$${formatPrice(summary.highPrice)}` : 'N/A' },
     { label: '24h Low', value: summary?.lowPrice ? `$${formatPrice(summary.lowPrice)}` : 'N/A' },
-    { label: 'Base Volume', value: summary?.volume ? formatNumber(summary.volume) : 'N/A' },
-    { label: 'Quote Volume', value: summary?.quoteVolume ? formatVolume(summary.quoteVolume) : 'N/A' },
+    { label: 'Market Cap', value: marketCap ? formatVolume(marketCap) : 'N/A' },
+    { label: '24h Volume', value: volume ? formatVolume(volume) : 'N/A' },
+    { label: 'Circulating Supply', value: circulatingSupply ? `${formatNumber(circulatingSupply)} ${page.symbol}` : 'N/A' },
+    { label: 'Max Supply', value: maxSupply ? `${formatNumber(maxSupply)} ${page.symbol}` : '∞' },
     { label: 'Best Bid', value: summary?.bidPrice ? `$${formatPrice(summary.bidPrice)}` : 'N/A' },
     { label: 'Best Ask', value: summary?.askPrice ? `$${formatPrice(summary.askPrice)}` : 'N/A' },
-    { label: 'Spread', value: summary?.spreadPct ? `${summary.spreadPct.toFixed(4)}%` : 'N/A' },
-    { label: 'Trades (24h)', value: summary?.count ? formatNumber(summary.count, 0) : 'N/A' },
   ];
 
   return (
@@ -636,6 +650,14 @@ export default function CryptoDetailV2() {
     queryKey: ['/api/crypto/pages/slug', slug],
   });
 
+  // Fetch CoinGecko snapshots as fallback data source
+  const { data: snapshots = [] } = useQuery<CryptoMarketSnapshot[]>({
+    queryKey: ['/api/crypto/snapshots'],
+  });
+
+  // Find the snapshot for this crypto page
+  const snapshot = snapshots.find(s => s.providerCoinId === page?.coingeckoId);
+
   const binanceSymbol = page?.binanceSymbol || (page?.symbol ? `${page.symbol}USDT` : undefined);
 
   const { data: summary } = useQuery<BinanceSummary>({
@@ -651,7 +673,7 @@ export default function CryptoDetailV2() {
     refetchInterval: 60000,
   });
 
-  const currentPrice = summary?.lastPrice || page?.marketData?.priceUsd || 0;
+  const currentPrice = summary?.lastPrice || snapshot?.priceUsd || page?.marketData?.priceUsd || 0;
 
   if (pageLoading) {
     return (
@@ -689,7 +711,7 @@ export default function CryptoDetailV2() {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <StickyTopBar page={page} summary={summary} />
+      <StickyTopBar page={page} summary={summary} snapshot={snapshot} />
       
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="mb-4">
@@ -703,14 +725,14 @@ export default function CryptoDetailV2() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <HeroSection page={page} summary={summary} />
+            <HeroSection page={page} summary={summary} snapshot={snapshot} />
             <ChartSection 
               symbol={page.symbol}
               binanceSymbol={binanceSymbol}
               coingeckoId={page.coingeckoId}
               currentPrice={currentPrice}
             />
-            <KeyStatsGrid summary={summary} page={page} />
+            <KeyStatsGrid summary={summary} page={page} snapshot={snapshot} />
             <DepthTradesSection binanceSymbol={binanceSymbol} />
             <AboutSection page={page} />
           </div>
