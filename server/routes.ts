@@ -2687,6 +2687,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const updateData = { ...req.body };
     delete updateData.slug; // Ignore any slug changes
     
+    // Publish gating validation - check required fields before allowing publish
+    if (updateData.status === 'published') {
+      const mergedPage = { ...page, ...updateData };
+      const publishErrors: string[] = [];
+      
+      // Check required fields for publishing
+      if (!mergedPage.title_en || mergedPage.title_en.trim() === '') {
+        publishErrors.push('English title is required');
+      }
+      if (!mergedPage.slug || mergedPage.slug.trim() === '') {
+        publishErrors.push('Slug is required');
+      }
+      if (!mergedPage.coingeckoId || mergedPage.coingeckoId.trim() === '') {
+        publishErrors.push('CoinGecko ID is required');
+      }
+      if (!mergedPage.risks_en || mergedPage.risks_en.trim() === '') {
+        publishErrors.push('Risk disclosure (English) is required');
+      }
+      if (!mergedPage.disclaimers_en || mergedPage.disclaimers_en.length === 0) {
+        publishErrors.push('At least one English disclaimer is required');
+      }
+      if (mergedPage.complianceStatus === 'fail') {
+        publishErrors.push('Compliance status must pass or be overridden before publishing');
+      }
+      
+      if (publishErrors.length > 0) {
+        return res.status(400).json({ 
+          message: 'Cannot publish page - missing required fields',
+          errors: publishErrors 
+        });
+      }
+    }
+    
     const updated = await storage.updateCryptoPage(req.params.id, updateData);
     res.json(updated);
   });
@@ -2799,9 +2832,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============================================
   // Crypto Live Data API Endpoints
+  // Primary: /api/crypto/data/:coingeckoId/...
+  // Legacy: /api/crypto/live/... (maintained for compatibility)
   // ============================================
 
-  // Get market summary (top coins by market cap)
+  // NEW: Asset Summary by CoinGecko ID - /api/crypto/data/:coingeckoId/summary
+  app.get("/api/crypto/data/:coingeckoId/summary", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const currency = (req.query.currency as string) || 'usd';
+      const summary = await cryptoDataService.getAssetSummary(coingeckoId, currency);
+      if (!summary) {
+        return res.status(404).json({ error: 'Asset not found' });
+      }
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching asset summary:', error);
+      res.status(500).json({ error: 'Failed to fetch asset summary' });
+    }
+  });
+
+  // NEW: Chart Data - /api/crypto/data/:coingeckoId/chart
+  app.get("/api/crypto/data/:coingeckoId/chart", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const range = (req.query.range as string) || '7d';
+      const currency = (req.query.currency as string) || 'usd';
+      const chartData = await cryptoDataService.getAssetChart(coingeckoId, range, currency);
+      res.json(chartData);
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      res.status(500).json({ error: 'Failed to fetch chart data' });
+    }
+  });
+
+  // NEW: Markets/Tickers - /api/crypto/data/:coingeckoId/markets
+  app.get("/api/crypto/data/:coingeckoId/markets", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 50;
+      const markets = await cryptoDataService.getAssetMarkets(coingeckoId, limit);
+      res.json(markets);
+    } catch (error) {
+      console.error('Error fetching markets:', error);
+      res.status(500).json({ error: 'Failed to fetch markets' });
+    }
+  });
+
+  // NEW: Profile/Metadata - /api/crypto/data/:coingeckoId/profile
+  app.get("/api/crypto/data/:coingeckoId/profile", async (req, res) => {
+    try {
+      const { coingeckoId } = req.params;
+      const profile = await cryptoDataService.getAssetProfile(coingeckoId);
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+      res.json(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  // LEGACY: Get market summary (top coins by market cap)
   app.get("/api/crypto/live/market", async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 100;
