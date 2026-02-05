@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'wouter';
-import { TrendingUp, BookOpen, RefreshCw, Moon, Sun, Landmark, Bitcoin } from 'lucide-react';
+import { TrendingUp, BookOpen, RefreshCw, Moon, Sun, Landmark, Bitcoin, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { useLanguage } from '@/lib/language-context';
 
 interface BarakaHeaderProps {
   showTradeCTA?: boolean;
@@ -14,12 +15,13 @@ export default function BarakaHeader({ showTradeCTA, tradeTicker, tradeLabel }: 
   const [location] = useLocation();
   const { resolvedTheme, toggleTheme } = useTheme();
   const { isAuthenticated } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
 
   const navItems = [
-    { href: '/stocks', label: 'Stocks', icon: TrendingUp },
-    { href: '/bonds', label: 'Bonds', icon: Landmark },
-    { href: '/crypto', label: 'Crypto', icon: Bitcoin },
-    { href: '/blog', label: 'Learn', icon: BookOpen },
+    { href: '/stocks', label: language === 'en' ? 'Stocks' : 'الأسهم', icon: TrendingUp },
+    { href: '/bonds', label: language === 'en' ? 'Bonds' : 'السندات', icon: Landmark },
+    { href: '/crypto', label: language === 'en' ? 'Crypto' : 'العملات', icon: Bitcoin },
+    { href: '/blog', label: language === 'en' ? 'Learn' : 'تعلم', icon: BookOpen },
   ];
 
   return (
@@ -41,7 +43,7 @@ export default function BarakaHeader({ showTradeCTA, tradeTicker, tradeLabel }: 
                     variant="ghost"
                     size="sm"
                     className={`gap-2 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
-                    data-testid={`nav-${item.label.toLowerCase()}`}
+                    data-testid={`nav-${item.href.slice(1)}`}
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
@@ -96,10 +98,12 @@ export default function BarakaHeader({ showTradeCTA, tradeTicker, tradeLabel }: 
           <Button
             variant="outline"
             size="sm"
-            className="font-medium"
+            className="font-medium gap-1"
+            onClick={toggleLanguage}
             data-testid="button-language"
           >
-            AR
+            <Globe className="h-4 w-4" />
+            {language === 'en' ? 'AR' : 'EN'}
           </Button>
         </div>
       </div>

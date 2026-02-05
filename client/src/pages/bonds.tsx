@@ -9,21 +9,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Landmark, 
   Search, 
-  Star, 
-  ArrowRight,
+  Star,
   TrendingUp,
   Calendar,
   Shield,
-  Percent
+  Percent,
+  Flame,
+  Eye,
+  Clock
 } from 'lucide-react';
 import BarakaHeader from '@/components/BarakaHeader';
+import { useLanguage } from '@/lib/language-context';
 import type { BondPage } from '@shared/schema';
 
 export default function BondsLanding() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  
-  const isRTL = language === 'ar';
+  const [activeFilter, setActiveFilter] = useState('all');
+  const { language, isRTL } = useLanguage();
 
   const { data: bonds = [], isLoading } = useQuery<BondPage[]>({
     queryKey: ['/api/bond-pages'],
@@ -35,12 +37,27 @@ export default function BondsLanding() {
     const query = searchQuery.toLowerCase();
     const title = language === 'en' ? bond.title_en : bond.title_ar;
     const issuerName = language === 'en' ? bond.issuerName_en : bond.issuerName_ar;
-    return (
+    
+    const matchesSearch = (
       title?.toLowerCase().includes(query) ||
       issuerName?.toLowerCase().includes(query) ||
       bond.isin?.toLowerCase().includes(query) ||
       bond.currency?.toLowerCase().includes(query)
     );
+
+    if (!matchesSearch) return false;
+
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'featured') return bond.featured;
+    if (activeFilter === 'high-yield') return bond.ytm && bond.ytm >= 5;
+    if (activeFilter === 'low-risk') return bond.riskLevel === 'low';
+    if (activeFilter === 'short-term') {
+      if (!bond.maturityDate) return false;
+      const maturity = new Date(bond.maturityDate);
+      const yearsToMaturity = (maturity.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365);
+      return yearsToMaturity <= 3;
+    }
+    return true;
   });
 
   const featuredBonds = publishedBonds.filter(b => b.featured).slice(0, 3);
@@ -48,11 +65,14 @@ export default function BondsLanding() {
 
   const labels = {
     en: {
-      heroTitle: 'Explore Bonds',
-      heroSubtitle: 'Discover fixed-income investment opportunities with stable returns.',
+      heroTitle: 'Discover bonds',
+      heroSubtitle: 'Explore fixed-income investment opportunities with stable returns.',
       searchPlaceholder: 'Search by name, issuer, or ISIN...',
-      featuredBonds: 'Featured Bonds',
-      allBonds: 'All Bonds',
+      all: 'All Bonds',
+      featured: 'Featured',
+      highYield: 'High Yield',
+      lowRisk: 'Low Risk',
+      shortTerm: 'Short Term',
       bonds: 'bonds',
       ytm: 'YTM',
       coupon: 'Coupon',
@@ -63,13 +83,16 @@ export default function BondsLanding() {
       disclaimer: 'Capital at risk. For informational purposes only. Not investment advice.',
     },
     ar: {
-      heroTitle: 'استكشف السندات',
+      heroTitle: 'اكتشف السندات',
       heroSubtitle: 'اكتشف فرص الاستثمار ذات الدخل الثابت مع عوائد مستقرة.',
       searchPlaceholder: 'البحث بالاسم أو المُصدر أو ISIN...',
-      featuredBonds: 'السندات المميزة',
-      allBonds: 'جميع السندات',
+      all: 'جميع السندات',
+      featured: 'المميزة',
+      highYield: 'عائد مرتفع',
+      lowRisk: 'مخاطر منخفضة',
+      shortTerm: 'قصير الأجل',
       bonds: 'سندات',
-      ytm: 'العائد حتى الاستحقاق',
+      ytm: 'العائد',
       coupon: 'الكوبون',
       maturity: 'الاستحقاق',
       riskLevel: 'المخاطرة',
@@ -80,6 +103,14 @@ export default function BondsLanding() {
   };
 
   const t = labels[language];
+
+  const filters = [
+    { id: 'all', label: t.all, icon: Landmark },
+    { id: 'featured', label: t.featured, icon: Star },
+    { id: 'high-yield', label: t.highYield, icon: TrendingUp },
+    { id: 'low-risk', label: t.lowRisk, icon: Shield },
+    { id: 'short-term', label: t.shortTerm, icon: Clock },
+  ];
 
   const getRiskColor = (risk: string | null) => {
     switch (risk) {
@@ -136,21 +167,21 @@ export default function BondsLanding() {
             <div className={`mt-4 grid grid-cols-2 gap-3 text-xs ${isRTL ? 'text-right' : ''}`}>
               <div>
                 <p className="text-muted-foreground mb-0.5">{t.ytm}</p>
-                <p className="font-semibold text-green-600 dark:text-green-400 flex items-center gap-1">
+                <p className={`font-semibold flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''} text-green-600 dark:text-green-400`}>
                   <TrendingUp className="h-3 w-3" />
                   {bond.ytm ? `${bond.ytm.toFixed(2)}%` : '-'}
                 </p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-0.5">{t.coupon}</p>
-                <p className="font-semibold flex items-center gap-1">
+                <p className={`font-semibold flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <Percent className="h-3 w-3" />
                   {bond.couponRate ? `${bond.couponRate.toFixed(2)}%` : '-'}
                 </p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-0.5">{t.maturity}</p>
-                <p className="font-medium flex items-center gap-1">
+                <p className={`font-semibold flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <Calendar className="h-3 w-3" />
                   {formatDate(bond.maturityDate ?? null)}
                 </p>
@@ -168,174 +199,90 @@ export default function BondsLanding() {
     );
   };
 
-  const BondRow = ({ bond }: { bond: BondPage }) => {
-    const title = language === 'en' ? bond.title_en : bond.title_ar;
-    
-    return (
-      <Link href={`/bonds/${bond.slug}`}>
-        <Card className="hover-elevate cursor-pointer" data-testid={`bond-row-${bond.slug}`}>
-          <CardContent className="p-4">
-            <div className={`flex items-center justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className={`flex items-center gap-4 flex-1 min-w-0 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Landmark className="h-5 w-5 text-primary" />
-                </div>
-                <div className={`min-w-0 ${isRTL ? 'text-right' : ''}`}>
-                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <span className="font-semibold text-sm line-clamp-1">{title}</span>
-                    {bond.featured && (
-                      <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {language === 'en' ? bond.issuerName_en : bond.issuerName_ar}
-                  </p>
-                </div>
-              </div>
-              
-              <div className={`flex items-center gap-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div className={`hidden sm:block ${isRTL ? 'text-left' : 'text-right'}`}>
-                  <p className="text-xs text-muted-foreground">{t.ytm}</p>
-                  <p className="font-semibold text-green-600 dark:text-green-400">
-                    {bond.ytm ? `${bond.ytm.toFixed(2)}%` : '-'}
-                  </p>
-                </div>
-                <div className={`hidden md:block ${isRTL ? 'text-left' : 'text-right'}`}>
-                  <p className="text-xs text-muted-foreground">{t.coupon}</p>
-                  <p className="font-medium">{bond.couponRate ? `${bond.couponRate.toFixed(2)}%` : '-'}</p>
-                </div>
-                <div className={`hidden lg:block ${isRTL ? 'text-left' : 'text-right'}`}>
-                  <p className="text-xs text-muted-foreground">{t.maturity}</p>
-                  <p className="font-medium">{formatDate(bond.maturityDate ?? null)}</p>
-                </div>
-                <Badge variant="outline" className="shrink-0">{bond.currency || 'USD'}</Badge>
-                <Badge className={`shrink-0 ${getRiskColor(bond.riskLevel)}`}>
-                  {bond.riskLevel || 'N/A'}
-                </Badge>
-                <ArrowRight className={`h-5 w-5 text-muted-foreground shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-    );
-  };
-
   return (
     <div 
       className={`min-h-screen bg-background ${isRTL ? 'rtl' : 'ltr'}`}
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <BarakaHeader />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className={`max-w-5xl mx-auto space-y-8 ${isRTL ? 'text-right' : ''}`}>
           <div className="text-center space-y-4">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Landmark className="h-8 w-8 text-primary" />
-              </div>
-            </div>
             <h1 className="text-4xl font-bold tracking-tight" data-testid="page-title">
               {t.heroTitle}
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               {t.heroSubtitle}
             </p>
-            <div className="flex justify-center gap-2">
-              <Button
-                variant={language === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLanguage('en')}
-                data-testid="button-lang-en"
-              >
-                English
-              </Button>
-              <Button
-                variant={language === 'ar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLanguage('ar')}
-                data-testid="button-lang-ar"
-              >
-                العربية
-              </Button>
-            </div>
           </div>
 
-          <div className="relative max-w-lg mx-auto">
-            <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+          <div className="relative max-w-xl mx-auto">
+            <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
             <Input
               placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`${isRTL ? 'pr-10 text-right' : 'pl-10'} h-12 text-lg`}
+              className={`${isRTL ? 'pr-12 text-right' : 'pl-12'} h-12 text-base rounded-full border-muted`}
               data-testid="input-search-bonds"
             />
           </div>
 
+          <div className={`flex flex-wrap items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            {filters.map((filter) => (
+              <Button
+                key={filter.id}
+                variant={activeFilter === filter.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveFilter(filter.id)}
+                className={`gap-2 rounded-full ${activeFilter === filter.id ? '' : 'bg-background'}`}
+                data-testid={`filter-${filter.id}`}
+              >
+                <filter.icon className="h-4 w-4" />
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+
           {isLoading && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-48" />
-                ))}
-              </div>
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map(i => (
-                  <Skeleton key={i} className="h-20" />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <Skeleton key={i} className="h-48" />
+              ))}
             </div>
           )}
 
-          {!isLoading && searchQuery === '' && displayFeatured.length > 0 && (
-            <section className="space-y-4">
-              <h2 className={`text-xl font-semibold flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Star className="h-5 w-5 text-amber-500" />
-                {t.featuredBonds}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {displayFeatured.map((bond) => (
-                  <BondCard key={bond.id} bond={bond} featured />
-                ))}
-              </div>
-            </section>
+          {!isLoading && filteredBonds.length === 0 && (
+            <div className="text-center py-12">
+              <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">{t.noResults}</p>
+            </div>
           )}
 
-          {!isLoading && (
-            <section className="space-y-4">
+          {!isLoading && filteredBonds.length > 0 && (
+            <div className="space-y-6">
               <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <h2 className="text-xl font-semibold">{t.allBonds}</h2>
                 <Badge variant="secondary">
                   {filteredBonds.length} {t.bonds}
                 </Badge>
               </div>
-              
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredBonds.map((bond) => (
-                  <BondRow key={bond.id} bond={bond} />
+                  <BondCard key={bond.id} bond={bond} featured={bond.featured} />
                 ))}
               </div>
-              
-              {filteredBonds.length === 0 && (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Landmark className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">{t.noResults}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </section>
-          )}
-
-          <footer className="text-center text-sm text-muted-foreground pt-8 border-t">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Shield className="h-4 w-4" />
-              <span>{t.disclaimer}</span>
             </div>
-          </footer>
+          )}
         </div>
       </main>
+
+      <footer className="border-t py-8 mt-8">
+        <div className="container mx-auto px-4 max-w-6xl text-center">
+          <p className="text-sm text-muted-foreground">
+            {t.disclaimer}
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

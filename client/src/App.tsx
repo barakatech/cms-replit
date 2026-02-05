@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { ThemeProvider } from '@/hooks/use-theme';
+import { LanguageProvider } from '@/lib/language-context';
 import { UserProvider } from '@/lib/user-context';
 import { AuthProvider } from '@/lib/auth-context';
 import { AppSidebar } from '@/components/AppSidebar';
@@ -547,14 +548,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">
-        <AuthProvider>
-          <UserProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </UserProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <UserProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </UserProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

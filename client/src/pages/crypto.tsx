@@ -9,21 +9,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Bitcoin, 
   Search, 
-  Star, 
-  ArrowRight,
+  Star,
   TrendingUp,
   TrendingDown,
   BarChart3,
-  Coins
+  Coins,
+  Flame,
+  Eye,
+  Zap
 } from 'lucide-react';
 import BarakaHeader from '@/components/BarakaHeader';
+import { useLanguage } from '@/lib/language-context';
 import type { CryptoPage, CryptoMarketSnapshot } from '@shared/schema';
 
 export default function CryptoLanding() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  
-  const isRTL = language === 'ar';
+  const [activeFilter, setActiveFilter] = useState('all');
+  const { language, isRTL } = useLanguage();
 
   const { data: cryptoPages = [], isLoading: pagesLoading } = useQuery<CryptoPage[]>({
     queryKey: ['/api/crypto/pages'],
@@ -40,23 +42,35 @@ export default function CryptoLanding() {
   const filteredCryptos = publishedCryptos.filter(crypto => {
     const query = searchQuery.toLowerCase();
     const title = language === 'en' ? crypto.title_en : crypto.title_ar;
-    return (
+    
+    const matchesSearch = (
       title?.toLowerCase().includes(query) ||
       crypto.name?.toLowerCase().includes(query) ||
       crypto.symbol?.toLowerCase().includes(query)
     );
-  });
 
-  const featuredCryptos = publishedCryptos.filter(c => c.featured).slice(0, 3);
-  const displayFeatured = featuredCryptos.length > 0 ? featuredCryptos : publishedCryptos.slice(0, 3);
+    if (!matchesSearch) return false;
+
+    const snapshot = snapshotMap.get(crypto.coingeckoId || '');
+    
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'featured') return crypto.featured;
+    if (activeFilter === 'top-10') return crypto.marketCapRank && crypto.marketCapRank <= 10;
+    if (activeFilter === 'gainers') return snapshot?.priceChange24hPct && snapshot.priceChange24hPct > 0;
+    if (activeFilter === 'losers') return snapshot?.priceChange24hPct && snapshot.priceChange24hPct < 0;
+    return true;
+  });
 
   const labels = {
     en: {
-      heroTitle: 'Explore Crypto',
-      heroSubtitle: 'Discover the top cryptocurrencies by market capitalization.',
+      heroTitle: 'Discover crypto',
+      heroSubtitle: 'Explore the top cryptocurrencies by market capitalization.',
       searchPlaceholder: 'Search by name or symbol...',
-      featuredCryptos: 'Featured Cryptocurrencies',
-      allCryptos: 'All Cryptocurrencies',
+      all: 'All Crypto',
+      featured: 'Featured',
+      top10: 'Top 10',
+      gainers: 'Gainers',
+      losers: 'Losers',
       cryptos: 'cryptocurrencies',
       price: 'Price',
       change24h: '24h Change',
@@ -68,11 +82,14 @@ export default function CryptoLanding() {
       noCryptosDesc: 'Check back later for cryptocurrency listings.',
     },
     ar: {
-      heroTitle: 'استكشف العملات الرقمية',
+      heroTitle: 'اكتشف العملات الرقمية',
       heroSubtitle: 'اكتشف أفضل العملات الرقمية حسب القيمة السوقية.',
       searchPlaceholder: 'البحث بالاسم أو الرمز...',
-      featuredCryptos: 'العملات الرقمية المميزة',
-      allCryptos: 'جميع العملات الرقمية',
+      all: 'جميع العملات',
+      featured: 'المميزة',
+      top10: 'أفضل 10',
+      gainers: 'الرابحون',
+      losers: 'الخاسرون',
       cryptos: 'عملات رقمية',
       price: 'السعر',
       change24h: 'التغيير ٢٤س',
@@ -86,6 +103,14 @@ export default function CryptoLanding() {
   };
 
   const t = labels[language];
+
+  const filters = [
+    { id: 'all', label: t.all, icon: Bitcoin },
+    { id: 'featured', label: t.featured, icon: Star },
+    { id: 'top-10', label: t.top10, icon: Zap },
+    { id: 'gainers', label: t.gainers, icon: TrendingUp },
+    { id: 'losers', label: t.losers, icon: TrendingDown },
+  ];
 
   const formatPrice = (price?: number) => {
     if (!price) return '-';
@@ -178,55 +203,46 @@ export default function CryptoLanding() {
       <main className="container mx-auto px-4 py-8">
         <div className={`max-w-5xl mx-auto space-y-8 ${isRTL ? 'text-right' : ''}`}>
           <div className="text-center space-y-4">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bitcoin className="h-8 w-8 text-primary" />
-              </div>
-            </div>
             <h1 className="text-4xl font-bold tracking-tight" data-testid="text-hero-title">
               {t.heroTitle}
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               {t.heroSubtitle}
             </p>
-            <div className="flex justify-center gap-2">
-              <Button
-                variant={language === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLanguage('en')}
-                data-testid="button-lang-en"
-              >
-                English
-              </Button>
-              <Button
-                variant={language === 'ar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLanguage('ar')}
-                data-testid="button-lang-ar"
-              >
-                العربية
-              </Button>
-            </div>
           </div>
 
-          <div className="relative max-w-lg mx-auto">
-            <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
+          <div className="relative max-w-xl mx-auto">
+            <Search className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground`} />
             <Input
               placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`${isRTL ? 'pr-10 text-right' : 'pl-10'} h-12 text-lg`}
+              className={`${isRTL ? 'pr-12 text-right' : 'pl-12'} h-12 text-base rounded-full border-muted`}
               data-testid="input-search-crypto"
             />
           </div>
 
+          <div className={`flex flex-wrap items-center justify-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            {filters.map((filter) => (
+              <Button
+                key={filter.id}
+                variant={activeFilter === filter.id ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveFilter(filter.id)}
+                className={`gap-2 rounded-full ${activeFilter === filter.id ? '' : 'bg-background'}`}
+                data-testid={`filter-${filter.id}`}
+              >
+                <filter.icon className="h-4 w-4" />
+                {filter.label}
+              </Button>
+            ))}
+          </div>
+
           {pagesLoading && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map(i => (
-                  <Skeleton key={i} className="h-48" />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <Skeleton key={i} className="h-48" />
+              ))}
             </div>
           )}
 
@@ -240,42 +256,26 @@ export default function CryptoLanding() {
             </div>
           )}
 
-          {!pagesLoading && searchQuery === '' && displayFeatured.length > 0 && (
-            <section className="space-y-4">
-              <h2 className={`text-xl font-semibold flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Star className="h-5 w-5 text-amber-500" />
-                {t.featuredCryptos}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {displayFeatured.map((crypto) => (
-                  <CryptoCard key={crypto.id} crypto={crypto} featured />
-                ))}
-              </div>
-            </section>
+          {!pagesLoading && filteredCryptos.length === 0 && publishedCryptos.length > 0 && (
+            <div className="text-center py-12">
+              <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">{t.noResults}</p>
+            </div>
           )}
 
-          {!pagesLoading && publishedCryptos.length > 0 && (
-            <section className="space-y-4">
+          {!pagesLoading && filteredCryptos.length > 0 && (
+            <div className="space-y-6">
               <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <h2 className="text-xl font-semibold">{t.allCryptos}</h2>
                 <Badge variant="secondary">
                   {filteredCryptos.length} {t.cryptos}
                 </Badge>
               </div>
-
-              {filteredCryptos.length === 0 ? (
-                <div className="text-center py-12">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">{t.noResults}</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredCryptos.map((crypto) => (
-                    <CryptoCard key={crypto.id} crypto={crypto} />
-                  ))}
-                </div>
-              )}
-            </section>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCryptos.map((crypto) => (
+                  <CryptoCard key={crypto.id} crypto={crypto} featured={crypto.featured} />
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </main>

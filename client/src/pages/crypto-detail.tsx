@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,13 +16,12 @@ import {
   ChartLine
 } from 'lucide-react';
 import BarakaHeader from '@/components/BarakaHeader';
+import { useLanguage } from '@/lib/language-context';
 import type { CryptoPage, CryptoMarketSnapshot } from '@shared/schema';
 
 export default function CryptoDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const [language, setLanguage] = useState<'en' | 'ar'>('en');
-  
-  const isRTL = language === 'ar';
+  const { language, isRTL } = useLanguage();
 
   const { data: crypto, isLoading, error } = useQuery<CryptoPage>({
     queryKey: ['/api/crypto/pages/slug', slug],
@@ -161,31 +159,13 @@ export default function CryptoDetail() {
 
       <div className="bg-gradient-to-br from-primary/10 via-background to-background">
         <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="mb-6">
             <Link href="/crypto">
               <Button variant="ghost" size="sm" data-testid="button-back">
                 <ArrowLeft className={`h-4 w-4 ${isRTL ? 'ml-2 rotate-180' : 'mr-2'}`} />
                 {t.backToCrypto}
               </Button>
             </Link>
-            <div className="flex gap-2">
-              <Button
-                variant={language === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLanguage('en')}
-                data-testid="button-lang-en"
-              >
-                English
-              </Button>
-              <Button
-                variant={language === 'ar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLanguage('ar')}
-                data-testid="button-lang-ar"
-              >
-                العربية
-              </Button>
-            </div>
           </div>
 
           <div className={`flex flex-col md:flex-row md:items-start md:justify-between gap-6 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
