@@ -42,6 +42,8 @@ import AdminBonds from '@/pages/admin-bonds';
 import AdminBondEditor from '@/pages/admin-bond-editor';
 import BondDetail from '@/pages/bond-detail';
 import BondsLanding from '@/pages/bonds';
+import CryptoLanding from '@/pages/crypto';
+import CryptoDetail from '@/pages/crypto-detail';
 import PageBuilder from '@/pages/page-builder';
 import NewsletterPreview from '@/pages/newsletter-preview';
 import LandingPagePublic from '@/pages/landing-page';
@@ -65,6 +67,9 @@ function Router() {
       <Route path="/themes/:slug" component={StockThemePage} />
       <Route path="/stocks/:slug" component={StockDetail} />
       <Route path="/bonds" component={BondsLanding} />
+      <Route path="/bonds/:slug" component={BondDetail} />
+      <Route path="/crypto" component={CryptoLanding} />
+      <Route path="/crypto/:slug" component={CryptoDetail} />
       <Route path="/blog" component={BlogHome} />
       <Route path="/refer" component={ReferEarnPage} />
       <Route path="/referral" component={ReferEarnPage} />
