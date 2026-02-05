@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema, insertBondPageSchema, DEFAULT_BOND_PAGE_BLOCKS } from "@shared/schema";
+import { insertPriceAlertSubscriptionSchema, insertStockWatchSubscriptionSchema, insertNewsletterSignupSchema, insertCallToActionSchema, insertCTAEventSchema, insertNewsletterSchema, insertSpotlightBannerSchema, insertSubscriberSchema, insertComplianceScanRunSchema, insertComplianceRuleSchema, insertSchemaBlockSchema, insertBondPageSchema, DEFAULT_BOND_PAGE_BLOCKS, insertCryptoPageSchema, insertCryptoMarketSnapshotSchema } from "@shared/schema";
 import type { InsertCmsWebEvent, InsertBannerEvent, UserPresence, PresenceMessage } from "@shared/schema";
 import { PRESENCE_COLORS } from "@shared/schema";
 import { z } from "zod";
@@ -2604,6 +2604,310 @@ export async function registerRoutes(app: Express): Promise<Server> {
       htmlOutput: newsletter.htmlOutput,
       locale: newsletter.locale,
       sentAt: newsletter.sentAt,
+    });
+  });
+
+  // ============================================
+  // Crypto Market Snapshots API
+  // ============================================
+  
+  app.get("/api/crypto/snapshots", async (_req, res) => {
+    const snapshots = await storage.getCryptoMarketSnapshots();
+    res.json(snapshots);
+  });
+
+  app.get("/api/crypto/snapshots/:id", async (req, res) => {
+    const snapshot = await storage.getCryptoMarketSnapshot(req.params.id);
+    if (!snapshot) {
+      return res.status(404).json({ message: "Crypto market snapshot not found" });
+    }
+    res.json(snapshot);
+  });
+
+  // ============================================
+  // Crypto Pages API
+  // ============================================
+  
+  app.get("/api/crypto/pages", async (_req, res) => {
+    const pages = await storage.getCryptoPages();
+    res.json(pages);
+  });
+
+  app.get("/api/crypto/pages/:id", async (req, res) => {
+    const page = await storage.getCryptoPage(req.params.id);
+    if (!page) {
+      return res.status(404).json({ message: "Crypto page not found" });
+    }
+    res.json(page);
+  });
+
+  app.get("/api/crypto/pages/slug/:slug", async (req, res) => {
+    const page = await storage.getCryptoPageBySlug(req.params.slug);
+    if (!page) {
+      return res.status(404).json({ message: "Crypto page not found" });
+    }
+    res.json(page);
+  });
+
+  app.post("/api/crypto/pages", async (req, res) => {
+    try {
+      const parsed = insertCryptoPageSchema.parse(req.body);
+      const page = await storage.createCryptoPage(parsed);
+      res.status(201).json(page);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request body", errors: error.errors });
+      }
+      throw error;
+    }
+  });
+
+  app.put("/api/crypto/pages/:id", async (req, res) => {
+    const page = await storage.getCryptoPage(req.params.id);
+    if (!page) {
+      return res.status(404).json({ message: "Crypto page not found" });
+    }
+    
+    // Prevent updates to editorially locked pages from generation endpoint
+    if (page.editorialLocked && req.body.fromGenerator) {
+      return res.status(403).json({ message: "Crypto page is editorially locked" });
+    }
+    
+    const updated = await storage.updateCryptoPage(req.params.id, req.body);
+    res.json(updated);
+  });
+
+  app.delete("/api/crypto/pages/:id", async (req, res) => {
+    const deleted = await storage.deleteCryptoPage(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Crypto page not found" });
+    }
+    res.json({ success: true });
+  });
+
+  // Generate crypto pages from CoinGecko top 100
+  app.post("/api/crypto/generate", async (req, res) => {
+    try {
+      const { limit = 100 } = req.body;
+      
+      // Fetch top coins from CoinGecko
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${limit}&page=1&sparkline=false&price_change_percentage=24h,7d,30d`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+      
+      const coins = await response.json() as Array<{
+        id: string;
+        symbol: string;
+        name: string;
+        image: string;
+        current_price: number | null;
+        market_cap: number | null;
+        market_cap_rank: number | null;
+        fully_diluted_valuation: number | null;
+        total_volume: number | null;
+        high_24h: number | null;
+        low_24h: number | null;
+        price_change_24h: number | null;
+        price_change_percentage_24h: number | null;
+        price_change_percentage_7d_in_currency: number | null;
+        price_change_percentage_30d_in_currency: number | null;
+        market_cap_change_24h: number | null;
+        market_cap_change_percentage_24h: number | null;
+        circulating_supply: number | null;
+        total_supply: number | null;
+        max_supply: number | null;
+        ath: number | null;
+        ath_change_percentage: number | null;
+        ath_date: string | null;
+        atl: number | null;
+        atl_change_percentage: number | null;
+        atl_date: string | null;
+        last_updated: string;
+      }>;
+      
+      const created: string[] = [];
+      const updated: string[] = [];
+      const skipped: string[] = [];
+      
+      for (const coin of coins) {
+        // Upsert market snapshot
+        await storage.upsertCryptoMarketSnapshot({
+          provider: 'coingecko',
+          providerCoinId: coin.id,
+          symbol: coin.symbol.toUpperCase(),
+          name: coin.name,
+          image: coin.image,
+          rank: coin.market_cap_rank || 9999,
+          priceUsd: coin.current_price ?? 0,
+          marketCapUsd: coin.market_cap ?? 0,
+          volume24hUsd: coin.total_volume ?? 0,
+          priceChange24hPct: coin.price_change_percentage_24h ?? 0,
+          circulatingSupply: coin.circulating_supply ?? undefined,
+          totalSupply: coin.total_supply ?? undefined,
+          maxSupply: coin.max_supply ?? undefined,
+          athUsd: coin.ath ?? undefined,
+          athDate: coin.ath_date ?? undefined,
+          atlUsd: coin.atl ?? undefined,
+          atlDate: coin.atl_date ?? undefined,
+          lastUpdatedAt: coin.last_updated || new Date().toISOString(),
+        });
+        
+        // Check if page exists
+        const existingPage = await storage.getCryptoPageByCoingeckoId(coin.id);
+        
+        if (existingPage) {
+          // Skip editorially locked pages
+          if (existingPage.editorialLocked) {
+            skipped.push(coin.name);
+            continue;
+          }
+          
+          // Update existing page with market data
+          await storage.updateCryptoPage(existingPage.id, {
+            marketCapRank: coin.market_cap_rank ?? undefined,
+          });
+          updated.push(coin.name);
+        } else {
+          // Create new page
+          const slug = coin.id.toLowerCase().replace(/\s+/g, '-');
+          
+          await storage.createCryptoPage({
+            coingeckoId: coin.id,
+            symbol: coin.symbol.toUpperCase(),
+            name: coin.name,
+            slug,
+            title_en: coin.name,
+            title_ar: coin.name,
+            marketCapRank: coin.market_cap_rank ?? undefined,
+            status: 'draft',
+            editorialLocked: false,
+            heroSummary_en: `${coin.name} (${coin.symbol.toUpperCase()}) is a cryptocurrency ranked #${coin.market_cap_rank || 'N/A'} by market capitalization. Track real-time price, market data, and learn more about ${coin.name}.`,
+            heroSummary_ar: `${coin.name} (${coin.symbol.toUpperCase()}) هي عملة رقمية تحتل المرتبة #${coin.market_cap_rank || 'N/A'} من حيث القيمة السوقية. تتبع السعر في الوقت الفعلي وبيانات السوق.`,
+            metaTitle_en: `${coin.name} (${coin.symbol.toUpperCase()}) Price, Charts & Market Data | baraka`,
+            metaTitle_ar: `سعر ${coin.name} (${coin.symbol.toUpperCase()}) والرسوم البيانية | بركة`,
+            metaDescription_en: `Get the latest ${coin.name} price, market cap, trading volume, and detailed analysis. Track ${coin.symbol.toUpperCase()} price charts and learn more about ${coin.name}.`,
+            metaDescription_ar: `احصل على أحدث سعر ${coin.name} والقيمة السوقية وحجم التداول. تتبع مخططات أسعار ${coin.symbol.toUpperCase()}.`,
+            ogImage: coin.image,
+          });
+          created.push(coin.name);
+        }
+      }
+      
+      res.json({
+        success: true,
+        created: created.length,
+        updated: updated.length,
+        skipped: skipped.length,
+        details: { created, updated, skipped },
+      });
+    } catch (error) {
+      console.error('Crypto generation error:', error);
+      res.status(500).json({ 
+        message: "Failed to generate crypto pages", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Toggle editorial lock
+  app.post("/api/crypto/pages/:id/toggle-lock", async (req, res) => {
+    const page = await storage.getCryptoPage(req.params.id);
+    if (!page) {
+      return res.status(404).json({ message: "Crypto page not found" });
+    }
+    
+    const updated = await storage.updateCryptoPage(req.params.id, {
+      editorialLocked: !page.editorialLocked,
+    });
+    res.json(updated);
+  });
+
+  // Run compliance scan on crypto page content
+  app.post("/api/crypto/pages/:id/scan", async (req, res) => {
+    const page = await storage.getCryptoPage(req.params.id);
+    if (!page) {
+      return res.status(404).json({ message: "Crypto page not found" });
+    }
+    
+    // Combine all content for scanning
+    const contentToScan = [
+      page.heroSummary_en,
+      page.heroSummary_ar,
+      page.howItWorks_en,
+      page.howItWorks_ar,
+      page.whatIsIt_en,
+      page.whatIsIt_ar,
+      page.risks_en,
+      page.risks_ar,
+      page.metaTitle_en,
+      page.metaTitle_ar,
+      page.metaDescription_en,
+      page.metaDescription_ar,
+    ].filter(Boolean).join('\n\n');
+    
+    // Get compliance rules
+    const rules = await storage.getComplianceRules();
+    const violations: Array<{
+      ruleId: string;
+      phrase: string;
+      category: string;
+      severity: string;
+      context: string;
+    }> = [];
+    
+    for (const rule of rules) {
+      if (!rule.enabled) continue;
+      
+      let matched = false;
+      const lowerContent = contentToScan.toLowerCase();
+      const lowerPhrase = rule.phrase.toLowerCase();
+      
+      if (rule.matchType === 'exact') {
+        const regex = new RegExp(`\\b${lowerPhrase}\\b`, 'gi');
+        matched = regex.test(lowerContent);
+      } else if (rule.matchType === 'contains') {
+        matched = lowerContent.includes(lowerPhrase);
+      } else if (rule.matchType === 'regex') {
+        try {
+          const regex = new RegExp(rule.phrase, 'gi');
+          matched = regex.test(contentToScan);
+        } catch {
+          // Invalid regex, skip
+        }
+      }
+      
+      if (matched) {
+        const phraseIndex = lowerContent.indexOf(lowerPhrase);
+        const contextStart = Math.max(0, phraseIndex - 30);
+        const contextEnd = Math.min(contentToScan.length, phraseIndex + lowerPhrase.length + 30);
+        
+        violations.push({
+          ruleId: rule.id,
+          phrase: rule.phrase,
+          category: rule.category,
+          severity: rule.severity,
+          context: '...' + contentToScan.slice(contextStart, contextEnd) + '...',
+        });
+      }
+    }
+    
+    // Update page compliance status
+    const complianceStatus: 'pass' | 'fail' | 'pending' = violations.length === 0 ? 'pass' : 
+      violations.some(v => v.severity === 'critical' || v.severity === 'high') ? 'fail' : 'pending';
+    
+    await storage.updateCryptoPage(req.params.id, {
+      complianceStatus,
+    });
+    
+    res.json({
+      pageId: page.id,
+      status: complianceStatus,
+      violations,
+      scannedAt: new Date().toISOString(),
     });
   });
 
