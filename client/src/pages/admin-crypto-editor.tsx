@@ -38,7 +38,7 @@ import { DEFAULT_CRYPTO_PAGE_MODULES } from '@shared/schema';
 const cryptoFormSchema = z.object({
   title_en: z.string().min(1, 'English title is required'),
   title_ar: z.string().min(1, 'Arabic title is required'),
-  slug: z.string().min(1, 'Slug is required').regex(/^[a-z0-9-]+$/, 'Slug must be lowercase with hyphens'),
+  slug: z.string().optional(),
   status: z.enum(['draft', 'published', 'archived']),
   featured: z.boolean().default(false),
   tags: z.array(z.string()).default([]),
@@ -220,16 +220,6 @@ export default function AdminCryptoEditor() {
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  const generateSlug = () => {
-    const name = form.getValues('name') || form.getValues('title_en');
-    const slug = name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-    form.setValue('slug', slug);
-  };
 
   const addDisclaimer = (lang: 'en' | 'ar') => {
     const value = lang === 'en' ? disclaimerEn : disclaimerAr;
@@ -391,16 +381,38 @@ export default function AdminCryptoEditor() {
                         name="slug"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>URL Slug</FormLabel>
+                            <FormLabel>URL Slug {!isNew && <Badge variant="secondary" className="ml-2">Read-only</Badge>}</FormLabel>
                             <div className="flex gap-2">
                               <FormControl>
-                                <Input {...field} placeholder="bitcoin" data-testid="input-slug" />
+                                <Input 
+                                  {...field} 
+                                  placeholder={isNew ? "Auto-generated from symbol + coingeckoId" : ""} 
+                                  readOnly={!isNew}
+                                  className={!isNew ? "bg-muted cursor-not-allowed" : ""}
+                                  data-testid="input-slug" 
+                                />
                               </FormControl>
-                              <Button type="button" variant="outline" onClick={generateSlug}>
-                                Generate
-                              </Button>
+                              {!isNew && field.value && (
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="icon"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(field.value || '');
+                                    toast({ title: "Copied!", description: "Slug copied to clipboard" });
+                                  }}
+                                  data-testid="button-copy-slug"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                </Button>
+                              )}
                             </div>
-                            <FormDescription>Used in the URL: /crypto/{field.value || 'slug'}</FormDescription>
+                            <FormDescription>
+                              {isNew 
+                                ? "Slug will be auto-generated as: {symbol}-{coingeckoId}" 
+                                : `URL: /crypto/${field.value || 'slug'} (cannot be changed)`
+                              }
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
