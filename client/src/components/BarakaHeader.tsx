@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { TrendingUp, BookOpen, RefreshCw, Moon, Sun } from 'lucide-react';
+import { TrendingUp, BookOpen, RefreshCw, Moon, Sun, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
@@ -17,6 +17,7 @@ export default function BarakaHeader({ showTradeCTA, tradeTicker, tradeLabel }: 
 
   const navItems = [
     { href: '/stocks', label: 'Stocks', icon: TrendingUp },
+    { href: '/bonds', label: 'Bonds', icon: Landmark },
     { href: '/blog', label: 'Learn', icon: BookOpen },
   ];
 
