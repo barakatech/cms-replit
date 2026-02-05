@@ -18,6 +18,12 @@ import {
   Eye,
   Globe,
   FileText,
+  Settings2,
+  Shield,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { useToast } from '@/hooks/use-toast';
@@ -324,19 +330,16 @@ export default function AdminStockEditor() {
 
         <Form {...form}>
           <form className="space-y-6">
-            <Tabs defaultValue="content">
+            <Tabs defaultValue="basics">
               <TabsList>
-                <TabsTrigger value="content" className="gap-2">
-                  <FileText className="h-4 w-4" />
-                  Content
-                </TabsTrigger>
-                <TabsTrigger value="seo" className="gap-2">
-                  <Globe className="h-4 w-4" />
-                  SEO
-                </TabsTrigger>
+                <TabsTrigger value="basics" data-testid="tab-basics">Basics</TabsTrigger>
+                <TabsTrigger value="content" data-testid="tab-content">Content</TabsTrigger>
+                <TabsTrigger value="seo" data-testid="tab-seo">SEO</TabsTrigger>
+                <TabsTrigger value="compliance" data-testid="tab-compliance">Compliance</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="content" className="space-y-6 mt-6">
+              {/* BASICS TAB */}
+              <TabsContent value="basics" className="space-y-6 mt-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Stock Information</CardTitle>
@@ -505,61 +508,6 @@ export default function AdminStockEditor() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Description</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="description_en"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>English</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="description_en" />
-                            </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={3}
-                                placeholder="Brief description..."
-                                onFocus={() => handleFieldFocus('description_en')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-description-en"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="description_ar"
-                        render={({ field }) => (
-                          <FormItem>
-                            <div className="flex items-center justify-between">
-                              <FormLabel>Arabic</FormLabel>
-                              <FieldPresenceIndicator presences={othersOnSamePage} field="description_ar" />
-                            </div>
-                            <FormControl>
-                              <Textarea 
-                                {...field} 
-                                rows={3}
-                                dir="rtl"
-                                placeholder="وصف مختصر..."
-                                onFocus={() => handleFieldFocus('description_ar')}
-                                onBlur={handleFieldBlur}
-                                data-testid="input-description-ar"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
                     <CardTitle>About Company</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -637,6 +585,98 @@ export default function AdminStockEditor() {
                         )}
                       />
                     </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Related Stocks</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="relatedTickers"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Related Tickers (comma-separated)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="MSFT, GOOGL, AMZN"
+                              onFocus={() => handleFieldFocus('relatedTickers')}
+                              onBlur={handleFieldBlur}
+                              data-testid="input-related-tickers"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* CONTENT TAB */}
+              <TabsContent value="content" className="space-y-6 mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Description</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="description_en"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>English</FormLabel>
+                              <FieldPresenceIndicator presences={othersOnSamePage} field="description_en" />
+                            </div>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={3}
+                                placeholder="Brief description..."
+                                onFocus={() => handleFieldFocus('description_en')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-description-en"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="description_ar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Arabic</FormLabel>
+                              <FieldPresenceIndicator presences={othersOnSamePage} field="description_ar" />
+                            </div>
+                            <FormControl>
+                              <Textarea 
+                                {...field} 
+                                rows={3}
+                                dir="rtl"
+                                placeholder="وصف مختصر..."
+                                onFocus={() => handleFieldFocus('description_ar')}
+                                onBlur={handleFieldBlur}
+                                data-testid="input-description-ar"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Overview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <FormField
                       control={form.control}
                       name="overview_en"
@@ -689,6 +729,14 @@ export default function AdminStockEditor() {
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Investment Thesis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <FormField
                       control={form.control}
                       name="thesis_en"
@@ -746,7 +794,7 @@ export default function AdminStockEditor() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Content</CardTitle>
+                    <CardTitle>Main Content</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormField
@@ -797,32 +845,6 @@ export default function AdminStockEditor() {
                                 dir="rtl"
                               />
                             </div>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Related Stocks</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <FormField
-                      control={form.control}
-                      name="relatedTickers"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Related Tickers (comma-separated)</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              placeholder="MSFT, GOOGL, AMZN"
-                              onFocus={() => handleFieldFocus('relatedTickers')}
-                              onBlur={handleFieldBlur}
-                              data-testid="input-related-tickers"
-                            />
                           </FormControl>
                         </FormItem>
                       )}
@@ -1261,6 +1283,97 @@ export default function AdminStockEditor() {
 }`}
                       </pre>
                     </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* COMPLIANCE TAB */}
+              <TabsContent value="compliance" className="space-y-6 mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Compliance Status
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {stockPage && (
+                      <div className="flex items-center gap-4 p-4 rounded-lg border">
+                        {(stockPage as any).complianceStatus === 'pass' && (
+                          <>
+                            <CheckCircle2 className="h-8 w-8 text-green-500" />
+                            <div>
+                              <p className="font-medium text-green-700 dark:text-green-400">Compliance Passed</p>
+                              <p className="text-sm text-muted-foreground">
+                                Last scanned: {(stockPage as any).lastComplianceScanAt ? new Date((stockPage as any).lastComplianceScanAt).toLocaleString() : 'Never'}
+                              </p>
+                            </div>
+                          </>
+                        )}
+                        {(stockPage as any).complianceStatus === 'fail' && (
+                          <>
+                            <XCircle className="h-8 w-8 text-red-500" />
+                            <div>
+                              <p className="font-medium text-red-700 dark:text-red-400">Compliance Issues Found</p>
+                              <p className="text-sm text-muted-foreground">
+                                {(stockPage as any).blockedKeywordsHit?.length || 0} violations detected
+                              </p>
+                            </div>
+                          </>
+                        )}
+                        {((stockPage as any).complianceStatus === 'pending' || !(stockPage as any).complianceStatus) && (
+                          <>
+                            <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                            <div>
+                              <p className="font-medium text-yellow-700 dark:text-yellow-400">Pending Review</p>
+                              <p className="text-sm text-muted-foreground">
+                                Run a compliance scan to check content
+                              </p>
+                            </div>
+                          </>
+                        )}
+                        {(stockPage as any).complianceStatus === 'override' && (
+                          <>
+                            <Settings2 className="h-8 w-8 text-blue-500" />
+                            <div>
+                              <p className="font-medium text-blue-700 dark:text-blue-400">Override Applied</p>
+                              <p className="text-sm text-muted-foreground">
+                                Reason: {(stockPage as any).complianceOverrideReason || 'Not specified'}
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {!stockPage && (
+                      <div className="flex items-center gap-4 p-4 rounded-lg border">
+                        <AlertTriangle className="h-8 w-8 text-yellow-500" />
+                        <div>
+                          <p className="font-medium text-yellow-700 dark:text-yellow-400">Save First</p>
+                          <p className="text-sm text-muted-foreground">
+                            Save the stock page to enable compliance scanning
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isNew}
+                      onClick={() => {
+                        toast({ title: 'Scanning...', description: 'Compliance scan is not yet implemented for stock pages.' });
+                      }}
+                      data-testid="button-run-compliance-scan"
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Run Compliance Scan
+                    </Button>
+
+                    <p className="text-xs text-muted-foreground">
+                      Compliance scanning checks content against regulatory rules and blocked keywords to ensure fintech compliance requirements are met.
+                    </p>
                   </CardContent>
                 </Card>
               </TabsContent>
