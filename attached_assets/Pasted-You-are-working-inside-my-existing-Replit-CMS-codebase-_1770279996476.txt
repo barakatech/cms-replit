@@ -1,0 +1,618 @@
+You are working inside my existing Replit CMS codebase (do NOT refactor unrelated parts).
+
+TASK
+Seed the CMS with 8 fully-populated dummy BondPage entries (complete landing-page content), aligned to the BondPage fields already created in the CMS.
+
+NON-NEGOTIABLES
+- Do not change the BondPage schema.
+- Reuse existing CMS patterns for seeding/fixtures. If a seed script exists, extend it; otherwise create one in the standard repo place (e.g., scripts/seed-bonds.ts / scripts/seed-bonds.js).
+- The seed must be IDEMPOTENT: upsert keyed by slug (no duplicates on repeated runs).
+- Publish items 1–6; keep items 7–8 as draft.
+- After seeding, print a console table: slug | title.en | issuerName | currency | ytm | maturityDate | status
+- Print public URLs for each (e.g., /bonds/:slug).
+
+DB IMPLEMENTATION NOTES (choose the right one based on the repo)
+- Prisma: prisma.bondPage.upsert({ where: { slug }, create: {...}, update: {...} })
+- Mongo: collection.updateOne({slug}, {$set: doc}, {upsert:true})
+- Supabase/Postgres: upsert into bond_pages with slug unique
+
+COMMON TEXT (use exactly)
+riskDisclosure.en:
+"Bonds carry risks including interest rate risk, credit risk, and liquidity risk. Capital is at risk."
+riskDisclosure.ar:
+"تنطوي السندات على مخاطر تشمل مخاطر أسعار الفائدة ومخاطر الائتمان ومخاطر السيولة. رأس المال معرّض للمخاطر."
+disclaimers.en:
+"This page is for information only and is not investment advice."
+disclaimers.ar:
+"هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."
+incomeEstimateDisclaimer.en:
+"Income estimates are illustrative and depend on price, yields, and holding period. Capital is at risk."
+incomeEstimateDisclaimer.ar:
+"تقديرات الدخل لغرض التوضيح وتعتمد على السعر والعوائد وفترة الاحتفاظ. رأس المال معرّض للمخاطر."
+
+IMPORTANT
+- Run the existing compliance checker (reuse the existing function) on ALL text fields for each page after creating/updating it, and store results into:
+  complianceStatus (Pass), complianceScanResults, blockedKeywordsHit, requiredDisclosuresPresent, lastComplianceScanAt
+- If your compliance checker requires a manual “run” action, simulate it in seed by calling the same internal function used by the UI.
+
+FIELDS
+Insert these documents matching the BondPage schema that exists in the CMS (Identity, Classification, IDs/Metadata, Pricing/Yield, Coupon/Cashflow, Risk/Credit, Issuer, Liquidity, Content Modules, Charts, SEO, Compliance).
+
+DATA TO UPSERT (use exactly these 8 records)
+
+[
+  {
+    "title": { "en": "US Treasury Note 4.50% (May 2031)", "ar": "سندات الخزانة الأمريكية 4.50% (مايو 2031)" },
+    "slug": "us-treasury-note-4-50-may-2031",
+    "status": "published",
+    "canonicalUrl": null,
+    "tags": ["government", "usd", "treasury", "fixed-income"],
+    "featured": true,
+
+    "instrumentType": "Bond",
+    "issuerType": "Government",
+    "couponType": "Fixed",
+    "seniority": "Senior Unsecured",
+    "callable": false,
+    "putable": false,
+    "convertible": false,
+    "guaranteed": true,
+    "callSchedule": [],
+    "putSchedule": [],
+    "conversionTerms": null,
+    "guarantor": null,
+
+    "isin": "US000000DUMMY1",
+    "cusip": "000000AA1",
+    "ticker": null,
+    "exchange": null,
+    "countryOfRisk": "United States",
+    "issuerCountry": "United States",
+    "currency": "USD",
+    "issueDate": "2021-05-15",
+    "maturityDate": "2031-05-15",
+    "dayCountConvention": "ACT/ACT",
+    "settlementDays": 2,
+    "denomination": 100,
+    "minimumInvestment": { "amount": 100, "currency": "USD" },
+    "incrementSize": { "amount": 100, "currency": "USD" },
+
+    "cleanPrice": 98.75,
+    "dirtyPrice": 99.10,
+    "accruedInterest": 0.35,
+    "ytm": 4.62,
+    "currentYield": 4.56,
+    "yieldToCall": null,
+    "yieldToWorst": 4.62,
+    "spread": { "type": "N/A", "valueBps": null },
+    "benchmark": { "name": "UST", "spreadToBenchmarkBps": 0 },
+    "bidPrice": 98.70,
+    "askPrice": 98.80,
+    "bidYield": 4.63,
+    "askYield": 4.61,
+    "bidAskSpread": { "type": "price", "value": 0.10 },
+    "lastUpdatedAt": "NOW",
+    "priceSource": "manual",
+
+    "couponRate": 4.5,
+    "couponFrequency": "Semi-annual",
+    "lastCouponDate": "2025-11-15",
+    "nextCouponDate": "2026-05-15",
+    "principalRepaymentType": "Bullet",
+    "couponSchedule": [
+      { "paymentDate": "2026-05-15", "amountPer100": 2.25, "currency": "USD" },
+      { "paymentDate": "2026-11-15", "amountPer100": 2.25, "currency": "USD" },
+      { "paymentDate": "2027-05-15", "amountPer100": 2.25, "currency": "USD" },
+      { "paymentDate": "2027-11-15", "amountPer100": 2.25, "currency": "USD" }
+    ],
+    "amortizationSchedule": null,
+    "incomeCalculatorDefaults": {
+      "defaultInvestmentAmount": { "amount": 10000, "currency": "USD" },
+      "showIncomeEstimate": true,
+      "incomeEstimateDisclaimer": { "en": "Income estimates are illustrative and depend on price, yields, and holding period. Capital is at risk.", "ar": "تقديرات الدخل لغرض التوضيح وتعتمد على السعر والعوائد وفترة الاحتفاظ. رأس المال معرّض للمخاطر." }
+    },
+
+    "creditRatingDisplay": "AAA (example)",
+    "ratingAgencies": [
+      { "agency": "S&P", "rating": "AAA", "outlook": "Stable", "lastReviewedDate": "2025-12-01" }
+    ],
+    "riskLevel": "Low",
+    "duration": 5.8,
+    "macaulayDuration": 6.1,
+    "convexity": 0.9,
+    "interestRateSensitivityNotes": {
+      "en": "Bond prices can move when market interest rates change; longer duration may mean higher sensitivity.",
+      "ar": "قد تتغير أسعار السندات عند تغير أسعار الفائدة في السوق؛ المدة الأطول قد تعني حساسية أعلى."
+    },
+    "defaultRiskNotes": {
+      "en": "Even high-quality bonds can fluctuate in price before maturity.",
+      "ar": "حتى السندات عالية الجودة قد تتقلب أسعارها قبل الاستحقاق."
+    },
+    "countryRiskNotes": {
+      "en": "Country and currency factors may affect outcomes for non-domestic investors.",
+      "ar": "قد تؤثر عوامل الدولة والعملة على النتائج للمستثمرين من خارج الدولة."
+    },
+
+    "issuerName": "United States Treasury",
+    "issuerShortDescription": { "en": "Debt securities issued by the US government.", "ar": "أدوات دين تصدرها حكومة الولايات المتحدة." },
+    "issuerSector": "Government",
+    "issuerWebsite": "https://home.treasury.gov/",
+    "issuerLogo": null,
+    "issuerFinancialHighlights": {
+      "en": "Demo issuer profile for seeding. Replace with your production issuer content source when available.",
+      "ar": "ملف مُصدر تجريبي لأغراض التهيئة. استبدله بمصدر محتوى المُصدر الفعلي عند توفره."
+    },
+    "issuerDocsLinks": [
+      { "name": "Issuer page (demo)", "url": "https://example.com/issuer/us-treasury" }
+    ],
+
+    "liquidityScore": 95,
+    "avgDailyVolume": null,
+    "typicalBidAskBps": 2,
+    "tradableOnPlatform": true,
+    "tradingHoursNotes": { "en": "Trading availability may vary by venue and product.", "ar": "قد يختلف توفر التداول حسب الجهة والمنتج." },
+    "earlyExitNotes": {
+      "en": "Selling before maturity may result in a gain or loss depending on market conditions.",
+      "ar": "قد يؤدي البيع قبل الاستحقاق إلى ربح أو خسارة حسب ظروف السوق."
+    },
+
+    "heroSummary": {
+      "en": "A USD government bond with scheduled coupon payments and a defined maturity date.",
+      "ar": "سند حكومي بالدولار الأمريكي مع دفعات كوبون مجدولة وتاريخ استحقاق محدد."
+    },
+    "highlights": {
+      "en": ["Fixed coupon schedule", "Defined maturity date", "USD-denominated"],
+      "ar": ["جدول كوبون ثابت", "تاريخ استحقاق محدد", "مقوم بالدولار الأمريكي"]
+    },
+    "howItWorks": {
+      "en": "This bond pays periodic coupons and returns principal at maturity. Market prices can fluctuate prior to maturity.",
+      "ar": "يدفع هذا السند كوبونات دورية ويعيد أصل الاستثمار عند الاستحقاق. قد تتقلب الأسعار في السوق قبل الاستحقاق."
+    },
+    "faq": [
+      {
+        "q": { "en": "What is Yield to Maturity (YTM)?", "ar": "ما هو العائد حتى الاستحقاق (YTM)؟" },
+        "a": {
+          "en": "YTM is an annualized estimate based on price, coupon, and time to maturity if held to maturity.",
+          "ar": "YTM هو تقدير سنوي يعتمد على السعر والكوبون والمدة حتى الاستحقاق إذا تم الاحتفاظ بالسند حتى الاستحقاق."
+        }
+      },
+      {
+        "q": { "en": "What happens at maturity?", "ar": "ماذا يحدث عند الاستحقاق؟" },
+        "a": {
+          "en": "At maturity, the issuer repays principal (face value) and the bond stops paying coupons.",
+          "ar": "عند الاستحقاق، يقوم المُصدر بسداد أصل الاستثمار (القيمة الاسمية) ويتوقف السند عن دفع الكوبونات."
+        }
+      }
+    ],
+    "riskDisclosure": { "en": "Bonds carry risks including interest rate risk, credit risk, and liquidity risk. Capital is at risk.", "ar": "تنطوي السندات على مخاطر تشمل مخاطر أسعار الفائدة ومخاطر الائتمان ومخاطر السيولة. رأس المال معرّض للمخاطر." },
+    "disclaimers": { "en": ["This page is for information only and is not investment advice."], "ar": ["هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."] },
+    "educationalTooltips": {
+      "en": {
+        "Coupon": "A periodic payment made by the issuer, typically expressed as an annual rate.",
+        "Duration": "A measure of price sensitivity to interest rate changes.",
+        "Clean Price": "Bond price excluding accrued interest."
+      },
+      "ar": {
+        "الكوبون": "دفعة دورية من المُصدر، وعادةً ما تُعرض كنسبة سنوية.",
+        "المدة": "مقياس لحساسية السعر تجاه تغيرات أسعار الفائدة.",
+        "السعر النظيف": "سعر السند دون احتساب الفائدة المستحقة."
+      }
+    },
+
+    "showCharts": false,
+    "ytmSeriesRef": null,
+    "priceSeriesRef": null,
+
+    "metaTitle": { "en": "US Treasury Note 4.50% (May 2031) | Bonds", "ar": "سندات الخزانة الأمريكية 4.50% (مايو 2031) | السندات" },
+    "metaDescription": {
+      "en": "Key facts, coupon schedule, risk notes, and issuer overview for a demo US Treasury bond page.",
+      "ar": "حقائق أساسية، جدول الكوبونات، ملاحظات المخاطر، ونبذة عن المُصدر لصفحة سندات تجريبية."
+    },
+    "ogTitle": { "en": "US Treasury Note 4.50% (May 2031)", "ar": "سندات الخزانة الأمريكية 4.50% (مايو 2031)" },
+    "ogDescription": {
+      "en": "Demo bond page showing yield, coupon schedule, and risk disclosures.",
+      "ar": "صفحة سندات تجريبية تعرض العائد وجدول الكوبونات وإفصاحات المخاطر."
+    },
+    "ogImage": null,
+    "indexable": true,
+    "schemaOrgJsonLd": null,
+
+    "complianceStatus": "Pass",
+    "complianceScanResults": null,
+    "blockedKeywordsHit": [],
+    "requiredDisclosuresPresent": true,
+    "lastComplianceScanAt": "NOW"
+  },
+
+  {
+    "title": { "en": "UAE Government Bond 3.90% (Oct 2030)", "ar": "سند حكومي إماراتي 3.90% (أكتوبر 2030)" },
+    "slug": "uae-government-bond-3-90-oct-2030",
+    "status": "published",
+    "canonicalUrl": null,
+    "tags": ["government", "aed", "fixed-income"],
+    "featured": true,
+
+    "instrumentType": "Bond",
+    "issuerType": "Government",
+    "couponType": "Fixed",
+    "seniority": "Senior Unsecured",
+    "callable": false,
+    "putable": false,
+    "convertible": false,
+    "guaranteed": true,
+    "callSchedule": [],
+    "putSchedule": [],
+    "conversionTerms": null,
+    "guarantor": null,
+
+    "isin": "AE000000DUMMY2",
+    "cusip": null,
+    "ticker": null,
+    "exchange": null,
+    "countryOfRisk": "United Arab Emirates",
+    "issuerCountry": "United Arab Emirates",
+    "currency": "AED",
+    "issueDate": "2022-10-20",
+    "maturityDate": "2030-10-20",
+    "dayCountConvention": "30/360",
+    "settlementDays": 2,
+    "denomination": 100,
+    "minimumInvestment": { "amount": 1000, "currency": "AED" },
+    "incrementSize": { "amount": 100, "currency": "AED" },
+
+    "cleanPrice": 100.40,
+    "dirtyPrice": 100.55,
+    "accruedInterest": 0.15,
+    "ytm": 3.84,
+    "currentYield": 3.88,
+    "yieldToCall": null,
+    "yieldToWorst": 3.84,
+    "spread": { "type": "N/A", "valueBps": null },
+    "benchmark": { "name": "UAE Gov Curve", "spreadToBenchmarkBps": 0 },
+    "bidPrice": 100.30,
+    "askPrice": 100.50,
+    "bidYield": 3.86,
+    "askYield": 3.82,
+    "bidAskSpread": { "type": "price", "value": 0.20 },
+    "lastUpdatedAt": "NOW",
+    "priceSource": "manual",
+
+    "couponRate": 3.9,
+    "couponFrequency": "Semi-annual",
+    "lastCouponDate": "2025-10-20",
+    "nextCouponDate": "2026-04-20",
+    "principalRepaymentType": "Bullet",
+    "couponSchedule": [
+      { "paymentDate": "2026-04-20", "amountPer100": 1.95, "currency": "AED" },
+      { "paymentDate": "2026-10-20", "amountPer100": 1.95, "currency": "AED" },
+      { "paymentDate": "2027-04-20", "amountPer100": 1.95, "currency": "AED" }
+    ],
+    "amortizationSchedule": null,
+    "incomeCalculatorDefaults": {
+      "defaultInvestmentAmount": { "amount": 50000, "currency": "AED" },
+      "showIncomeEstimate": true,
+      "incomeEstimateDisclaimer": { "en": "Income estimates are illustrative and depend on price, yields, and holding period. Capital is at risk.", "ar": "تقديرات الدخل لغرض التوضيح وتعتمد على السعر والعوائد وفترة الاحتفاظ. رأس المال معرّض للمخاطر." }
+    },
+
+    "creditRatingDisplay": "AA (example)",
+    "ratingAgencies": [
+      { "agency": "Moody’s", "rating": "Aa (example)", "outlook": "Stable", "lastReviewedDate": "2025-11-01" }
+    ],
+    "riskLevel": "Low",
+    "duration": 4.9,
+    "macaulayDuration": 5.1,
+    "convexity": 0.8,
+    "interestRateSensitivityNotes": {
+      "en": "Prices can move as local interest rates change; longer duration tends to increase sensitivity.",
+      "ar": "قد تتغير الأسعار مع تغير أسعار الفائدة المحلية؛ المدة الأطول غالباً تزيد الحساسية."
+    },
+    "defaultRiskNotes": { "en": "Government issuers can still be affected by market conditions.", "ar": "قد يتأثر المُصدر الحكومي بظروف السوق أيضاً." },
+    "countryRiskNotes": { "en": "Currency and country factors may matter for investors outside the AED base.", "ar": "قد تكون عوامل العملة والدولة مهمة للمستثمرين خارج قاعدة الدرهم." },
+
+    "issuerName": "UAE Government (Demo)",
+    "issuerShortDescription": { "en": "Demo government issuer profile for UAE sovereign exposure.", "ar": "ملف مُصدر حكومي تجريبي للتعرض السيادي الإماراتي." },
+    "issuerSector": "Government",
+    "issuerWebsite": "https://example.com/issuer/uae-government",
+    "issuerLogo": null,
+    "issuerFinancialHighlights": {
+      "en": "This is dummy content used to validate page layout and modules.",
+      "ar": "هذا محتوى تجريبي لاختبار تصميم الصفحة والوحدات."
+    },
+    "issuerDocsLinks": [{ "name": "Issuer page (demo)", "url": "https://example.com/issuer/uae-government" }],
+
+    "liquidityScore": 85,
+    "avgDailyVolume": null,
+    "typicalBidAskBps": 4,
+    "tradableOnPlatform": true,
+    "tradingHoursNotes": { "en": "Trading availability may vary.", "ar": "قد يختلف توفر التداول." },
+    "earlyExitNotes": { "en": "Early sale may result in price differences versus purchase price.", "ar": "قد يؤدي البيع المبكر إلى اختلافات في السعر مقارنة بسعر الشراء." },
+
+    "heroSummary": {
+      "en": "An AED-denominated government bond with fixed coupons and a defined maturity date.",
+      "ar": "سند حكومي بالدرهم مع كوبونات ثابتة وتاريخ استحقاق محدد."
+    },
+    "highlights": {
+      "en": ["AED exposure", "Fixed coupon payments", "Defined maturity date"],
+      "ar": ["تعرض للدرهم", "دفعات كوبون ثابتة", "تاريخ استحقاق محدد"]
+    },
+    "howItWorks": {
+      "en": "You may receive coupon payments on the schedule shown, and principal is repaid at maturity. Market prices can move prior to maturity.",
+      "ar": "قد تتلقى دفعات كوبون وفق الجدول الموضح ويتم سداد أصل الاستثمار عند الاستحقاق. قد تتغير الأسعار قبل الاستحقاق."
+    },
+    "faq": [
+      {
+        "q": { "en": "What is a coupon payment?", "ar": "ما هي دفعة الكوبون؟" },
+        "a": {
+          "en": "A coupon is the periodic interest payment paid by the issuer to bondholders.",
+          "ar": "الكوبون هو دفعة الفائدة الدورية التي يدفعها المُصدر لحاملي السند."
+        }
+      }
+    ],
+    "riskDisclosure": { "en": "Bonds carry risks including interest rate risk, credit risk, and liquidity risk. Capital is at risk.", "ar": "تنطوي السندات على مخاطر تشمل مخاطر أسعار الفائدة ومخاطر الائتمان ومخاطر السيولة. رأس المال معرّض للمخاطر." },
+    "disclaimers": { "en": ["This page is for information only and is not investment advice."], "ar": ["هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."] },
+    "educationalTooltips": {
+      "en": { "YTM": "An annualized estimate of return if held to maturity, based on current price and coupon." },
+      "ar": { "YTM": "تقدير سنوي للعائد إذا تم الاحتفاظ بالسند حتى الاستحقاق بناءً على السعر الحالي والكوبون." }
+    },
+
+    "showCharts": false,
+    "ytmSeriesRef": null,
+    "priceSeriesRef": null,
+
+    "metaTitle": { "en": "UAE Government Bond 3.90% (Oct 2030) | Bonds", "ar": "سند حكومي إماراتي 3.90% (أكتوبر 2030) | السندات" },
+    "metaDescription": {
+      "en": "Demo UAE government bond page with coupons, yield, and disclosures.",
+      "ar": "صفحة سند حكومي إماراتي تجريبية مع الكوبونات والعائد والإفصاحات."
+    },
+    "ogTitle": { "en": "UAE Government Bond 3.90% (Oct 2030)", "ar": "سند حكومي إماراتي 3.90% (أكتوبر 2030)" },
+    "ogDescription": { "en": "Demo bond page with key facts and risk notes.", "ar": "صفحة سندات تجريبية مع الحقائق الأساسية وملاحظات المخاطر." },
+    "ogImage": null,
+    "indexable": true,
+    "schemaOrgJsonLd": null,
+
+    "complianceStatus": "Pass",
+    "complianceScanResults": null,
+    "blockedKeywordsHit": [],
+    "requiredDisclosuresPresent": true,
+    "lastComplianceScanAt": "NOW"
+  },
+
+  {
+    "title": { "en": "Saudi Corporate Bond 5.75% (Mar 2029)", "ar": "سند شركة سعودي 5.75% (مارس 2029)" },
+    "slug": "saudi-corporate-bond-5-75-mar-2029",
+    "status": "published",
+    "canonicalUrl": null,
+    "tags": ["corporate", "usd", "fixed-income"],
+    "featured": false,
+
+    "instrumentType": "Bond",
+    "issuerType": "Corporate",
+    "couponType": "Fixed",
+    "seniority": "Senior Unsecured",
+    "callable": true,
+    "putable": false,
+    "convertible": false,
+    "guaranteed": false,
+    "callSchedule": [
+      { "callDate": "2027-03-01", "callPrice": 101.0, "callType": "Optional" }
+    ],
+    "putSchedule": [],
+    "conversionTerms": null,
+    "guarantor": null,
+
+    "isin": "SA000000DUMMY3",
+    "cusip": null,
+    "ticker": null,
+    "exchange": null,
+    "countryOfRisk": "Saudi Arabia",
+    "issuerCountry": "Saudi Arabia",
+    "currency": "USD",
+    "issueDate": "2019-03-01",
+    "maturityDate": "2029-03-01",
+    "dayCountConvention": "30/360",
+    "settlementDays": 2,
+    "denomination": 100,
+    "minimumInvestment": { "amount": 500, "currency": "USD" },
+    "incrementSize": { "amount": 100, "currency": "USD" },
+
+    "cleanPrice": 97.10,
+    "dirtyPrice": 97.60,
+    "accruedInterest": 0.50,
+    "ytm": 6.15,
+    "currentYield": 5.92,
+    "yieldToCall": 6.05,
+    "yieldToWorst": 6.05,
+    "spread": { "type": "OAS (example)", "valueBps": 185 },
+    "benchmark": { "name": "UST", "spreadToBenchmarkBps": 185 },
+    "bidPrice": 96.95,
+    "askPrice": 97.25,
+    "bidYield": 6.19,
+    "askYield": 6.11,
+    "bidAskSpread": { "type": "price", "value": 0.30 },
+    "lastUpdatedAt": "NOW",
+    "priceSource": "manual",
+
+    "couponRate": 5.75,
+    "couponFrequency": "Semi-annual",
+    "lastCouponDate": "2025-09-01",
+    "nextCouponDate": "2026-03-01",
+    "principalRepaymentType": "Bullet",
+    "couponSchedule": [
+      { "paymentDate": "2026-03-01", "amountPer100": 2.875, "currency": "USD" },
+      { "paymentDate": "2026-09-01", "amountPer100": 2.875, "currency": "USD" },
+      { "paymentDate": "2027-03-01", "amountPer100": 2.875, "currency": "USD" }
+    ],
+    "amortizationSchedule": null,
+    "incomeCalculatorDefaults": {
+      "defaultInvestmentAmount": { "amount": 10000, "currency": "USD" },
+      "showIncomeEstimate": true,
+      "incomeEstimateDisclaimer": { "en": "Income estimates are illustrative and depend on price, yields, and holding period. Capital is at risk.", "ar": "تقديرات الدخل لغرض التوضيح وتعتمد على السعر والعوائد وفترة الاحتفاظ. رأس المال معرّض للمخاطر." }
+    },
+
+    "creditRatingDisplay": "BBB (example)",
+    "ratingAgencies": [
+      { "agency": "Fitch", "rating": "BBB (example)", "outlook": "Stable", "lastReviewedDate": "2025-10-15" }
+    ],
+    "riskLevel": "Medium",
+    "duration": 4.2,
+    "macaulayDuration": 4.5,
+    "convexity": 0.7,
+    "interestRateSensitivityNotes": { "en": "Corporate bonds can be sensitive to both rate moves and credit spreads.", "ar": "قد تتأثر سندات الشركات بتغيرات الفائدة واتساع فروق الائتمان." },
+    "defaultRiskNotes": { "en": "Credit conditions and issuer fundamentals can affect market pricing.", "ar": "قد تؤثر ظروف الائتمان وأساسيات المُصدر على التسعير في السوق." },
+    "countryRiskNotes": { "en": "Country and regional factors may influence risk perception.", "ar": "قد تؤثر عوامل الدولة والمنطقة على تقييم المخاطر." },
+
+    "issuerName": "Demo Issuer (Saudi Corporate)",
+    "issuerShortDescription": { "en": "Demo corporate issuer used to test corporate-bond layouts.", "ar": "مُصدر شركة تجريبي لاختبار تصميم صفحات سندات الشركات." },
+    "issuerSector": "Corporate",
+    "issuerWebsite": "https://example.com/issuer/saudi-corporate-demo",
+    "issuerLogo": null,
+    "issuerFinancialHighlights": { "en": "Dummy highlights to validate issuer module rendering.", "ar": "ملخصات تجريبية للتحقق من عرض وحدة المُصدر." },
+    "issuerDocsLinks": [{ "name": "Issuer docs (demo)", "url": "https://example.com/docs/saudi-corp-demo" }],
+
+    "liquidityScore": 60,
+    "avgDailyVolume": null,
+    "typicalBidAskBps": 25,
+    "tradableOnPlatform": true,
+    "tradingHoursNotes": { "en": "Liquidity can vary; spreads may widen during volatile periods.", "ar": "قد تتغير السيولة؛ وقد تتسع الفروق خلال فترات التقلب." },
+    "earlyExitNotes": { "en": "Exiting early may result in gains or losses based on market price and spreads.", "ar": "قد يؤدي الخروج المبكر إلى أرباح أو خسائر حسب سعر السوق والفروق." },
+
+    "heroSummary": { "en": "A USD corporate bond with fixed coupons and a call feature (see call schedule).", "ar": "سند شركة بالدولار مع كوبونات ثابتة وخيار استدعاء (راجع جدول الاستدعاء)." },
+    "highlights": { "en": ["Fixed coupon payments", "Callable feature", "USD-denominated"], "ar": ["دفعات كوبون ثابتة", "ميزة الاستدعاء", "مقوم بالدولار الأمريكي"] },
+    "howItWorks": { "en": "This bond pays coupons on schedule. If called, the issuer may repay early according to the call terms.", "ar": "يدفع هذا السند كوبونات وفق الجدول. إذا تم استدعاؤه، قد يقوم المُصدر بالسداد المبكر وفق الشروط." },
+    "faq": [
+      {
+        "q": { "en": "What does callable mean?", "ar": "ماذا يعني قابل للاستدعاء؟" },
+        "a": { "en": "Callable bonds may be repaid early by the issuer under defined terms.", "ar": "السندات القابلة للاستدعاء قد يسددها المُصدر مبكراً وفق شروط محددة." }
+      }
+    ],
+    "riskDisclosure": { "en": "Bonds carry risks including interest rate risk, credit risk, and liquidity risk. Capital is at risk.", "ar": "تنطوي السندات على مخاطر تشمل مخاطر أسعار الفائدة ومخاطر الائتمان ومخاطر السيولة. رأس المال معرّض للمخاطر." },
+    "disclaimers": { "en": ["This page is for information only and is not investment advice."], "ar": ["هذه الصفحة لأغراض معلوماتية فقط وليست نصيحة استثمارية."] },
+    "educationalTooltips": {
+      "en": { "Yield to Worst": "The lowest potential yield among call/maturity scenarios, based on current terms." },
+      "ar": { "العائد إلى الأسوأ": "أدنى عائد محتمل بين سيناريوهات الاستدعاء/الاستحقاق بناءً على الشروط الحالية." }
+    },
+
+    "showCharts": false,
+    "ytmSeriesRef": null,
+    "priceSeriesRef": null,
+
+    "metaTitle": { "en": "Saudi Corporate Bond 5.75% (Mar 2029) | Bonds", "ar": "سند شركة سعودي 5.75% (مارس 2029) | السندات" },
+    "metaDescription": { "en": "Demo corporate bond page with call schedule, yield metrics, and risk disclosures.", "ar": "صفحة سندات شركة تجريبية مع جدول الاستدعاء ومقاييس العائد وإفصاحات المخاطر." },
+    "ogTitle": { "en": "Saudi Corporate Bond 5.75% (Mar 2029)", "ar": "سند شركة سعودي 5.75% (مارس 2029)" },
+    "ogDescription": { "en": "Demo corporate bond page for CMS seeding.", "ar": "صفحة سندات شركة تجريبية لتهيئة نظام إدارة المحتوى." },
+    "ogImage": null,
+    "indexable": true,
+    "schemaOrgJsonLd": null,
+
+    "complianceStatus": "Pass",
+    "complianceScanResults": null,
+    "blockedKeywordsHit": [],
+    "requiredDisclosuresPresent": true,
+    "lastComplianceScanAt": "NOW"
+  },
+
+  {
+    "title": { "en": "Investment Grade Corporate Bond 4.20% (Jun 2028)", "ar": "سند شركة بدرجة استثمارية 4.20% (يونيو 2028)" },
+    "slug": "investment-grade-corp-4-20-jun-2028",
+    "status": "published",
+    "canonicalUrl": null,
+    "tags": ["corporate", "usd", "investment-grade"],
+    "featured": false,
+
+    "instrumentType": "Bond",
+    "issuerType": "Corporate",
+    "couponType": "Fixed",
+    "seniority": "Senior Unsecured",
+    "callable": false,
+    "putable": false,
+    "convertible": false,
+    "guaranteed": false,
+    "callSchedule": [],
+    "putSchedule": [],
+    "conversionTerms": null,
+    "guarantor": null,
+
+    "isin": "US000000DUMMY4",
+    "cusip": "000000BB4",
+    "ticker": null,
+    "exchange": null,
+    "countryOfRisk": "United States",
+    "issuerCountry": "United States",
+    "currency": "USD",
+    "issueDate": "2020-06-15",
+    "maturityDate": "2028-06-15",
+    "dayCountConvention": "30/360",
+    "settlementDays": 2,
+    "denomination": 100,
+    "minimumInvestment": { "amount": 500, "currency": "USD" },
+    "incrementSize": { "amount": 100, "currency": "USD" },
+
+    "cleanPrice": 99.05,
+    "dirtyPrice": 99.35,
+    "accruedInterest": 0.30,
+    "ytm": 4.38,
+    "currentYield": 4.24,
+    "yieldToCall": null,
+    "yieldToWorst": 4.38,
+    "spread": { "type": "OAS (example)", "valueBps": 120 },
+    "benchmark": { "name": "UST", "spreadToBenchmarkBps": 120 },
+    "bidPrice": 98.95,
+    "askPrice": 99.15,
+    "bidYield": 4.41,
+    "askYield": 4.35,
+    "bidAskSpread": { "type": "price", "value": 0.20 },
+    "lastUpdatedAt": "NOW",
+    "priceSource": "manual",
+
+    "couponRate": 4.2,
+    "couponFrequency": "Semi-annual",
+    "lastCouponDate": "2025-12-15",
+    "nextCouponDate": "2026-06-15",
+    "principalRepaymentType": "Bullet",
+    "couponSchedule": [
+      { "paymentDate": "2026-06-15", "amountPer100": 2.10, "currency": "USD" },
+      { "paymentDate": "2026-12-15", "amountPer100": 2.10, "currency": "USD" },
+      { "paymentDate": "2027-06-15", "amountPer100": 2.10, "currency": "USD" }
+    ],
+    "amortizationSchedule": null,
+    "incomeCalculatorDefaults": {
+      "defaultInvestmentAmount": { "amount": 10000, "currency": "USD" },
+      "showIncomeEstimate": true,
+      "incomeEstimateDisclaimer": { "en": "Income estimates are illustrative and depend on price, yields, and holding period. Capital is at risk.", "ar": "تقديرات الدخل لغرض التوضيح وتعتمد على السعر والعوائد وفترة الاحتفاظ. رأس المال معرّض للمخاطر." }
+    },
+
+    "creditRatingDisplay": "A- (example)",
+    "ratingAgencies": [{ "agency": "S&P", "rating": "A- (example)", "outlook": "Stable", "lastReviewedDate": "2025-09-20" }],
+    "riskLevel": "Medium",
+    "duration": 3.6,
+    "macaulayDuration": 3.8,
+    "convexity": 0.6,
+    "interestRateSensitivityNotes": { "en": "Investment-grade bonds can still move in price when rates or spreads change.", "ar": "قد تتغير أسعار السندات بدرجة استثمارية عند تغير الفائدة أو فروق الائتمان." },
+    "defaultRiskNotes": { "en": "Issuer credit quality is a key risk driver; ratings can change over time.", "ar": "جودة ائتمان المُصدر عامل مهم للمخاطر؛ وقد تتغير التصنيفات مع الوقت." },
+    "countryRiskNotes": { "en": "USD instruments may involve FX considerations for non-USD investors.", "ar": "قد تتضمن الأدوات بالدولار اعتبارات صرف للمستثمرين غير الدولار." },
+
+    "issuerName": "Demo Issuer (Investment Grade)",
+    "issuerShortDescription": { "en": "Demo issuer profile for an investment-grade corporate bond.", "ar": "ملف مُصدر تجريبي لسند شركة بدرجة استثمارية." },
+    "issuerSector": "Corporate",
+    "issuerWebsite": "https://example.com/issuer/investment-grade-demo",
+    "issuerLogo": null,
+    "issuerFinancialHighlights": { "en": "Dummy issuer highlights for layout testing.", "ar": "ملخصات مُصدر تجريبية لاختبار التصميم." },
+    "issuerDocsLinks": [{ "name": "Issuer docs (demo)", "url": "https://example.com/docs/investment-grade-demo" }],
+
+    "liquidityScore": 70,
+    "avgDailyVolume": null,
+    "typicalBidAskBps": 15,
+    "tradableOnPlatform": true,
+    "tradingHoursNotes": { "en": "Spreads may vary based on market conditions.", "ar": "قد تختلف الفروق حسب ظروف السوق." },
+    "earlyExitNotes": { "en": "Selling before maturity may result in a gain or loss.", "ar": "قد يؤدي البيع قبل الاستحقاق إلى ربح أو خسارة." },
+
+    "heroSummary": { "en": "A demo investment-grade corporate bond with fixed coupons and defined maturity.", "ar": "سند شركة تجريبي بدرجة استثمارية مع كوبونات ثابتة واستحقاق محدد." },
+    "highlights": { "en": ["Investment-grade example", "Fixed coupon schedule", "Defined maturity date"], "ar": ["مثال بدرجة استثمارية", "جدول كوبون ثابت", "تاريخ استحقاق محدد"] },
+    "howItWorks": { "en": "Coupons may be paid on schedule and principal is returned at maturity. Secondary prices can fluctuate.", "ar": "قد تُدفع الكوبونات وفق الجدول ويُعاد أصل الاستثمار عند الاستحقاق. قد تتقلب أسعار السوق الثانوية." },
+    "faq": [
+      {
+        "q": { "en": "Why does bond price move?", "ar": "لماذا يتغير سعر السند؟" },
+        "a": { "en": "Prices can change due to interest rates, issuer credit spreads, and liquidity conditions.", "ar": "قد يتغير السعر بسبب أسعار الفائدة وفروق ائتمان المُصدر وظروف السيولة." }
+      }
+    ],
+    "riskDisclosure": { "en": "Bonds carry risks including interest rate risk, credit risk, and liquidity risk. Capital is at risk.", "ar": "تنطوي السندات على مخاطر تشمل مخاطر أسعار الفائدة ومخاطر الائتمان ومخاطر السيولة. رأس المال معرّض للمخاطر."
