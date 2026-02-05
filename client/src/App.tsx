@@ -41,6 +41,7 @@ import AdminCompliance from '@/pages/admin-compliance';
 import AdminBonds from '@/pages/admin-bonds';
 import AdminBondEditor from '@/pages/admin-bond-editor';
 import BondDetail from '@/pages/bond-detail';
+import BondsLanding from '@/pages/bonds';
 import PageBuilder from '@/pages/page-builder';
 import NewsletterPreview from '@/pages/newsletter-preview';
 import LandingPagePublic from '@/pages/landing-page';
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/stocks/themes/:slug" component={StockThemePage} />
       <Route path="/themes/:slug" component={StockThemePage} />
       <Route path="/stocks/:slug" component={StockDetail} />
+      <Route path="/bonds" component={BondsLanding} />
       <Route path="/blog" component={BlogHome} />
       <Route path="/refer" component={ReferEarnPage} />
       <Route path="/referral" component={ReferEarnPage} />

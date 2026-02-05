@@ -81,11 +81,13 @@ export default function BondDetail() {
                 </div>
                 <div>
                   <Badge variant="outline" className="mb-1">
-                    {bond.instrumentType.replace(/_/g, ' ')}
+                    {bond.instrumentType?.replace(/_/g, ' ') || 'Bond'}
                   </Badge>
-                  <Badge className={`ml-2 ${riskLevelColors[bond.riskLevel]}`}>
-                    {bond.riskLevel.replace(/_/g, ' ')} risk
-                  </Badge>
+                  {bond.riskLevel && (
+                    <Badge className={`ml-2 ${riskLevelColors[bond.riskLevel]}`}>
+                      {bond.riskLevel.replace(/_/g, ' ')} risk
+                    </Badge>
+                  )}
                 </div>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold mb-2" data-testid="text-bond-title">
@@ -161,7 +163,7 @@ export default function BondDetail() {
                 {bond.isPerpetual ? 'Perpetual' : formatDate(bond.maturityDate)}
               </p>
               <p className="text-xs text-muted-foreground">
-                {bond.principalRepaymentType.replace(/_/g, ' ')}
+                {bond.principalRepaymentType?.replace(/_/g, ' ') || 'At Maturity'}
               </p>
             </CardContent>
           </Card>
@@ -173,7 +175,7 @@ export default function BondDetail() {
               </div>
               <p className="text-2xl font-bold">{bond.creditRatingDisplay || 'NR'}</p>
               <p className="text-xs text-muted-foreground capitalize">
-                {bond.seniority.replace(/_/g, ' ')}
+                {bond.seniority?.replace(/_/g, ' ') || 'Unsecured'}
               </p>
             </CardContent>
           </Card>
@@ -282,7 +284,7 @@ export default function BondDetail() {
                 <div>
                   <p className="font-medium">{bond.issuerName_en}</p>
                   <p className="text-sm text-muted-foreground capitalize">
-                    {bond.issuerType.replace(/_/g, ' ')} • {bond.issuerSector || 'N/A'}
+                    {bond.issuerType?.replace(/_/g, ' ') || 'Unknown'} • {bond.issuerSector || 'N/A'}
                   </p>
                 </div>
                 {bond.issuerShortDescription_en && (

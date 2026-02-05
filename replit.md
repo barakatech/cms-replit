@@ -62,7 +62,9 @@ The CMS provides:
     - **Compliance Tab**: Run compliance scans, view status, publish gating
   - **11 Bond-Specific Block Types**: bond_hero, key_facts, income_calculator, coupon_schedule, risk_summary, charts, issuer_profile, liquidity_exit, similar_bonds, faq, disclosures
   - **Compliance Integration**: Dedicated scan endpoint with keyword matching, violation detection, publish blocking
+  - **Public Landing Page** (`/bonds`): Browse all bonds with search, featured bonds section, and full listing
   - **Public Detail Page** (`/bonds/:slug`): Renders bond metrics, issuer profile, risk disclosures, trading info
+  - **Seed Data**: 6 sample bonds auto-loaded on startup (3 featured: US Treasury, UAE Government, High Yield Corp)
   - **Bond Types**: BondInstrumentType, BondIssuerType, BondCouponType, BondSeniority, BondRiskLevel for type safety
 
 ## User Preferences

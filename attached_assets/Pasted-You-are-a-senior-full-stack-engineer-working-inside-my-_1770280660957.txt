@@ -1,0 +1,268 @@
+You are a senior full-stack engineer working inside my existing Replit CMS codebase.
+
+ABSOLUTE CONSTRAINTS
+- Do NOT refactor unrelated parts of the CMS.
+- Reuse existing patterns for: models, migrations, RBAC, draft/publish workflow, media uploads, list/detail views, routing, and the existing compliance checker.
+- Implement changes in a clean, isolated way that does not break existing Stock/Bond/Blog/Newsletter pages.
+- Any new seeding/cron/job code must be idempotent and safe to run multiple times.
+
+========================
+TASK 0 — GLOBAL: Add a WYSIWYG editor for ALL page types
+========================
+GOAL
+Add a consistent WYSIWYG editor component used across the CMS wherever editors write rich content, for all page types (at minimum: Bonds and Crypto; and also any existing page types with long-form content fields).
+
+REQUIREMENTS
+1) Implement a reusable RichTextEditor component (WYSIWYG) that supports:
+   - Headings H2/H3
+   - Bold/Italic/Underline
+   - Bullets + numbered lists
+   - Links (with rel="noopener noreferrer" and target="_blank" optional)
+   - Blockquotes
+   - Code inline + code block (optional but preferred)
+   - RTL support (Arabic) and LTR support (English)
+   - Paste from Google Docs without breaking formatting (best-effort)
+2) Store content as a portable format:
+   - Prefer JSON (TipTap/ProseMirror) OR sanitized HTML (if CMS already uses HTML).
+   - Do not introduce two formats. Choose the existing one if present.
+3) Ensure safe rendering on the public site:
+   - Sanitize output (prevent script injection).
+   - Preserve allowed tags only.
+4) Backward compatibility:
+   - If existing content is plain text or markdown, implement a migration/adapter layer so it still renders.
+   - Do NOT break existing pages.
+5) Apply WYSIWYG to all rich fields in ALL page types:
+   - For Bonds: howItWorks, riskDisclosure, issuerFinancialHighlights (if rich), any long-form sections.
+   - For Crypto: whatIsIt, howItWorks, risks, plus any other long-form fields.
+   - For any other existing page types: replace long-text textareas with RichTextEditor where appropriate.
+6) Add a “Preview” mode in the editor pane that shows how it will render on the public page.
+
+IMPLEMENTATION NOTES
+- If the codebase already has a rich editor library, reuse it.
+- Otherwise use a stable OSS editor like TipTap or Quill.
+- Make the editor component fully controlled and form-friendly (works with your existing form library).
+- Add unit tests for sanitizer + serialization/deserialization.
+
+========================
+TASK 1 — UPDATE: Bonds Pages content editor to use WYSIWYG
+========================
+- Update the Bonds CMS edit screen to use the new RichTextEditor for all rich fields.
+- Ensure Arabic RTL works and line breaks/formatting render correctly on the public bond pages.
+- Ensure compliance checker scans text extracted from the rich content (see compliance section below).
+
+========================
+TASK 2 — NEW: Crypto Pages in CMS (like Bonds Pages)
+========================
+A) Create a new CMS content type/model: CryptoPage.
+B) Add CMS menu item: “Crypto”.
+C) Admin list view with filters:
+   - status, assetType, marketCapRank (range), isStablecoin, featured, data source
+D) Create/Edit UI with tabs:
+   - Basics
+   - Identifiers & Networks
+   - Content
+   - SEO
+   - Compliance
+   - Live Data (read-only, from ingestion cache)
+E) Simple/Pro toggle:
+   - Simple: Basics + Content + SEO + Compliance
+   - Pro: everything, including Networks + advanced fields + Live Data tab
+
+PUBLISH GATING RULES (block publish unless true)
+- title.en present
+- slug unique
+- symbol present
+- providerCoinId present (coingeckoId strongly preferred) OR coincapId fallback
+- risks(en/ar) present (rich text)
+- disclaimers(en/ar) present
+- complianceStatus is Pass OR an Admin override with required reason
+- requiredDisclosuresPresent = true
+
+PUBLIC ROUTE
+- /crypto/:slug
+- Render from CMS editorial content + cached market data (never call external API on page view).
+- Blocks:
+  1) CryptoHeroBlock (price, 24h change, market cap rank, CTA)
+  2) KeyStatsBlock (market cap, volume 24h, supply)
+  3) AboutBlock (whatIsIt)
+  4) HowItWorksBlock
+  5) UseCasesBlock
+  6) RisksBlock (prominent)
+  7) FAQBlock
+  8) DisclosuresBlock
+  9) Optional 7D sparkline chart if you store it
+
+CRYPTO PAGE SCHEMA (implement exactly; localized fields are {en, ar})
+A) Identity
+- title{en,ar}, slug, status, canonicalUrl, tags[], featured, languageDefault
+
+B) Classification
+- assetType enum: Coin|Token|Stablecoin|Meme|DeFi|L2|NFTInfra|Other
+- rankingSource enum: CoinGecko|CoinCap|Manual
+- marketCapRank number (auto from ingestion, editable only if rankingSource=Manual)
+- isStablecoin boolean
+- launchDate optional
+- category optional string
+
+C) Identifiers & Networks
+- symbol string
+- name string (optional; can be auto from ingestion)
+- coingeckoId string (primary ingestion key)
+- coincapId string (fallback)
+- networks[]: { chainName, contractAddress, decimals, explorerUrl }
+- websiteUrl, whitepaperUrl
+- communityLinks: { xUrl, redditUrl, telegramUrl, discordUrl }
+
+D) Market Data (read-only in CMS; updated by ingestion)
+- marketData: {
+    priceUsd,
+    priceChange24hPct,
+    marketCapUsd,
+    volume24hUsd,
+    circulatingSupply,
+    totalSupply,
+    maxSupply,
+    athUsd,
+    athDate,
+    atlUsd,
+    atlDate,
+    lastUpdatedAt,
+    source
+  }
+- sparkline7dRef optional (preferred) OR sparkline7d[] if your DB supports arrays safely
+
+E) Content (WYSIWYG for rich fields)
+- heroSummary{en,ar} (short text)
+- highlights{en[],ar[]}
+- whatIsIt{en,ar} (RICH TEXT via WYSIWYG)
+- howItWorks{en,ar} (RICH TEXT via WYSIWYG)
+- useCases{en[],ar[]}
+- risks{en,ar} (RICH TEXT via WYSIWYG) [MANDATORY]
+- faq[]: { q{en,ar}, a{en,ar} }
+- educationalTooltips { en: object, ar: object }
+- disclaimers{en[],ar[]}
+
+F) SEO
+- metaTitle{en,ar}, metaDescription{en,ar}
+- ogTitle{en,ar}, ogDescription{en,ar}, ogImage
+- indexable boolean
+- schemaOrgJsonLd auto-generated
+
+G) Compliance
+- complianceStatus enum: Pass|Fail|NeedsReview
+- complianceScanResults json/text
+- blockedKeywordsHit[]
+- requiredDisclosuresPresent boolean
+- lastComplianceScanAt datetime
+- adminOverride: { enabled boolean, reason string, overriddenBy userId, overriddenAt datetime } (ONLY if your CMS already supports overrides; otherwise omit and rely on existing override mechanism)
+
+========================
+TASK 3 — BACKEND: Free market data ingestion for Top 1000 cryptos
+========================
+GOAL
+Fetch and refresh live market data for the top 1000 cryptocurrencies by market cap rank using free APIs, and cache in DB. Public pages should read from DB cache only.
+
+CORE REQUIREMENTS
+1) Provider interface:
+   - fetchTopMarketCoins({vsCurrency, page, perPage}) -> {items[], providerMeta}
+   - optional: fetchSparkline7d(coinId) (best-effort; do not block ingestion)
+2) Providers with fallback:
+   - Primary: CoinGecko (public)
+   - Secondary: CoinCap (fallback)
+3) Scheduled job:
+   - Runs every 10 minutes (configurable via env CRYPTO_REFRESH_MINUTES).
+   - For CoinGecko: fetch top 1000 using 4 calls (per_page=250, page=1..4, order=market_cap_desc, vs_currency=usd).
+   - Store results in DB cache table (see below).
+   - Do NOT call external APIs during page render.
+4) DB cache table:
+   Create CryptoMarketSnapshot (or reuse existing “market cache” pattern):
+   - provider (CoinGecko|CoinCap)
+   - providerCoinId (coingeckoId or coincapId)
+   - symbol, name
+   - rank
+   - priceUsd
+   - priceChange24hPct
+   - marketCapUsd
+   - volume24hUsd
+   - circulatingSupply
+   - totalSupply
+   - maxSupply
+   - athUsd, athDate
+   - atlUsd, atlDate
+   - lastUpdatedAt (from provider)
+   - fetchedAt (our timestamp)
+   - raw (optional, capped size; safe for debugging)
+   Unique index: (provider, providerCoinId)
+5) Sync into CryptoPage.marketData:
+   - For each CryptoPage with coingeckoId (preferred), join against snapshot and update marketData fields.
+   - If CryptoPage has only coincapId, use CoinCap snapshot.
+   - If no snapshot available, keep previous marketData and show “Last updated” timestamp.
+   - IMPORTANT: Do NOT auto-create CryptoPages for missing coins. Only update pages that exist.
+6) Resilience:
+   - Handle rate limits (429) with exponential backoff and jitter.
+   - If primary fails, fallback to secondary for that run.
+   - Never wipe data on failure; retain last known marketData.
+7) Manual admin trigger:
+   - POST /api/admin/crypto/refresh
+   - RBAC protected (admin-only)
+   - Returns summary: provider used, fetched count, updated pages count, duration, errors.
+
+OBSERVABILITY
+- Log a single structured line per run: providerUsed, fetchedCount, updatedPagesCount, durationMs, errorsCount.
+- If your system has email alerts already, reuse it for “job failed N times consecutively”; otherwise log only.
+
+========================
+TASK 4 — COMPLIANCE SCANNING (Crypto + Bonds + WYSIWYG)
+========================
+- Reuse the existing compliance checker.
+- Update the compliance checker integration so it can scan rich text:
+  - Extract plain text from the rich content (strip tags or convert editor JSON to text).
+  - Scan ALL relevant fields (including FAQs, highlights, meta fields, disclaimers).
+- Store results back to the existing compliance fields on each content type.
+- Add “Run Compliance Scan” button on both Bonds and Crypto edit screens.
+- Publishing must enforce complianceStatus Pass unless override mechanism exists.
+
+========================
+TASK 5 — SEED: Create 20 starter CryptoPages (optional but recommended)
+========================
+(Only do this if it matches existing CMS seeding conventions; do not break environments)
+- Seed 20 CryptoPages for the largest coins (e.g., BTC, ETH, USDT, BNB, SOL, XRP, USDC, ADA, AVAX, DOGE, etc.)
+- Each seeded page should include EN/AR heroSummary, highlights, whatIsIt, howItWorks, risks, disclaimers, and FAQs.
+- Set status = published for at least 10 pages so /crypto/:slug works immediately.
+- Ensure coingeckoId is correctly set for seeded pages.
+- After seeding, print a console table: slug | symbol | coingeckoId | status
+- IMPORTANT: This seed is idempotent (upsert by slug).
+
+========================
+DELIVERABLES
+========================
+1) WYSIWYG editor component integrated across ALL page types wherever rich text is used, including Bonds and Crypto.
+2) CryptoPage CMS model + UI + public route /crypto/:slug
+3) Market ingestion system:
+   - CoinGecko primary, CoinCap fallback
+   - DB cache table
+   - scheduled refresh + manual admin endpoint
+   - sync cache -> CryptoPage.marketData
+4) Tests:
+   - Sanitization & rich text serialization tests
+   - Ingestion provider tests (mocked)
+   - Publish gating tests for CryptoPage
+5) Clear run instructions:
+   - Env vars required
+   - How to start scheduler
+   - How to run manual refresh endpoint
+
+ENV VARS
+- CRYPTO_REFRESH_MINUTES=10
+- CRYPTO_VS_CURRENCY=usd
+- (Optional) COINGECKO_BASE_URL, COINCAP_BASE_URL if needed
+
+FINAL OUTPUT
+- Show me the exact commands to:
+  - run migrations
+  - run seed (if created)
+  - start the job/scheduler
+  - hit the manual refresh endpoint
+- Confirm the URLs that should work:
+  - /crypto/:slug
+  - /bonds/:slug
