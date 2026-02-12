@@ -32,6 +32,7 @@ import {
   Monitor,
   CreditCard,
   Coins,
+  Landmark,
   Heart,
   ShoppingCart,
   Fuel,
@@ -43,7 +44,7 @@ import { mockBlogHomeSettings, blogCategories } from '@/lib/discoverData';
 import { useTheme } from '@/hooks/use-theme';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import type { DiscoverSettings, StockTheme, OfferBanner } from '@shared/schema';
+import type { DiscoverSettings, StockTheme, OfferBanner, BondPage, CryptoPage } from '@shared/schema';
 import BarakaHeader from '@/components/BarakaHeader';
 import { StockLogo } from '@/components/StockLogo';
 
@@ -78,6 +79,14 @@ export default function Discover() {
   
   const { data: offerBanners = [] } = useQuery<OfferBanner[]>({
     queryKey: ['/api/discover/offers'],
+  });
+
+  const { data: bondPages = [] } = useQuery<BondPage[]>({
+    queryKey: ['/api/bond-pages'],
+  });
+
+  const { data: cryptoPages = [] } = useQuery<CryptoPage[]>({
+    queryKey: ['/api/crypto/pages'],
   });
 
   useEffect(() => {
@@ -173,6 +182,10 @@ export default function Discover() {
       trendingSubtitle: 'Real-time market movers',
       viewAllStocks: 'View all stocks',
       featuredStocks: 'Featured Stocks',
+      featuredBonds: 'Featured Bonds',
+      featuredCrypto: 'Featured Crypto',
+      exploreBonds: 'Explore Bonds',
+      exploreCrypto: 'Explore Crypto',
       exploreStocks: 'Explore Stocks',
       priceAlerts: 'Get Price Updates',
       priceAlertsDesc: 'Subscribe to price alerts for stocks you follow.',
@@ -212,6 +225,10 @@ export default function Discover() {
       trendingSubtitle: 'تحركات السوق الفورية',
       viewAllStocks: 'عرض جميع الأسهم',
       featuredStocks: 'الأسهم المميزة',
+      featuredBonds: 'السندات المميزة',
+      featuredCrypto: 'العملات الرقمية المميزة',
+      exploreBonds: 'استكشف السندات',
+      exploreCrypto: 'استكشف العملات الرقمية',
       exploreStocks: 'استكشف الأسهم',
       priceAlerts: 'احصل على تحديثات الأسعار',
       priceAlertsDesc: 'اشترك في تنبيهات الأسعار للأسهم التي تتابعها.',
@@ -700,6 +717,114 @@ export default function Discover() {
             </div>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {settings.featuredTickers.slice(0, 8).map(ticker => renderStockCard(ticker))}
+            </div>
+          </section>
+        )}
+
+        {/* SECTION 5b: Featured Bonds */}
+        {settings.sectionVisibility.bonds && settings.featuredBondSlugs.length > 0 && (
+          <section className="py-8">
+            <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className={`text-2xl font-bold flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Landmark className="h-6 w-6 text-primary" />
+                {t.featuredBonds}
+              </h2>
+              <Link href="/bonds">
+                <Button variant="outline" size="sm" data-testid="explore-bonds">
+                  {t.exploreBonds}
+                  <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-1 rotate-180' : 'ml-1'}`} />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {settings.featuredBondSlugs.map((slug: string) => {
+                const bond = bondPages.find((b: BondPage) => b.slug === slug);
+                if (!bond) return null;
+                return (
+                  <Link key={slug} href={`/bonds/${slug}`}>
+                    <Card className="hover-elevate cursor-pointer h-full" data-testid={`card-bond-${slug}`}>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Landmark className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm truncate">{isRTL ? bond.title_ar : bond.title_en}</p>
+                            <p className="text-xs text-muted-foreground">{bond.instrumentType}</p>
+                          </div>
+                        </div>
+                        {bond.couponRate != null && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Coupon</span>
+                            <span className="font-medium">{bond.couponRate}%</span>
+                          </div>
+                        )}
+                        {bond.maturityDate && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Maturity</span>
+                            <span className="font-medium">{bond.maturityDate}</span>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {(bond.tags || []).slice(0, 2).map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs" data-testid={`badge-bond-tag-${slug}-${tag}`}>{tag}</Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* SECTION 5c: Featured Crypto */}
+        {settings.sectionVisibility.crypto && settings.featuredCryptoSlugs.length > 0 && (
+          <section className="py-8">
+            <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className={`text-2xl font-bold flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Coins className="h-6 w-6 text-primary" />
+                {t.featuredCrypto}
+              </h2>
+              <Link href="/crypto">
+                <Button variant="outline" size="sm" data-testid="explore-crypto">
+                  {t.exploreCrypto}
+                  <ChevronRight className={`h-4 w-4 ${isRTL ? 'mr-1 rotate-180' : 'ml-1'}`} />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {settings.featuredCryptoSlugs.map((slug: string) => {
+                const crypto = cryptoPages.find((c: CryptoPage) => c.slug === slug);
+                if (!crypto) return null;
+                return (
+                  <Link key={slug} href={`/crypto/${slug}`}>
+                    <Card className="hover-elevate cursor-pointer h-full" data-testid={`card-crypto-${slug}`}>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          {crypto.logoUrl ? (
+                            <img src={crypto.logoUrl} alt={crypto.title_en} className="w-8 h-8 rounded-full" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Coins className="h-4 w-4 text-primary" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm truncate">{isRTL ? crypto.title_ar : crypto.title_en}</p>
+                            <p className="text-xs text-muted-foreground uppercase">{crypto.slug}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {(crypto.tags || []).slice(0, 2).map((tag: string) => (
+                            <Badge key={tag} variant="secondary" className="text-xs" data-testid={`badge-crypto-tag-${slug}-${tag}`}>{tag}</Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}

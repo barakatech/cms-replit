@@ -193,6 +193,8 @@ export interface DiscoverSettings {
   otherThemeSlugs: string[];
   trendingTabs: TrendingTab[];
   featuredTickers: string[];
+  featuredBondSlugs: string[];
+  featuredCryptoSlugs: string[];
   learnFeaturedPostId: string;
   learnSecondaryPostIds: string[];
   learnCategorySlugs: string[];
@@ -201,6 +203,8 @@ export interface DiscoverSettings {
     themes: boolean;
     trending: boolean;
     featured: boolean;
+    bonds: boolean;
+    crypto: boolean;
     priceAlerts: boolean;
     learn: boolean;
     newsletter: boolean;

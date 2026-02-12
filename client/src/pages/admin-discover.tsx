@@ -22,13 +22,15 @@ import {
   Plus,
   X,
   GripVertical,
-  Loader2
+  Loader2,
+  Landmark,
+  Coins
 } from 'lucide-react';
 import { blogCategories } from '@/lib/discoverData';
 import { mockBlogs } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import type { DiscoverSettings, StockTheme, OfferBanner } from '@shared/schema';
+import type { DiscoverSettings, StockTheme, OfferBanner, BondPage, CryptoPage } from '@shared/schema';
 
 export default function AdminDiscover() {
   const { toast } = useToast();
@@ -45,6 +47,14 @@ export default function AdminDiscover() {
     queryKey: ['/api/discover/offers'],
   });
   
+  const { data: bondPages = [] } = useQuery<BondPage[]>({
+    queryKey: ['/api/bond-pages'],
+  });
+
+  const { data: cryptoPages = [] } = useQuery<CryptoPage[]>({
+    queryKey: ['/api/crypto/pages'],
+  });
+
   const [settings, setSettings] = useState<DiscoverSettings | null>(null);
   
   useEffect(() => {
@@ -117,10 +127,12 @@ export default function AdminDiscover() {
       </div>
 
       <Tabs defaultValue="hero">
-        <TabsList className="grid grid-cols-6 w-full">
+        <TabsList className="flex flex-wrap gap-1 w-full">
           <TabsTrigger value="hero" data-testid="tab-hero">Hero</TabsTrigger>
           <TabsTrigger value="themes" data-testid="tab-themes">Themes</TabsTrigger>
           <TabsTrigger value="stocks" data-testid="tab-stocks">Stocks</TabsTrigger>
+          <TabsTrigger value="bonds" data-testid="tab-bonds">Bonds</TabsTrigger>
+          <TabsTrigger value="crypto" data-testid="tab-crypto">Crypto</TabsTrigger>
           <TabsTrigger value="learn" data-testid="tab-learn">Learn</TabsTrigger>
           <TabsTrigger value="offers" data-testid="tab-offers">Offers</TabsTrigger>
           <TabsTrigger value="visibility" data-testid="tab-visibility">Visibility</TabsTrigger>
@@ -360,6 +372,134 @@ export default function AdminDiscover() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="bonds" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Landmark className="h-5 w-5" />
+                Featured Bonds
+              </CardTitle>
+              <CardDescription>Select bond pages to feature on the discover landing page</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Add Bond</Label>
+                <Select
+                  value=""
+                  onValueChange={(slug) => {
+                    if (!settings.featuredBondSlugs.includes(slug)) {
+                      updateSetting('featuredBondSlugs', [...settings.featuredBondSlugs, slug]);
+                    }
+                  }}
+                >
+                  <SelectTrigger data-testid="select-add-bond">
+                    <SelectValue placeholder="Select a bond to feature..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bondPages
+                      .filter((b: BondPage) => b.status === 'published' && !settings.featuredBondSlugs.includes(b.slug))
+                      .map((b: BondPage) => (
+                        <SelectItem key={b.slug} value={b.slug} data-testid={`select-bond-${b.slug}`}>
+                          {b.title_en} ({b.slug})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Featured Bonds ({settings.featuredBondSlugs.length})</Label>
+                {settings.featuredBondSlugs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No bonds featured yet. Add bonds from the dropdown above.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {settings.featuredBondSlugs.map((slug: string) => {
+                      const bond = bondPages.find((b: BondPage) => b.slug === slug);
+                      return (
+                        <Badge key={slug} variant="secondary" className="gap-1" data-testid={`badge-bond-${slug}`}>
+                          <Landmark className="h-3 w-3" />
+                          {bond?.title_en || slug}
+                          <button
+                            onClick={() => updateSetting('featuredBondSlugs', settings.featuredBondSlugs.filter((s: string) => s !== slug))}
+                            className="ml-1"
+                            data-testid={`remove-bond-${slug}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="crypto" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Coins className="h-5 w-5" />
+                Featured Crypto
+              </CardTitle>
+              <CardDescription>Select crypto pages to feature on the discover landing page</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Add Crypto</Label>
+                <Select
+                  value=""
+                  onValueChange={(slug) => {
+                    if (!settings.featuredCryptoSlugs.includes(slug)) {
+                      updateSetting('featuredCryptoSlugs', [...settings.featuredCryptoSlugs, slug]);
+                    }
+                  }}
+                >
+                  <SelectTrigger data-testid="select-add-crypto">
+                    <SelectValue placeholder="Select a crypto to feature..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cryptoPages
+                      .filter((c: CryptoPage) => c.status === 'published' && !settings.featuredCryptoSlugs.includes(c.slug))
+                      .map((c: CryptoPage) => (
+                        <SelectItem key={c.slug} value={c.slug} data-testid={`select-crypto-${c.slug}`}>
+                          {c.title_en} ({c.slug})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Featured Crypto ({settings.featuredCryptoSlugs.length})</Label>
+                {settings.featuredCryptoSlugs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No crypto pages featured yet. Add crypto from the dropdown above.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {settings.featuredCryptoSlugs.map((slug: string) => {
+                      const crypto = cryptoPages.find((c: CryptoPage) => c.slug === slug);
+                      return (
+                        <Badge key={slug} variant="secondary" className="gap-1" data-testid={`badge-crypto-${slug}`}>
+                          <Coins className="h-3 w-3" />
+                          {crypto?.title_en || slug}
+                          <button
+                            onClick={() => updateSetting('featuredCryptoSlugs', settings.featuredCryptoSlugs.filter((s: string) => s !== slug))}
+                            className="ml-1"
+                            data-testid={`remove-crypto-${slug}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="learn" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -501,6 +641,8 @@ export default function AdminDiscover() {
                   { key: 'themes', label: 'Stock Themes & Trackers', icon: Star },
                   { key: 'trending', label: 'Trending Stocks', icon: TrendingUp },
                   { key: 'featured', label: 'Featured Stocks', icon: TrendingUp },
+                  { key: 'bonds', label: 'Featured Bonds', icon: Landmark },
+                  { key: 'crypto', label: 'Featured Crypto', icon: Coins },
                   { key: 'priceAlerts', label: 'Price Alerts Subscription', icon: Bell },
                   { key: 'learn', label: 'Learn Section', icon: BookOpen },
                   { key: 'newsletter', label: 'Newsletter Signup', icon: Mail },
